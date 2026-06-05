@@ -1,19 +1,21 @@
 export type EntryType =
   | "symptom"
   | "question"
-  | "appointment"
+  | "appointment" // legacy — displayed as People & Care
+  | "person"
+  | "measurement"
   | "photo"
-  | "labour"
+  | "labour" // legacy
   | "feeling"
   | "note"
-  | "concern";
+  | "concern"; // legacy
 
 export interface BaseEntry {
   id: string;
   type: EntryType;
   createdAt: string; // ISO
   weekDay: { weeks: number; days: number };
-  deletedAt?: string; // ISO if soft-deleted
+  deletedAt?: string;
   saveAsQuestion?: boolean;
 }
 
@@ -24,11 +26,14 @@ export interface SymptomEntry extends BaseEntry {
   clarification?: string;
   location?: string;
   note?: string;
+  dataUrl?: string;
 }
 
 export interface QuestionEntry extends BaseEntry {
   type: "question";
   text: string;
+  context?: string;
+  answered?: boolean;
 }
 
 export interface AppointmentEntry extends BaseEntry {
@@ -40,6 +45,37 @@ export interface AppointmentEntry extends BaseEntry {
   advice?: string;
   questionsAnswered?: string;
   followUp?: string;
+}
+
+export interface PersonEntry extends BaseEntry {
+  type: "person";
+  whenISO: string;
+  name?: string;
+  role?: string;
+  discussed?: string;
+  advised?: string;
+  note?: string;
+  dataUrl?: string;
+}
+
+export type MeasurementKind =
+  | "blood_pressure"
+  | "weight"
+  | "blood_sugar"
+  | "movements"
+  | "temperature"
+  | "custom";
+
+export interface MeasurementEntry extends BaseEntry {
+  type: "measurement";
+  kind: MeasurementKind;
+  customLabel?: string;
+  systolic?: number;
+  diastolic?: number;
+  pulse?: number;
+  value?: number;
+  unit?: string;
+  note?: string;
 }
 
 export interface PhotoEntry extends BaseEntry {
@@ -77,6 +113,8 @@ export type Entry =
   | SymptomEntry
   | QuestionEntry
   | AppointmentEntry
+  | PersonEntry
+  | MeasurementEntry
   | PhotoEntry
   | LabourEntry
   | FeelingEntry
@@ -86,7 +124,7 @@ export type Entry =
 export interface Profile {
   userName: string;
   babyNickname: string;
-  dueDateISO: string; // YYYY-MM-DD
+  dueDateISO: string;
   hospital?: string;
   midwife?: string;
   consultant?: string;
