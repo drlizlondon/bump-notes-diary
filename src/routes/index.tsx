@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Toaster } from "sonner";
+import { Activity, HelpCircle, Users, Gauge, Camera, NotebookPen, Heart } from "lucide-react";
 import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell } from "@/components/bumpnotes/AppShell";
 import { HomeHeader } from "@/components/bumpnotes/HomeHeader";
@@ -8,22 +9,20 @@ import {
   ActionCard,
   SymptomPanelBody,
   QuestionPanelBody,
-  AppointmentPanelBody,
+  PeopleCarePanelBody,
+  MeasurementPanelBody,
   PhotoPanelBody,
-  LabourPanelBody,
   FeelingPanelBody,
   NotePanelBody,
-  ConcernPanelBody,
 } from "@/components/bumpnotes/Panels";
 import { Onboarding } from "@/components/bumpnotes/Onboarding";
-import { gestationFromDueDate, formatGestation } from "@/lib/bumpnotes/gestation";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "BumpNotes — your pregnancy, in your own words" },
-      { name: "description", content: "A simple, private pregnancy notebook to record symptoms, concerns, questions, appointments and more." },
-      { name: "theme-color", content: "#fdf8f1" },
+      { title: "BumpNotes — your pregnancy record" },
+      { name: "description", content: "A simple, private pregnancy record. Capture symptoms, measurements, questions, care and photos, then create a clear summary by pregnancy week." },
+      { name: "theme-color", content: "#ffffff" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -34,15 +33,11 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type PanelKey = "symptom" | "question" | "appointment" | "photo" | "labour" | "feeling" | "note" | "concern";
+type PanelKey = "symptom" | "question" | "people" | "measurement" | "photo" | "note" | "feeling";
 
 function Index() {
-  const { profile, entries } = useAppState();
+  const { profile } = useAppState();
   const [open, setOpen] = useState<PanelKey | null>(null);
-
-  function toggle(k: PanelKey) {
-    setOpen((prev) => (prev === k ? null : k));
-  }
 
   if (!profile?.onboarded) {
     return (
@@ -53,10 +48,7 @@ function Index() {
     );
   }
 
-  const todayStr = new Date().toDateString();
-  const todayContractions = entries
-    .filter((e) => !e.deletedAt && e.type === "labour" && e.event === "Contraction" && new Date(e.createdAt).toDateString() === todayStr)
-    .map((e) => ({ id: e.id, createdAt: e.createdAt }));
+  function toggle(k: PanelKey) { setOpen((p) => (p === k ? null : k)); }
 
   return (
     <>
@@ -64,36 +56,42 @@ function Index() {
       <AppShell>
         <HomeHeader profile={profile} />
 
-        <section className="px-4 pt-4 pb-8 space-y-3">
-          <ActionCard label="Symptom" tone="peach" open={open === "symptom"} onToggle={() => toggle("symptom")}>
-            <SymptomPanelBody />
-          </ActionCard>
-          <ActionCard label="Question for my team" tone="sage" open={open === "question"} onToggle={() => toggle("question")}>
-            <QuestionPanelBody />
-          </ActionCard>
-          <ActionCard label="Appointment" tone="butter" open={open === "appointment"} onToggle={() => toggle("appointment")}>
-            <AppointmentPanelBody />
-          </ActionCard>
-          <ActionCard label="Photo" tone="lilac" open={open === "photo"} onToggle={() => toggle("photo")}>
-            <PhotoPanelBody />
-          </ActionCard>
-          <ActionCard label="Labour" tone="rose" open={open === "labour"} onToggle={() => toggle("labour")} badge={todayContractions.length}>
-            <LabourPanelBody contractionsToday={todayContractions} />
-          </ActionCard>
-          <ActionCard label="Feeling" tone="lilac" open={open === "feeling"} onToggle={() => toggle("feeling")}>
-            <FeelingPanelBody />
-          </ActionCard>
-          <ActionCard label="Note" tone="sage" open={open === "note"} onToggle={() => toggle("note")}>
-            <NotePanelBody />
-          </ActionCard>
-          <ActionCard label="Concern" tone="primary" open={open === "concern"} onToggle={() => toggle("concern")}>
-            <ConcernPanelBody />
-          </ActionCard>
+        <section className="px-4 md:px-0 pb-10">
+          <h2 className="font-serif text-xl md:text-2xl font-semibold mt-2 mb-1 px-1">What would you like to capture?</h2>
+          <p className="text-sm text-ink-soft mb-4 px-1">Tap any card to add an entry.</p>
+          <div className="space-y-2.5">
+            <ActionCard label="Symptoms" helper="Headache, swelling, bleeding, pain, movements" tone="coral"
+              icon={<Activity className="size-5" />} open={open === "symptom"} onToggle={() => toggle("symptom")}>
+              <SymptomPanelBody />
+            </ActionCard>
+            <ActionCard label="Save a Question" helper="Questions for your next appointment" tone="mint"
+              icon={<HelpCircle className="size-5" />} open={open === "question"} onToggle={() => toggle("question")}>
+              <QuestionPanelBody />
+            </ActionCard>
+            <ActionCard label="People & Care" helper="Who you saw and what was discussed" tone="butter"
+              icon={<Users className="size-5" />} open={open === "people"} onToggle={() => toggle("people")}>
+              <PeopleCarePanelBody />
+            </ActionCard>
+            <ActionCard label="Measurements" helper="Blood pressure, weight, movements +" tone="lavender"
+              icon={<Gauge className="size-5" />} open={open === "measurement"} onToggle={() => toggle("measurement")}>
+              <MeasurementPanelBody />
+            </ActionCard>
+            <ActionCard label="Photo" helper="Add a photo or document" tone="blush"
+              icon={<Camera className="size-5" />} open={open === "photo"} onToggle={() => toggle("photo")}>
+              <PhotoPanelBody />
+            </ActionCard>
+            <ActionCard label="Note" helper="Notes, thoughts or anything else" tone="mint"
+              icon={<NotebookPen className="size-5" />} open={open === "note"} onToggle={() => toggle("note")}>
+              <NotePanelBody />
+            </ActionCard>
+            <ActionCard label="Feelings" helper="Mood and emotional wellbeing" tone="lavender"
+              icon={<Heart className="size-5" />} open={open === "feeling"} onToggle={() => toggle("feeling")}>
+              <FeelingPanelBody />
+            </ActionCard>
+          </div>
 
-          <p className="text-center text-xs text-ink-soft pt-4 px-6 leading-relaxed">
-            Today, {profile.babyNickname} is {formatGestation(gestationFromDueDate(profile.dueDateISO))}.
-            <br />
-            Your notes stay on this device unless you choose to share them.
+          <p className="text-center text-xs text-ink-soft pt-6 px-6 leading-relaxed">
+            Your data is private. Only on this device unless you choose to share.
           </p>
         </section>
       </AppShell>
