@@ -1,72 +1,64 @@
 import { useState, type ReactNode } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { store } from "@/lib/bumpnotes/store";
-import type { Entry } from "@/lib/bumpnotes/types";
+import type { Entry, MeasurementKind } from "@/lib/bumpnotes/types";
 import { toast } from "sonner";
 
-type Tone = "peach" | "rose" | "sage" | "butter" | "lilac" | "primary";
+type Tone = "coral" | "blush" | "mint" | "butter" | "lavender" | "primary";
 
 const tonemap: Record<Tone, { bg: string; chip: string; ring: string; dot: string }> = {
-  peach:   { bg: "bg-peach-soft", chip: "bg-peach/30", ring: "ring-peach/30", dot: "bg-peach" },
-  rose:    { bg: "bg-rose-soft", chip: "bg-rose/25", ring: "ring-rose/30", dot: "bg-rose" },
-  sage:    { bg: "bg-sage-soft", chip: "bg-sage/30", ring: "ring-sage/30", dot: "bg-sage" },
-  butter:  { bg: "bg-butter-soft", chip: "bg-butter/35", ring: "ring-butter/30", dot: "bg-butter" },
-  lilac:   { bg: "bg-lilac-soft", chip: "bg-lilac/30", ring: "ring-lilac/30", dot: "bg-lilac" },
-  primary: { bg: "bg-primary/15", chip: "bg-primary/20", ring: "ring-primary/30", dot: "bg-primary" },
+  coral:    { bg: "bg-coral-soft",     chip: "bg-coral/15",    ring: "ring-coral/30",    dot: "bg-coral" },
+  blush:    { bg: "bg-blush-soft",     chip: "bg-blush/40",    ring: "ring-coral/20",    dot: "bg-coral" },
+  mint:     { bg: "bg-mint-soft",      chip: "bg-mint/40",     ring: "ring-mint/40",     dot: "bg-mint" },
+  butter:   { bg: "bg-butter-soft",    chip: "bg-butter/40",   ring: "ring-butter/40",   dot: "bg-butter" },
+  lavender: { bg: "bg-lavender-soft",  chip: "bg-lavender/40", ring: "ring-lavender/40", dot: "bg-lavender" },
+  primary:  { bg: "bg-primary/10",     chip: "bg-primary/15",  ring: "ring-primary/25",  dot: "bg-primary" },
 };
 
 export function ActionCard({
-  label,
-  tone,
-  open,
-  onToggle,
-  badge,
-  children,
+  label, helper, tone, open, onToggle, icon, children,
 }: {
   label: string;
+  helper?: string;
   tone: Tone;
   open: boolean;
   onToggle: () => void;
-  badge?: number;
+  icon: ReactNode;
   children: ReactNode;
 }) {
   const t = tonemap[tone];
   return (
-    <div className={`${t.bg} rounded-3xl ring-1 ${t.ring} overflow-hidden transition-all`}>
+    <div className={`surface-card overflow-hidden transition-all ${open ? "ring-1 " + t.ring : ""}`}>
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-5 py-4 text-left"
+        className="w-full flex items-center gap-4 px-4 py-4 text-left"
       >
-        <span className="flex items-center gap-3">
-          <span className={`size-2.5 rounded-full ${t.dot}`} />
-          <span className="font-semibold text-base">{label}</span>
-          {badge !== undefined && badge > 0 && (
-            <span className="text-[10px] font-mono bg-white/70 rounded-full px-2 py-0.5">
-              {badge} today
-            </span>
-          )}
+        <span className={`size-11 shrink-0 rounded-2xl grid place-items-center ${t.bg}`}>
+          <span className={`text-ink`}>{icon}</span>
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block font-semibold text-[15px] leading-tight text-ink">{label}</span>
+          {helper && <span className="block text-[12.5px] text-ink-soft mt-0.5 truncate">{helper}</span>}
         </span>
         <ChevronDown
           className={`size-5 text-ink-soft transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
-      {open && <div className="px-4 pb-5 pt-1">{children}</div>}
+      {open && <div className="px-4 pb-5 pt-1 border-t border-border">{children}</div>}
     </div>
   );
 }
 
 export function Chip({
-  active,
-  onClick,
-  children,
+  active, onClick, children,
 }: { active?: boolean; onClick?: () => void; children: ReactNode }) {
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 rounded-full text-sm font-medium ring-1 transition-all ${
+      className={`px-3.5 py-2 rounded-full text-sm font-medium border transition-all ${
         active
-          ? "bg-primary text-primary-foreground ring-primary shadow-sm"
-          : "bg-white/80 text-ink ring-black/5 hover:bg-white"
+          ? "bg-primary text-primary-foreground border-primary"
+          : "bg-white text-ink border-border hover:border-primary/40"
       }`}
     >
       {children}
@@ -75,136 +67,67 @@ export function Chip({
 }
 
 function LoggedToast(label: string) {
-  toast.success(label, {
-    icon: <Check className="size-4 text-sage" />,
-    duration: 2200,
-  });
+  toast.success(label, { icon: <Check className="size-4 text-mint" />, duration: 2200 });
 }
+
+const inputClass = "w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60";
+const primaryBtn = "w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50";
+const secondaryBtn = "flex-1 py-3 rounded-full bg-white border border-border text-sm font-medium";
 
 /* -------------------------------- SYMPTOM -------------------------------- */
 
 const SYMPTOMS = [
   "Headache","Visual changes","Swelling","Abdominal pain","Pelvic pain","Back pain",
   "Vaginal bleeding","Fluid loss","Itching","Breathlessness","Nausea","Vomiting",
-  "Dizziness","Reduced movements","More movements than usual","Cramps","Contractions","Other symptom",
+  "Dizziness","Reduced movements","More movements than usual","Cramps","Other symptom",
 ];
+const PAIN_LIKE = new Set(["Headache","Abdominal pain","Pelvic pain","Back pain","Cramps"]);
 
-const PAIN_LIKE = new Set(["Headache","Abdominal pain","Pelvic pain","Back pain","Cramps","Contractions"]);
-const LOCATION_LIKE = new Set(["Abdominal pain","Pelvic pain","Back pain","Cramps"]);
-
-export function SymptomPanelBody({ onLogged }: { onLogged?: () => void }) {
+export function SymptomPanelBody() {
   const [selected, setSelected] = useState<string | null>(null);
   const [severity, setSeverity] = useState<number | null>(null);
-  const [clarification, setClarification] = useState<string>("");
-  const [location, setLocation] = useState<string>("");
-  const [note, setNote] = useState<string>("");
+  const [note, setNote] = useState("");
 
-  function reset() {
-    setSelected(null);
-    setSeverity(null);
-    setClarification("");
-    setLocation("");
-    setNote("");
-  }
-
+  function reset() { setSelected(null); setSeverity(null); setNote(""); }
   function save() {
     if (!selected) return;
     store.addEntry({
       type: "symptom",
       symptom: selected,
       severity: severity ?? undefined,
-      clarification: clarification || undefined,
-      location: location || undefined,
       note: note || undefined,
     } as Omit<Entry, "id" | "createdAt" | "weekDay">);
     LoggedToast(`${selected} saved`);
     reset();
-    onLogged?.();
   }
 
-  const clarifyOptions: Record<string, string[]> = {
-    "Vaginal bleeding": ["Light","Moderate","Heavy","Unsure"],
-    "Fluid loss": ["Small amount","Gush","Ongoing leaking","Unsure"],
-    "Visual changes": ["Blurred vision","Flashing lights","Spots","Other"],
-    "Swelling": ["Hands","Feet","Face","Other"],
-    "Itching": ["Hands/feet","Generalised","Other"],
-    "Breathlessness": ["Mild","Moderate","Severe"],
-    "Nausea": ["Mild","Moderate","Severe"],
-    "Vomiting": ["Mild","Moderate","Severe"],
-  };
-
   return (
-    <div className="space-y-4">
-      <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold px-1">
-        What are you noticing?
-      </p>
+    <div className="space-y-4 pt-4">
+      <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold">What are you noticing?</p>
       <div className="flex flex-wrap gap-2">
         {SYMPTOMS.map((s) => (
-          <Chip key={s} active={selected === s} onClick={() => { setSelected(s); setSeverity(null); setClarification(""); }}>
-            {s}
-          </Chip>
+          <Chip key={s} active={selected === s} onClick={() => { setSelected(s); setSeverity(null); }}>{s}</Chip>
         ))}
       </div>
-
       {selected && (
-        <div className="space-y-4 pt-2 border-t border-black/5 mt-2">
-          {(PAIN_LIKE.has(selected)) && (
+        <div className="space-y-4 pt-2 border-t border-border">
+          {PAIN_LIKE.has(selected) && (
             <div>
-              <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2 px-1">
-                Severity
-              </p>
+              <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2">Severity</p>
               <div className="grid grid-cols-10 gap-1">
                 {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setSeverity(n)}
-                    className={`h-9 rounded-xl text-xs font-semibold ring-1 transition ${
-                      severity === n
-                        ? "bg-primary text-primary-foreground ring-primary"
-                        : "bg-white/80 ring-black/5"
-                    }`}
-                  >
+                  <button key={n} onClick={() => setSeverity(n)}
+                    className={`h-9 rounded-lg text-xs font-semibold border ${severity === n ? "bg-primary text-primary-foreground border-primary" : "bg-white border-border"}`}>
                     {n}
                   </button>
                 ))}
               </div>
             </div>
           )}
-
-          {clarifyOptions[selected] && (
-            <div className="flex flex-wrap gap-2">
-              {clarifyOptions[selected].map((o) => (
-                <Chip key={o} active={clarification === o} onClick={() => setClarification(o)}>
-                  {o}
-                </Chip>
-              ))}
-            </div>
-          )}
-
-          {LOCATION_LIKE.has(selected) && (
-            <input
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Where? (optional)"
-              className="w-full px-4 py-3 rounded-2xl bg-white/80 ring-1 ring-black/5 text-sm"
-            />
-          )}
-
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Optional note"
-            rows={2}
-            className="w-full px-4 py-3 rounded-2xl bg-white/80 ring-1 ring-black/5 text-sm resize-none"
-          />
-
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Notes (optional)" rows={2} className={inputClass + " resize-none"} />
           <div className="flex gap-2">
-            <button onClick={reset} className="flex-1 py-3 rounded-full bg-white/70 ring-1 ring-black/5 text-sm font-medium">
-              Cancel
-            </button>
-            <button onClick={save} className="flex-[2] py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-              Save symptom
-            </button>
+            <button onClick={reset} className={secondaryBtn}>Cancel</button>
+            <button onClick={save} className={primaryBtn + " flex-[2]"}>Save symptom</button>
           </div>
         </div>
       )}
@@ -218,48 +141,30 @@ const COMMON_PROMPTS = [
   "What does this result mean?",
   "Why is this being recommended?",
   "What are my options?",
-  "What happens if I say no or want more time?",
+  "What happens if I want more time?",
   "Who should I contact if I am worried?",
-  "Can you explain that again?",
   "What should I look out for?",
-  "Can this be written in my notes?",
 ];
 
 export function QuestionPanelBody() {
   const [text, setText] = useState("");
-  function save(q: string) {
+  const [context, setContext] = useState("");
+  function save(q: string, ctx?: string) {
     if (!q.trim()) return;
-    store.addEntry({ type: "question", text: q.trim() } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+    store.addEntry({ type: "question", text: q.trim(), context: ctx?.trim() || undefined } as Omit<Entry, "id" | "createdAt" | "weekDay">);
     LoggedToast("Question saved");
-    setText("");
+    setText(""); setContext("");
   }
   return (
-    <div className="space-y-4">
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Write a question to remember…"
-        rows={2}
-        className="w-full px-4 py-3 rounded-2xl bg-white/80 ring-1 ring-black/5 text-sm resize-none"
-      />
-      <button
-        onClick={() => save(text)}
-        disabled={!text.trim()}
-        className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50"
-      >
-        Add question
-      </button>
+    <div className="space-y-3 pt-4">
+      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Your question for your next appointment" rows={2} className={inputClass + " resize-none"} />
+      <textarea value={context} onChange={(e) => setContext(e.target.value)} placeholder="Context (optional)" rows={2} className={inputClass + " resize-none"} />
+      <button onClick={() => save(text, context)} disabled={!text.trim()} className={primaryBtn}>Save question</button>
       <div>
-        <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2 px-1">
-          Common prompts
-        </p>
+        <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2">Common prompts</p>
         <div className="flex flex-wrap gap-2">
           {COMMON_PROMPTS.map((q) => (
-            <button
-              key={q}
-              onClick={() => save(q)}
-              className="px-4 py-2 rounded-full bg-white/80 ring-1 ring-black/5 text-sm text-left hover:bg-white"
-            >
+            <button key={q} onClick={() => save(q)} className="px-3.5 py-2 rounded-full bg-white border border-border text-sm text-left hover:border-primary/40">
               {q}
             </button>
           ))}
@@ -269,9 +174,9 @@ export function QuestionPanelBody() {
   );
 }
 
-/* ------------------------------ APPOINTMENT ------------------------------ */
+/* ------------------------------ PEOPLE & CARE ----------------------------- */
 
-const APPT_KINDS = ["Midwife","Consultant","Scan","Triage","GP","Blood test","Growth scan","Hospital visit","Other"];
+const ROLES = ["Midwife","Obstetrician","Sonographer","GP","Nurse","Health visitor","Doula","Triage","Other"];
 
 function toLocalInput(iso: string) {
   const d = new Date(iso);
@@ -279,68 +184,153 @@ function toLocalInput(iso: string) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function AppointmentPanelBody() {
-  const [kind, setKind] = useState("Midwife");
+export function PeopleCarePanelBody() {
   const [when, setWhen] = useState(toLocalInput(new Date().toISOString()));
-  const [whoSeen, setWhoSeen] = useState("");
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("Midwife");
   const [discussed, setDiscussed] = useState("");
-  const [advice, setAdvice] = useState("");
-  const [questionsAnswered, setQuestionsAnswered] = useState("");
-  const [followUp, setFollowUp] = useState("");
+  const [advised, setAdvised] = useState("");
+  const [note, setNote] = useState("");
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
+
+  function onFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => setDataUrl(reader.result as string);
+    reader.readAsDataURL(file);
+  }
 
   function save() {
     const iso = new Date(when).toISOString();
     store.addEntry({
-      type: "appointment",
-      kind,
+      type: "person",
       whenISO: iso,
-      whoSeen: whoSeen || undefined,
+      name: name || undefined,
+      role: role || undefined,
       discussed: discussed || undefined,
-      advice: advice || undefined,
-      questionsAnswered: questionsAnswered || undefined,
-      followUp: followUp || undefined,
+      advised: advised || undefined,
+      note: note || undefined,
+      dataUrl: dataUrl || undefined,
       createdAt: iso,
     } as Omit<Entry, "id" | "createdAt" | "weekDay"> & { createdAt: string });
-    LoggedToast("Appointment saved");
-    setWhoSeen(""); setDiscussed(""); setAdvice(""); setQuestionsAnswered(""); setFollowUp("");
+    LoggedToast("People & Care saved");
+    setName(""); setDiscussed(""); setAdvised(""); setNote(""); setDataUrl(null);
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {APPT_KINDS.map((k) => <Chip key={k} active={kind === k} onClick={() => setKind(k)}>{k}</Chip>)}
-      </div>
+    <div className="space-y-3 pt-4">
       <label className="block">
-        <span className="text-xs uppercase tracking-widest text-ink-soft font-semibold">When</span>
-        <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)}
-          className="mt-1 w-full px-4 py-3 rounded-2xl bg-white/80 ring-1 ring-black/5 text-sm" />
+        <span className="text-xs uppercase tracking-widest text-ink-soft font-semibold">Date and time</span>
+        <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className={inputClass + " mt-1"} />
       </label>
-      {[
-        ["Who I saw", whoSeen, setWhoSeen],
-        ["What was discussed", discussed, setDiscussed],
-        ["Advice given", advice, setAdvice],
-        ["Questions answered", questionsAnswered, setQuestionsAnswered],
-        ["Follow-up mentioned", followUp, setFollowUp],
-      ].map(([label, val, set]) => (
-        <textarea
-          key={label as string}
-          value={val as string}
-          onChange={(e) => (set as (s: string) => void)(e.target.value)}
-          placeholder={label as string}
-          rows={2}
-          className="w-full px-4 py-3 rounded-2xl bg-white/80 ring-1 ring-black/5 text-sm resize-none"
-        />
-      ))}
-      <button onClick={save} className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-        Save appointment
-      </button>
+      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name (optional)" className={inputClass} />
+      <div className="flex flex-wrap gap-2">
+        {ROLES.map((r) => <Chip key={r} active={role === r} onClick={() => setRole(r)}>{r}</Chip>)}
+      </div>
+      <textarea value={discussed} onChange={(e) => setDiscussed(e.target.value)} placeholder="What was discussed?" rows={2} className={inputClass + " resize-none"} />
+      <textarea value={advised} onChange={(e) => setAdvised(e.target.value)} placeholder="What did they advise or say?" rows={2} className={inputClass + " resize-none"} />
+      <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Notes (optional)" rows={2} className={inputClass + " resize-none"} />
+      {dataUrl ? (
+        <img src={dataUrl} alt="" className="w-full rounded-xl border border-border" />
+      ) : (
+        <label className="block w-full py-4 rounded-xl bg-white border border-dashed border-border text-center text-sm text-ink-soft cursor-pointer">
+          Attach a photo or document
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+        </label>
+      )}
+      <button onClick={save} className={primaryBtn}>Save</button>
+    </div>
+  );
+}
+
+/* ------------------------------ MEASUREMENTS ------------------------------ */
+
+const MEASUREMENT_KINDS: { key: MeasurementKind; label: string; unit?: string }[] = [
+  { key: "blood_pressure", label: "Blood pressure" },
+  { key: "weight", label: "Weight", unit: "kg" },
+  { key: "blood_sugar", label: "Blood sugar", unit: "mmol/L" },
+  { key: "movements", label: "Baby movements", unit: "movements" },
+  { key: "temperature", label: "Temperature", unit: "°C" },
+  { key: "custom", label: "Custom" },
+];
+
+export function MeasurementPanelBody() {
+  const [kind, setKind] = useState<MeasurementKind>("blood_pressure");
+  const [customLabel, setCustomLabel] = useState("");
+  const [systolic, setSystolic] = useState("");
+  const [diastolic, setDiastolic] = useState("");
+  const [pulse, setPulse] = useState("");
+  const [value, setValue] = useState("");
+  const [unit, setUnit] = useState("");
+  const [note, setNote] = useState("");
+
+  function reset() {
+    setSystolic(""); setDiastolic(""); setPulse(""); setValue(""); setUnit(""); setNote(""); setCustomLabel("");
+  }
+
+  function save() {
+    const base = {
+      type: "measurement" as const,
+      kind,
+      customLabel: kind === "custom" ? (customLabel || undefined) : undefined,
+      note: note || undefined,
+    };
+    if (kind === "blood_pressure") {
+      if (!systolic || !diastolic) return;
+      store.addEntry({
+        ...base,
+        systolic: Number(systolic),
+        diastolic: Number(diastolic),
+        pulse: pulse ? Number(pulse) : undefined,
+      } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+    } else {
+      if (!value) return;
+      store.addEntry({
+        ...base,
+        value: Number(value),
+        unit: unit || MEASUREMENT_KINDS.find((m) => m.key === kind)?.unit,
+      } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+    }
+    LoggedToast("Measurement saved");
+    reset();
+  }
+
+  const preset = MEASUREMENT_KINDS.find((m) => m.key === kind);
+
+  return (
+    <div className="space-y-3 pt-4">
+      <div className="flex flex-wrap gap-2">
+        {MEASUREMENT_KINDS.map((m) => (
+          <Chip key={m.key} active={kind === m.key} onClick={() => { setKind(m.key); reset(); }}>{m.label}</Chip>
+        ))}
+      </div>
+
+      {kind === "custom" && (
+        <input value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} placeholder="What are you measuring?" className={inputClass} />
+      )}
+
+      {kind === "blood_pressure" ? (
+        <div className="grid grid-cols-3 gap-2">
+          <input inputMode="numeric" value={systolic} onChange={(e) => setSystolic(e.target.value)} placeholder="Systolic" className={inputClass} />
+          <input inputMode="numeric" value={diastolic} onChange={(e) => setDiastolic(e.target.value)} placeholder="Diastolic" className={inputClass} />
+          <input inputMode="numeric" value={pulse} onChange={(e) => setPulse(e.target.value)} placeholder="Pulse" className={inputClass} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          <input inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} placeholder="Value" className={inputClass} />
+          <input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder={preset?.unit || "Unit"} className={inputClass} />
+        </div>
+      )}
+
+      <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Notes (optional)" rows={2} className={inputClass + " resize-none"} />
+      <p className="text-[11px] text-ink-soft">BumpNotes records your readings. It does not interpret them.</p>
+      <button onClick={save} className={primaryBtn}>Save measurement</button>
     </div>
   );
 }
 
 /* --------------------------------- PHOTO --------------------------------- */
 
-const PHOTO_TAGS = ["Bump","Swelling","Rash/skin","Medication","Letter/document","Scan","Other"];
+const PHOTO_TAGS = ["Bump","Swelling","Skin","Document","Scan","Other"];
 
 export function PhotoPanelBody() {
   const [tag, setTag] = useState("Bump");
@@ -355,110 +345,51 @@ export function PhotoPanelBody() {
 
   function save() {
     if (!dataUrl) return;
-    store.addEntry({
-      type: "photo", tag, dataUrl, note: note || undefined,
-    } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+    store.addEntry({ type: "photo", tag, dataUrl, note: note || undefined } as Omit<Entry, "id" | "createdAt" | "weekDay">);
     LoggedToast("Photo saved");
     setDataUrl(null); setNote("");
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 pt-4">
       <div className="flex flex-wrap gap-2">
         {PHOTO_TAGS.map((t) => <Chip key={t} active={tag === t} onClick={() => setTag(t)}>{t}</Chip>)}
       </div>
       {dataUrl ? (
-        <img src={dataUrl} alt="" className="w-full aspect-square object-cover rounded-2xl ring-1 ring-black/5" />
+        <img src={dataUrl} alt="" className="w-full aspect-square object-cover rounded-xl border border-border" />
       ) : (
-        <label className="block w-full aspect-[4/3] rounded-2xl bg-white/70 ring-1 ring-dashed ring-black/15 grid place-items-center text-sm text-ink-soft cursor-pointer">
-          <span>Tap to choose a photo</span>
-          <input type="file" accept="image/*" className="hidden"
-            onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+        <label className="block w-full aspect-[4/3] rounded-xl bg-white border border-dashed border-border grid place-items-center text-sm text-ink-soft cursor-pointer">
+          Tap to choose a photo or document
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
         </label>
       )}
-      <textarea
-        value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note" rows={2}
-        className="w-full px-4 py-3 rounded-2xl bg-white/80 ring-1 ring-black/5 text-sm resize-none"
-      />
-      <button onClick={save} disabled={!dataUrl}
-        className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
-        Save photo
-      </button>
-    </div>
-  );
-}
-
-/* -------------------------------- LABOUR --------------------------------- */
-
-const LABOUR_EVENTS = [
-  "Contraction","Waters broke","Bleeding","Pressure","Pain","Called triage",
-  "Going to hospital","Arrived at hospital","Seen by midwife/doctor","Other",
-];
-
-export function LabourPanelBody({ contractionsToday }: { contractionsToday: { id: string; createdAt: string }[] }) {
-  function log(ev: string) {
-    store.addEntry({ type: "labour", event: ev } as Omit<Entry, "id" | "createdAt" | "weekDay">);
-    LoggedToast(ev);
-  }
-  return (
-    <div className="space-y-4">
-      <button
-        onClick={() => log("I think I'm in labour")}
-        className="w-full py-4 rounded-full bg-primary text-primary-foreground font-semibold"
-      >
-        I think I'm in labour
-      </button>
-      <div className="flex flex-wrap gap-2">
-        {LABOUR_EVENTS.map((e) => (
-          <Chip key={e} onClick={() => log(e)}>{e}</Chip>
-        ))}
-      </div>
-      {contractionsToday.length > 0 && (
-        <div className="bg-white/70 rounded-2xl p-3 ring-1 ring-black/5">
-          <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2">
-            Contractions today
-          </p>
-          <ul className="space-y-1 font-mono text-xs">
-            {contractionsToday.slice(0, 12).map((c, i) => (
-              <li key={c.id} className="flex justify-between">
-                <span>#{contractionsToday.length - i}</span>
-                <span>{new Date(c.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note" rows={2} className={inputClass + " resize-none"} />
+      <button onClick={save} disabled={!dataUrl} className={primaryBtn}>Save photo</button>
     </div>
   );
 }
 
 /* -------------------------------- FEELING -------------------------------- */
 
-const FEELINGS = ["Happy","Excited","Calm","Tired","Anxious","Worried","Overwhelmed","Frustrated","Scared","Sad","Other"];
+const FEELINGS = ["Calm","Happy","Excited","Tired","Anxious","Worried","Overwhelmed","Frustrated","Sad","Other"];
 
 export function FeelingPanelBody() {
   const [selected, setSelected] = useState<string | null>(null);
   const [note, setNote] = useState("");
   function save() {
     if (!selected) return;
-    store.addEntry({
-      type: "feeling", feeling: selected, note: note || undefined, privateOnly: true,
-    } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+    store.addEntry({ type: "feeling", feeling: selected, note: note || undefined, privateOnly: true } as Omit<Entry, "id" | "createdAt" | "weekDay">);
     LoggedToast(`Feeling: ${selected}`);
     setSelected(null); setNote("");
   }
   return (
-    <div className="space-y-4">
-      <p className="text-xs text-ink-soft px-1">Private diary — kept out of shared packs unless you choose to include it.</p>
+    <div className="space-y-3 pt-4">
+      <p className="text-xs text-ink-soft">Kept out of your summary unless you choose to include it.</p>
       <div className="flex flex-wrap gap-2">
         {FEELINGS.map((f) => <Chip key={f} active={selected === f} onClick={() => setSelected(f)}>{f}</Chip>)}
       </div>
-      <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note" rows={2}
-        className="w-full px-4 py-3 rounded-2xl bg-white/80 ring-1 ring-black/5 text-sm resize-none" />
-      <button onClick={save} disabled={!selected}
-        className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
-        Save feeling
-      </button>
+      <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note" rows={2} className={inputClass + " resize-none"} />
+      <button onClick={save} disabled={!selected} className={primaryBtn}>Save feeling</button>
     </div>
   );
 }
@@ -474,82 +405,9 @@ export function NotePanelBody() {
     setText("");
   }
   return (
-    <div className="space-y-3">
-      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Something to remember…" rows={4}
-        className="w-full px-4 py-3 rounded-2xl bg-white/80 ring-1 ring-black/5 text-sm resize-none" />
-      <button onClick={save} disabled={!text.trim()}
-        className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
-        Save note
-      </button>
-    </div>
-  );
-}
-
-/* -------------------------------- CONCERN -------------------------------- */
-
-const CONCERNS = [
-  "Something does not feel right","Worried about baby","Worried about myself",
-  "Worried about symptoms","Worried about labour","Worried after an appointment","Other concern",
-];
-
-export function ConcernPanelBody() {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [note, setNote] = useState("");
-  const [phase, setPhase] = useState<"choose" | "saved">("choose");
-  const [savedId, setSavedId] = useState<string | null>(null);
-
-  function saveConcern() {
-    if (!selected) return;
-    const e = store.addEntry({
-      type: "concern", concern: selected, note: note || undefined,
-    } as Omit<Entry, "id" | "createdAt" | "weekDay">);
-    setSavedId(e.id);
-    setPhase("saved");
-  }
-
-  function asQuestion(addAsQ: boolean) {
-    if (addAsQ && selected) {
-      store.addEntry({ type: "question", text: selected } as Omit<Entry, "id" | "createdAt" | "weekDay">);
-      LoggedToast("Added as question");
-    }
-    if (savedId) store.updateEntry(savedId, { saveAsQuestion: addAsQ } as Partial<Entry>);
-    setSelected(null); setNote(""); setPhase("choose"); setSavedId(null);
-  }
-
-  if (phase === "saved") {
-    return (
-      <div className="space-y-4">
-        <div className="rounded-2xl bg-white/80 ring-1 ring-black/5 p-4 text-sm leading-relaxed">
-          <p className="font-semibold mb-1">Concern saved.</p>
-          <p className="text-ink-soft">
-            If you are worried about your health or your baby&rsquo;s health, please contact your
-            maternity team, midwife, GP, maternity triage or emergency services as appropriate.
-          </p>
-        </div>
-        <p className="text-sm font-medium px-1">Would you like to save this as a question for your team?</p>
-        <div className="flex gap-2">
-          <button onClick={() => asQuestion(false)} className="flex-1 py-3 rounded-full bg-white/80 ring-1 ring-black/5 text-sm font-medium">
-            No, just save concern
-          </button>
-          <button onClick={() => asQuestion(true)} className="flex-1 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-            Yes, add question
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        {CONCERNS.map((c) => <Chip key={c} active={selected === c} onClick={() => setSelected(c)}>{c}</Chip>)}
-      </div>
-      <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note" rows={2}
-        className="w-full px-4 py-3 rounded-2xl bg-white/80 ring-1 ring-black/5 text-sm resize-none" />
-      <button onClick={saveConcern} disabled={!selected}
-        className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
-        Save concern
-      </button>
+    <div className="space-y-3 pt-4">
+      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Notes, thoughts or anything else" rows={4} className={inputClass + " resize-none"} />
+      <button onClick={save} disabled={!text.trim()} className={primaryBtn}>Save note</button>
     </div>
   );
 }
