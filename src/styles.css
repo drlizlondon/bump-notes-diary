@@ -33,19 +33,29 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --color-peach: var(--peach);
-  --color-peach-soft: var(--peach-soft);
-  --color-rose: var(--rose);
-  --color-rose-soft: var(--rose-soft);
-  --color-sage: var(--sage);
-  --color-sage-soft: var(--sage-soft);
+  --color-blush: var(--blush);
+  --color-blush-soft: var(--blush-soft);
+  --color-coral: var(--coral);
+  --color-coral-soft: var(--coral-soft);
+  --color-mint: var(--mint);
+  --color-mint-soft: var(--mint-soft);
   --color-butter: var(--butter);
   --color-butter-soft: var(--butter-soft);
-  --color-lilac: var(--lilac);
-  --color-lilac-soft: var(--lilac-soft);
+  --color-lavender: var(--lavender);
+  --color-lavender-soft: var(--lavender-soft);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
   --color-cream: var(--cream);
+
+  /* legacy aliases used in older components */
+  --color-peach: var(--coral);
+  --color-peach-soft: var(--blush-soft);
+  --color-rose: var(--coral);
+  --color-rose-soft: var(--blush-soft);
+  --color-sage: var(--mint);
+  --color-sage-soft: var(--mint-soft);
+  --color-lilac: var(--lavender);
+  --color-lilac-soft: var(--lavender-soft);
 
   --font-serif: "Fraunces", ui-serif, Georgia, serif;
   --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
@@ -55,86 +65,84 @@
 :root {
   --radius: 1rem;
 
-  /* Warm bright maternity palette */
-  --cream: oklch(0.985 0.018 80);
-  --background: oklch(0.985 0.018 80);
-  --foreground: oklch(0.28 0.05 40);
-  --ink: oklch(0.28 0.05 40);
-  --ink-soft: oklch(0.48 0.04 40);
+  /* New crisp blush + coral palette */
+  --cream: #ffffff;
+  --background: #ffffff;
+  --foreground: #241b1b;
+  --ink: #241b1b;
+  --ink-soft: #6f6262;
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.28 0.05 40);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.28 0.05 40);
+  --card: #ffffff;
+  --card-foreground: #241b1b;
+  --popover: #ffffff;
+  --popover-foreground: #241b1b;
 
-  /* Vibrant warm coral as primary */
-  --primary: oklch(0.72 0.18 35);
-  --primary-foreground: oklch(0.99 0.01 80);
+  --primary: #f65f7c;
+  --primary-foreground: #ffffff;
 
-  --secondary: oklch(0.93 0.045 50);
-  --secondary-foreground: oklch(0.28 0.05 40);
+  --secondary: #fff6f6;
+  --secondary-foreground: #241b1b;
 
-  --muted: oklch(0.95 0.025 70);
-  --muted-foreground: oklch(0.5 0.04 50);
+  --muted: #faf2f2;
+  --muted-foreground: #6f6262;
 
-  --accent: oklch(0.85 0.12 145);
-  --accent-foreground: oklch(0.28 0.06 145);
+  --accent: #beead5;
+  --accent-foreground: #1f3a2a;
 
-  --destructive: oklch(0.62 0.22 25);
-  --destructive-foreground: oklch(0.99 0.01 80);
+  --destructive: #d94a59;
+  --destructive-foreground: #ffffff;
 
-  --border: oklch(0.28 0.05 40 / 0.1);
-  --input: oklch(0.28 0.05 40 / 0.15);
-  --ring: oklch(0.72 0.18 35);
+  --border: #f0e4e4;
+  --input: #f0e4e4;
+  --ring: #f65f7c;
 
-  /* Brand accent set */
-  --peach: oklch(0.82 0.15 45);
-  --peach-soft: oklch(0.93 0.07 50);
-  --rose: oklch(0.78 0.13 15);
-  --rose-soft: oklch(0.92 0.06 15);
-  --sage: oklch(0.78 0.12 145);
-  --sage-soft: oklch(0.92 0.06 145);
-  --butter: oklch(0.88 0.13 95);
-  --butter-soft: oklch(0.95 0.06 95);
-  --lilac: oklch(0.78 0.1 320);
-  --lilac-soft: oklch(0.93 0.05 320);
+  --blush: #fff8f7;
+  --blush-soft: #fff6f6;
+  --coral: #f65f7c;
+  --coral-soft: #ffe1e6;
+  --mint: #beead5;
+  --mint-soft: #e6f6ee;
+  --butter: #ffe6a6;
+  --butter-soft: #fff6dc;
+  --lavender: #e7d7ff;
+  --lavender-soft: #f3ebff;
 
-  --sidebar: oklch(0.985 0.018 80);
-  --sidebar-foreground: oklch(0.28 0.05 40);
-  --sidebar-primary: oklch(0.72 0.18 35);
-  --sidebar-primary-foreground: oklch(0.99 0.01 80);
-  --sidebar-accent: oklch(0.93 0.06 50);
-  --sidebar-accent-foreground: oklch(0.28 0.05 40);
-  --sidebar-border: oklch(0.28 0.05 40 / 0.1);
-  --sidebar-ring: oklch(0.72 0.18 35);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #241b1b;
+  --sidebar-primary: #f65f7c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #fff6f6;
+  --sidebar-accent-foreground: #241b1b;
+  --sidebar-border: #f0e4e4;
+  --sidebar-ring: #f65f7c;
 
-  --chart-1: oklch(0.75 0.16 35);
-  --chart-2: oklch(0.78 0.12 145);
-  --chart-3: oklch(0.78 0.13 15);
-  --chart-4: oklch(0.85 0.13 95);
-  --chart-5: oklch(0.78 0.1 320);
+  --chart-1: #f65f7c;
+  --chart-2: #ff8a7a;
+  --chart-3: #beead5;
+  --chart-4: #ffe6a6;
+  --chart-5: #e7d7ff;
 }
 
 .dark {
-  --background: oklch(0.22 0.03 40);
-  --foreground: oklch(0.96 0.02 70);
-  --card: oklch(0.28 0.04 40);
-  --card-foreground: oklch(0.96 0.02 70);
-  --popover: oklch(0.28 0.04 40);
-  --popover-foreground: oklch(0.96 0.02 70);
-  --primary: oklch(0.78 0.16 40);
-  --primary-foreground: oklch(0.22 0.03 40);
-  --secondary: oklch(0.32 0.03 40);
-  --secondary-foreground: oklch(0.96 0.02 70);
-  --muted: oklch(0.32 0.03 40);
-  --muted-foreground: oklch(0.74 0.03 60);
-  --accent: oklch(0.5 0.1 145);
-  --accent-foreground: oklch(0.96 0.02 70);
-  --destructive: oklch(0.65 0.22 25);
-  --destructive-foreground: oklch(0.96 0.02 70);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.78 0.16 40);
+  --background: #1c1416;
+  --foreground: #faf2f2;
+  --card: #251c1e;
+  --card-foreground: #faf2f2;
+  --popover: #251c1e;
+  --popover-foreground: #faf2f2;
+  --primary: #f65f7c;
+  --primary-foreground: #ffffff;
+  --secondary: #2a2022;
+  --secondary-foreground: #faf2f2;
+  --muted: #2a2022;
+  --muted-foreground: #c4b5b5;
+  --accent: #2f4a3a;
+  --accent-foreground: #beead5;
+  --destructive: #e26b76;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.14);
+  --ring: #f65f7c;
 }
 
 @layer base {
@@ -151,37 +159,38 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
+    background:
+      radial-gradient(1100px 600px at 100% 0%, #fff1f1 0%, transparent 55%),
+      radial-gradient(900px 600px at 0% 100%, #fff7ef 0%, transparent 55%),
+      #ffffff;
   }
 
   h1, h2, h3, h4 {
     font-family: var(--font-serif);
-    letter-spacing: -0.01em;
-  }
-
-  /* Subtle desktop backdrop for the "phone frame" feel */
-  @media (min-width: 768px) {
-    body {
-      background:
-        radial-gradient(1200px 600px at 20% 10%, color-mix(in oklch, var(--peach-soft) 70%, transparent), transparent 60%),
-        radial-gradient(1200px 600px at 80% 90%, color-mix(in oklch, var(--sage-soft) 65%, transparent), transparent 60%),
-        var(--cream);
-    }
+    letter-spacing: -0.015em;
   }
 }
 
 @layer utilities {
   .app-shell {
-    @apply mx-auto w-full max-w-[480px] min-h-[100dvh];
+    @apply mx-auto w-full max-w-[480px] min-h-[100dvh] bg-white;
   }
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .app-shell {
-      max-width: 440px;
-      margin-block: 1.5rem;
-      border-radius: 2rem;
-      box-shadow: 0 30px 80px -30px oklch(0.28 0.05 40 / 0.25), 0 8px 24px -12px oklch(0.28 0.05 40 / 0.1);
-      background-color: var(--cream);
-      overflow: hidden;
-      min-height: calc(100dvh - 3rem);
+      max-width: 100%;
+      background: transparent;
+      min-height: 100dvh;
     }
+  }
+
+  .surface-card {
+    background-color: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    box-shadow: 0 1px 2px rgba(36, 27, 27, 0.04);
+  }
+
+  .blush-bg {
+    background-color: var(--blush-soft);
   }
 }
