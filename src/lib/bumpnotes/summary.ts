@@ -1,18 +1,20 @@
 import type { Entry, MeasurementEntry } from "./types";
+import { t } from "./i18n";
 
 export function summariseEntry(e: Entry): { headline: string; detail?: string } {
   switch (e.type) {
     case "symptom": {
+      const head = e.quantifier ? `${e.symptom} (${e.quantifier})` : e.symptom;
       const parts = [
         e.severity ? `severity ${e.severity}/10` : null,
         e.clarification,
         e.location ? `location: ${e.location}` : null,
         e.note ? `note: "${e.note}"` : null,
       ].filter(Boolean);
-      return { headline: `Symptom: ${e.symptom}`, detail: parts.join(" · ") || undefined };
+      return { headline: `${t("type.symptom")}: ${head}`, detail: parts.join(" · ") || undefined };
     }
     case "question":
-      return { headline: "Saved question", detail: `"${e.text}"${e.context ? ` · ${e.context}` : ""}` };
+      return { headline: t("type.question"), detail: `"${e.text}"${e.context ? ` · ${e.context}` : ""}` };
     case "appointment": {
       const parts = [
         e.whoSeen && `Who: ${e.whoSeen}`,
@@ -20,7 +22,7 @@ export function summariseEntry(e: Entry): { headline: string; detail?: string } 
         e.advice && `Advice: ${e.advice}`,
         e.followUp && `Follow-up: ${e.followUp}`,
       ].filter(Boolean);
-      return { headline: `People & Care: ${e.kind}`, detail: parts.join(" · ") || undefined };
+      return { headline: `${t("type.person")}: ${e.kind}`, detail: parts.join(" · ") || undefined };
     }
     case "person": {
       const who = [e.name, e.role].filter(Boolean).join(", ");
@@ -30,18 +32,25 @@ export function summariseEntry(e: Entry): { headline: string; detail?: string } 
         e.advised && `Advised: ${e.advised}`,
         e.note && `Note: ${e.note}`,
       ].filter(Boolean);
-      return { headline: "People & Care", detail: parts.join(" · ") || undefined };
+      return { headline: t("type.person"), detail: parts.join(" · ") || undefined };
     }
     case "measurement":
-      return { headline: `Measurement: ${measurementLabel(e)}`, detail: measurementValue(e) };
+      return { headline: `${t("type.measurement")}: ${measurementLabel(e)}`, detail: measurementValue(e) };
     case "photo":
-      return { headline: `Photo: ${e.tag}`, detail: e.note ? `"${e.note}"` : undefined };
+      return { headline: `${t("type.photo")}: ${e.tag}`, detail: e.note ? `"${e.note}"` : undefined };
     case "labour":
       return { headline: `Labour: ${e.event}`, detail: e.note };
+    case "labour_event":
+      return { headline: `${t("type.labour_event")}: ${e.event}`, detail: e.note };
+    case "contraction":
+      return {
+        headline: `${t("type.contraction")}`,
+        detail: `${formatDuration(e.durationSec)}${e.note ? ` · ${e.note}` : ""}`,
+      };
     case "feeling":
-      return { headline: `Feeling: ${e.feeling}`, detail: e.note };
+      return { headline: `${t("type.feeling")}: ${e.feeling}`, detail: e.note };
     case "note":
-      return { headline: "Note", detail: e.text };
+      return { headline: t("type.note"), detail: e.text };
     case "concern":
       return { headline: `Concern: ${e.concern}`, detail: e.note };
     default:
@@ -49,14 +58,21 @@ export function summariseEntry(e: Entry): { headline: string; detail?: string } 
   }
 }
 
+export function formatDuration(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m === 0) return `${s}s`;
+  return `${m}m ${s}s`;
+}
+
 export function measurementLabel(e: MeasurementEntry): string {
   switch (e.kind) {
-    case "blood_pressure": return "Blood pressure";
-    case "weight": return "Weight";
-    case "blood_sugar": return "Blood sugar";
-    case "movements": return "Baby movements";
-    case "temperature": return "Temperature";
-    case "custom": return e.customLabel || "Custom";
+    case "blood_pressure": return t("m.bp");
+    case "weight": return t("m.weight");
+    case "blood_sugar": return t("m.bloodSugar");
+    case "movements": return t("m.movements");
+    case "temperature": return t("m.temp");
+    case "custom": return e.customLabel || t("m.custom");
   }
 }
 
