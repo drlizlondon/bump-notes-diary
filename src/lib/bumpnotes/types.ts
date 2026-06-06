@@ -1,11 +1,13 @@
 export type EntryType =
   | "symptom"
   | "question"
-  | "appointment" // legacy — displayed as People & Care
+  | "appointment" // legacy
   | "person"
   | "measurement"
   | "photo"
-  | "labour" // legacy
+  | "labour" // legacy (kept for back-compat)
+  | "labour_event"
+  | "contraction"
   | "feeling"
   | "note"
   | "concern"; // legacy
@@ -13,7 +15,7 @@ export type EntryType =
 export interface BaseEntry {
   id: string;
   type: EntryType;
-  createdAt: string; // ISO
+  createdAt: string;
   weekDay: { weeks: number; days: number };
   deletedAt?: string;
   saveAsQuestion?: boolean;
@@ -23,6 +25,7 @@ export interface SymptomEntry extends BaseEntry {
   type: "symptom";
   symptom: string;
   severity?: number;
+  quantifier?: string;
   clarification?: string;
   location?: string;
   note?: string;
@@ -91,6 +94,20 @@ export interface LabourEntry extends BaseEntry {
   note?: string;
 }
 
+export interface LabourEventEntry extends BaseEntry {
+  type: "labour_event";
+  event: string;
+  note?: string;
+}
+
+export interface ContractionEntry extends BaseEntry {
+  type: "contraction";
+  startISO: string;
+  endISO: string;
+  durationSec: number;
+  note?: string;
+}
+
 export interface FeelingEntry extends BaseEntry {
   type: "feeling";
   feeling: string;
@@ -117,6 +134,8 @@ export type Entry =
   | MeasurementEntry
   | PhotoEntry
   | LabourEntry
+  | LabourEventEntry
+  | ContractionEntry
   | FeelingEntry
   | NoteEntry
   | ConcernEntry;
@@ -135,7 +154,24 @@ export interface Profile {
   onboarded: boolean;
 }
 
+export interface BagItem { id: string; label: string; packed: boolean; }
+
+export interface LabourPlan {
+  preferences?: string;
+  painRelief?: string;
+  partnerNotes?: string;
+  notes?: string;
+  bag: BagItem[];
+  infoHospital?: string;
+  infoContacts?: string;
+  infoParking?: string;
+  infoChildcare?: string;
+  infoNotes?: string;
+  recordingStartISO?: string; // present when actively recording labour
+}
+
 export interface AppState {
   profile: Profile | null;
   entries: Entry[];
+  labourPlan?: LabourPlan;
 }

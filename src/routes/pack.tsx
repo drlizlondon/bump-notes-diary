@@ -4,39 +4,39 @@ import { Toaster, toast } from "sonner";
 import { useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
 import {
-  formatGestation,
-  formatUKDate,
-  formatUKDateLong,
-  formatUKDateTime,
-  formatUKTime,
-  gestationFromDueDate,
+  formatGestation, formatUKDate, formatUKDateLong, formatUKDateTime, formatUKTime, gestationFromDueDate,
 } from "@/lib/bumpnotes/gestation";
-import { measurementLabel, measurementValue, summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
-import type { Entry, EntryType, MeasurementEntry, Profile } from "@/lib/bumpnotes/types";
+import { formatDuration, measurementLabel, measurementValue, summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
+import { useT, t as tFn } from "@/lib/bumpnotes/i18n";
+import type { ContractionEntry, Entry, EntryType, LabourEventEntry, MeasurementEntry, Profile, LabourPlan } from "@/lib/bumpnotes/types";
 
 export const Route = createFileRoute("/pack")({
   head: () => ({ meta: [{ title: "Pregnancy Summary · BumpNotes" }] }),
   component: SummaryPage,
 });
 
-const TYPE_LABELS: Record<EntryType, string> = {
-  symptom: "Symptoms",
-  question: "Saved questions",
-  person: "People & Care",
-  appointment: "People & Care",
-  measurement: "Measurements",
-  photo: "Photos",
-  note: "Notes",
-  labour: "Labour events",
-  feeling: "Feelings",
-  concern: "Concerns",
-};
+function typeLabels(): Record<EntryType, string> {
+  return {
+    symptom: tFn("type.symptom"),
+    question: tFn("type.question"),
+    person: tFn("type.person"),
+    appointment: tFn("type.person"),
+    measurement: tFn("type.measurement"),
+    photo: tFn("type.photo"),
+    note: tFn("type.note"),
+    labour: tFn("sum.labour.title"),
+    labour_event: tFn("type.labour_event"),
+    contraction: tFn("type.contraction"),
+    feeling: tFn("type.feeling"),
+    concern: "Concerns",
+  };
+}
 
 function defaultIncluded(): Record<EntryType, boolean> {
   return {
     symptom: true, question: true, person: true, appointment: true,
     measurement: true, photo: true, note: true,
-    labour: true, concern: true,
+    labour: true, labour_event: true, contraction: true, concern: true,
     feeling: false,
   };
 }
@@ -44,7 +44,8 @@ function defaultIncluded(): Record<EntryType, boolean> {
 type Step = 1 | 2 | 3 | 4;
 
 function SummaryPage() {
-  const { profile, entries } = useAppState();
+  const { profile, entries, labourPlan } = useAppState();
+  const t = useT();
   const [step, setStep] = useState<Step>(1);
   const [selectedWeeks, setSelectedWeeks] = useState<Set<number>>(new Set());
   const [included, setIncluded] = useState<Record<EntryType, boolean>>(defaultIncluded);
@@ -59,7 +60,6 @@ function SummaryPage() {
     return Array.from(set).sort((a, b) => a - b);
   }, [liveEntries]);
 
-  // Default: all weeks selected once we know them
   const activeWeeks = selectedWeeks.size === 0 ? new Set(allWeeks) : selectedWeeks;
 
   const selected = useMemo(() => {
@@ -76,57 +76,46 @@ function SummaryPage() {
     <>
       <Toaster position="top-center" />
       <AppShell>
-        <PageHeader title="Pregnancy Summary" subtitle="Your record. Your summary. Your way." />
+        <PageHeader title={t("sum.title")} subtitle={t("sum.subtitle")} />
         <div className="px-4 lg:px-0 pb-10 space-y-5">
           <div className="surface-card blush-bg p-4 text-sm text-ink-soft leading-relaxed">
-            Everything you add is organised in your timeline. When you're ready, create a clear summary to share with your care team.
+            {t("sum.intro")}
           </div>
 
           <Stepper step={step} />
 
           {step === 1 && (
-            <StepWeeks
-              allWeeks={allWeeks}
-              selected={selectedWeeks}
-              onChange={setSelectedWeeks}
-              onNext={() => setStep(2)}
-            />
+            <StepWeeks allWeeks={allWeeks} selected={selectedWeeks} onChange={setSelectedWeeks} onNext={() => setStep(2)} />
           )}
 
           {step === 2 && (
             <StepReview
-              profile={profile}
-              entries={selected}
-              groupMeasurements={groupMeasurements}
+              profile={profile} entries={selected} groupMeasurements={groupMeasurements}
+              labourPlan={included.labour ? labourPlan : undefined}
               onRemove={(id) => setExcluded((s) => new Set(s).add(id))}
-              onBack={() => setStep(1)}
-              onNext={() => setStep(3)}
+              onBack={() => setStep(1)} onNext={() => setStep(3)}
             />
           )}
 
           {step === 3 && (
             <StepCustomise
-              included={included}
-              setIncluded={setIncluded}
-              groupMeasurements={groupMeasurements}
-              setGroupMeasurements={setGroupMeasurements}
-              onBack={() => setStep(2)}
-              onNext={() => setStep(4)}
+              included={included} setIncluded={setIncluded}
+              groupMeasurements={groupMeasurements} setGroupMeasurements={setGroupMeasurements}
+              onBack={() => setStep(2)} onNext={() => setStep(4)}
             />
           )}
 
           {step === 4 && (
             <StepCreate
-              profile={profile}
-              entries={selected}
-              groupMeasurements={groupMeasurements}
+              profile={profile} entries={selected} groupMeasurements={groupMeasurements}
+              labourPlan={included.labour ? labourPlan : undefined}
               onBack={() => setStep(3)}
               onCopy={() => {
-                const t = buildText(profile, selected, groupMeasurements);
-                navigator.clipboard.writeText(t).then(() => toast.success("Copied to clipboard"));
+                const txt = buildText(profile, selected, groupMeasurements, included.labour ? labourPlan : undefined);
+                navigator.clipboard.writeText(txt).then(() => toast.success(t("sum.copied")));
               }}
               onPrint={() => window.print()}
-              onShare={() => sharePack(profile, selected, groupMeasurements)}
+              onShare={() => sharePack(profile, selected, groupMeasurements, included.labour ? labourPlan : undefined)}
             />
           )}
         </div>
@@ -136,7 +125,8 @@ function SummaryPage() {
 }
 
 function Stepper({ step }: { step: Step }) {
-  const labels = ["Choose weeks", "Review", "Customise", "Create summary"];
+  const t = useT();
+  const labels = [t("sum.stepWeeks"), t("sum.stepReview"), t("sum.stepCustomise"), t("sum.stepCreate")];
   return (
     <div>
       <div className="flex gap-2">
@@ -145,7 +135,7 @@ function Stepper({ step }: { step: Step }) {
         ))}
       </div>
       <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold mt-2">
-        Step {step} of 4 · {labels[step - 1]}
+        {t("sum.step", { n: step })} · {labels[step - 1]}
       </p>
     </div>
   );
@@ -154,6 +144,7 @@ function Stepper({ step }: { step: Step }) {
 function StepWeeks({
   allWeeks, selected, onChange, onNext,
 }: { allWeeks: number[]; selected: Set<number>; onChange: (s: Set<number>) => void; onNext: () => void }) {
+  const t = useT();
   function toggle(w: number) {
     const next = new Set(selected.size === 0 ? allWeeks : selected);
     if (next.has(w)) next.delete(w); else next.add(w);
@@ -163,20 +154,19 @@ function StepWeeks({
   return (
     <div className="space-y-3">
       <div className="surface-card p-5">
-        <h3 className="font-serif text-base font-semibold">Which weeks to include?</h3>
-        <p className="text-sm text-ink-soft mt-1">Pick the pregnancy weeks you want in this summary.</p>
+        <h3 className="font-serif text-base font-semibold">{t("sum.weeks.title")}</h3>
+        <p className="text-sm text-ink-soft mt-1">{t("sum.weeks.subtitle")}</p>
         {allWeeks.length === 0 ? (
-          <p className="mt-4 text-sm text-ink-soft">Nothing logged yet. Add entries from Home first.</p>
+          <p className="mt-4 text-sm text-ink-soft">{t("sum.weeks.empty")}</p>
         ) : (
           <>
             <div className="flex gap-2 mt-4">
               <button onClick={() => onChange(new Set(allWeeks))}
                 className={`px-3.5 py-2 rounded-full text-sm font-medium border ${isAll ? "bg-primary text-primary-foreground border-primary" : "bg-white border-border"}`}>
-                All weeks
+                {t("sum.weeks.all")}
               </button>
-              <button onClick={() => onChange(new Set())}
-                className="px-3.5 py-2 rounded-full text-sm font-medium bg-white border border-border">
-                Reset
+              <button onClick={() => onChange(new Set())} className="px-3.5 py-2 rounded-full text-sm font-medium bg-white border border-border">
+                {t("sum.weeks.reset")}
               </button>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -185,7 +175,7 @@ function StepWeeks({
                 return (
                   <button key={w} onClick={() => toggle(w)}
                     className={`px-3.5 py-2 rounded-full text-sm font-medium border ${active ? "bg-primary text-primary-foreground border-primary" : "bg-white border-border"}`}>
-                    Week {w}
+                    {t("home.week")} {w}
                   </button>
                 );
               })}
@@ -194,24 +184,25 @@ function StepWeeks({
         )}
       </div>
       <button onClick={onNext} className="w-full py-3.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-        Continue to review
+        {t("sum.weeks.continue")}
       </button>
     </div>
   );
 }
 
 function StepReview({
-  profile, entries, groupMeasurements, onRemove, onBack, onNext,
+  profile, entries, groupMeasurements, labourPlan, onRemove, onBack, onNext,
 }: {
-  profile: Profile; entries: Entry[]; groupMeasurements: boolean;
+  profile: Profile; entries: Entry[]; groupMeasurements: boolean; labourPlan?: LabourPlan;
   onRemove: (id: string) => void; onBack: () => void; onNext: () => void;
 }) {
+  const t = useT();
   return (
     <div className="space-y-3">
-      <PreviewCard profile={profile} entries={entries} groupMeasurements={groupMeasurements} onRemove={onRemove} />
+      <PreviewCard profile={profile} entries={entries} groupMeasurements={groupMeasurements} labourPlan={labourPlan} onRemove={onRemove} />
       <div className="grid grid-cols-2 gap-2">
-        <button onClick={onBack} className="py-3 rounded-full bg-white border border-border text-sm font-medium">Back</button>
-        <button onClick={onNext} className="py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">Continue</button>
+        <button onClick={onBack} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("common.back")}</button>
+        <button onClick={onNext} className="py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">{t("common.continue")}</button>
       </div>
     </div>
   );
@@ -224,20 +215,20 @@ function StepCustomise({
   groupMeasurements: boolean; setGroupMeasurements: (b: boolean) => void;
   onBack: () => void; onNext: () => void;
 }) {
-  // Display types: only show ones the user actually uses today
-  const displayTypes: EntryType[] = ["symptom","question","person","measurement","photo","note","feeling","concern","labour"];
+  const t = useT();
+  const TYPE_LABELS = typeLabels();
+  const displayTypes: EntryType[] = ["symptom","question","person","measurement","photo","note","feeling","labour","contraction","labour_event"];
   return (
     <div className="space-y-3">
       <div className="surface-card p-5 space-y-3">
-        <h3 className="font-serif text-base font-semibold">What to include</h3>
-        {displayTypes.map((t) => (
-          <label key={t} className="flex items-center justify-between py-1.5">
-            <span className="text-sm font-medium">{TYPE_LABELS[t]}</span>
-            <input type="checkbox" checked={included[t]}
+        <h3 className="font-serif text-base font-semibold">{t("sum.include")}</h3>
+        {displayTypes.map((tp) => (
+          <label key={tp} className="flex items-center justify-between py-1.5">
+            <span className="text-sm font-medium">{TYPE_LABELS[tp]}</span>
+            <input type="checkbox" checked={included[tp]}
               onChange={(e) => {
-                const next = { ...included, [t]: e.target.checked };
-                // appointment is legacy mirror of person
-                if (t === "person") next.appointment = e.target.checked;
+                const next = { ...included, [tp]: e.target.checked };
+                if (tp === "person") next.appointment = e.target.checked;
                 setIncluded(next);
               }}
               className="size-5 accent-[var(--primary)]" />
@@ -248,64 +239,112 @@ function StepCustomise({
         <label className="flex items-start gap-3">
           <input type="checkbox" checked={groupMeasurements} onChange={(e) => setGroupMeasurements(e.target.checked)} className="size-5 mt-0.5 accent-[var(--primary)]" />
           <span>
-            <span className="block text-sm font-medium">Group repeated measurements by week</span>
-            <span className="block text-xs text-ink-soft mt-0.5">Shows a count and range per week instead of every reading.</span>
+            <span className="block text-sm font-medium">{t("sum.groupM")}</span>
+            <span className="block text-xs text-ink-soft mt-0.5">{t("sum.groupM.sub")}</span>
           </span>
         </label>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <button onClick={onBack} className="py-3 rounded-full bg-white border border-border text-sm font-medium">Back</button>
-        <button onClick={onNext} className="py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">Continue</button>
+        <button onClick={onBack} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("common.back")}</button>
+        <button onClick={onNext} className="py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">{t("common.continue")}</button>
       </div>
     </div>
   );
 }
 
 function StepCreate({
-  profile, entries, groupMeasurements, onBack, onCopy, onPrint, onShare,
+  profile, entries, groupMeasurements, labourPlan, onBack, onCopy, onPrint, onShare,
 }: {
-  profile: Profile; entries: Entry[]; groupMeasurements: boolean;
+  profile: Profile; entries: Entry[]; groupMeasurements: boolean; labourPlan?: LabourPlan;
   onBack: () => void; onCopy: () => void; onPrint: () => void; onShare: () => void;
 }) {
+  const t = useT();
   return (
     <div className="space-y-3">
-      <PreviewCard profile={profile} entries={entries} groupMeasurements={groupMeasurements} />
+      <PreviewCard profile={profile} entries={entries} groupMeasurements={groupMeasurements} labourPlan={labourPlan} />
       <div className="grid grid-cols-2 gap-2 print:hidden">
-        <button onClick={onBack} className="py-3 rounded-full bg-white border border-border text-sm font-medium">Back</button>
-        <button onClick={onCopy} className="py-3 rounded-full bg-white border border-border text-sm font-medium">Copy text</button>
-        <button onClick={onPrint} className="py-3 rounded-full bg-white border border-border text-sm font-medium">Download PDF</button>
-        <button onClick={onShare} className="py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">Share</button>
+        <button onClick={onBack} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("common.back")}</button>
+        <button onClick={onCopy} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("sum.copy")}</button>
+        <button onClick={onPrint} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("sum.pdf")}</button>
+        <button onClick={onShare} className="py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">{t("sum.share")}</button>
       </div>
     </div>
   );
 }
 
 function PreviewCard({
-  profile, entries, groupMeasurements, onRemove,
+  profile, entries, groupMeasurements, labourPlan, onRemove,
 }: {
-  profile: Profile; entries: Entry[]; groupMeasurements: boolean;
+  profile: Profile; entries: Entry[]; groupMeasurements: boolean; labourPlan?: LabourPlan;
   onRemove?: (id: string) => void;
 }) {
+  const t = useT();
   return (
     <div className="surface-card p-5 print:shadow-none print:border-0" id="pack-print">
-      <h2 className="font-serif text-xl font-semibold">BumpNotes Pregnancy Summary</h2>
-      <p className="text-xs text-ink-soft mt-1">A factual summary from my own pregnancy record.</p>
+      <h2 className="font-serif text-xl font-semibold">{t("sum.header.title")}</h2>
+      <p className="text-xs text-ink-soft mt-1">{t("sum.header.intro")}</p>
       <dl className="mt-4 grid grid-cols-2 gap-y-1 text-xs">
-        <dt className="text-ink-soft">Name</dt><dd className="font-medium">{profile.userName}</dd>
-        <dt className="text-ink-soft">Baby</dt><dd className="font-medium">{profile.babyNickname}</dd>
-        <dt className="text-ink-soft">Due date</dt><dd className="font-medium">{formatUKDateLong(profile.dueDateISO)}</dd>
-        <dt className="text-ink-soft">Today</dt><dd className="font-medium">{formatGestation(gestationFromDueDate(profile.dueDateISO))}</dd>
-        <dt className="text-ink-soft">Generated</dt><dd className="font-medium">{formatUKDateTime(new Date())}</dd>
+        <dt className="text-ink-soft">{t("sum.field.name")}</dt><dd className="font-medium">{profile.userName}</dd>
+        <dt className="text-ink-soft">{t("sum.field.baby")}</dt><dd className="font-medium">{profile.babyNickname}</dd>
+        <dt className="text-ink-soft">{t("sum.field.due")}</dt><dd className="font-medium">{formatUKDateLong(profile.dueDateISO)}</dd>
+        <dt className="text-ink-soft">{t("sum.field.today")}</dt><dd className="font-medium">{formatGestation(gestationFromDueDate(profile.dueDateISO))}</dd>
+        <dt className="text-ink-soft">{t("sum.field.generated")}</dt><dd className="font-medium">{formatUKDateTime(new Date())}</dd>
       </dl>
 
       <div className="mt-5 space-y-5">
         <ByWeek entries={entries} groupMeasurements={groupMeasurements} onRemove={onRemove} />
+        {labourPlan && hasLabourData(labourPlan, entries) && (
+          <LabourSection plan={labourPlan} entries={entries} />
+        )}
       </div>
 
       <p className="mt-6 text-[11px] text-ink-soft leading-relaxed border-t border-border pt-4">
-        This is a personal record created by the user to help them remember and discuss their pregnancy
-        with their care team. It does not provide medical advice, diagnosis or triage.
+        {t("sum.foot")}
       </p>
+    </div>
+  );
+}
+
+function hasLabourData(plan: LabourPlan, entries: Entry[]): boolean {
+  if (plan.recordingStartISO) return true;
+  return entries.some((e) => e.type === "contraction" || e.type === "labour_event" || e.type === "labour");
+}
+
+function LabourSection({ plan, entries }: { plan: LabourPlan; entries: Entry[] }) {
+  const t = useT();
+  const contractions = entries.filter((e): e is ContractionEntry => e.type === "contraction");
+  const events = entries.filter((e): e is LabourEventEntry => e.type === "labour_event");
+  return (
+    <div className="rounded-xl bg-blush-soft border border-border p-4 space-y-2">
+      <p className="font-mono uppercase tracking-widest text-ink-soft text-xs">{t("sum.labour.title")}</p>
+      {plan.recordingStartISO && (
+        <p className="text-xs"><span className="font-semibold">{t("sum.labour.started")}:</span> {formatUKDateTime(plan.recordingStartISO)}</p>
+      )}
+      {contractions.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold mt-1">{t("sum.labour.contractions")} ({contractions.length})</p>
+          <ul className="text-xs text-ink-soft mt-1 space-y-0.5">
+            {contractions.map((c) => (
+              <li key={c.id}>
+                {formatUKDate(c.createdAt)} {formatUKTime(c.createdAt)} — {formatDuration(c.durationSec)}
+                {c.note ? ` · ${c.note}` : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {events.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold mt-1">{t("sum.labour.events")} ({events.length})</p>
+          <ul className="text-xs text-ink-soft mt-1 space-y-0.5">
+            {events.map((e) => (
+              <li key={e.id}>
+                {formatUKDate(e.createdAt)} {formatUKTime(e.createdAt)} — {e.event}{e.note ? ` · ${e.note}` : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -313,6 +352,7 @@ function PreviewCard({
 function ByWeek({
   entries, groupMeasurements, onRemove,
 }: { entries: Entry[]; groupMeasurements: boolean; onRemove?: (id: string) => void }) {
+  const t = useT();
   const map = new Map<string, Entry[]>();
   for (const e of entries) {
     const k = weekDayKey(e);
@@ -324,7 +364,6 @@ function ByWeek({
     return aw - bw || ad - bd;
   });
 
-  // For measurement grouping, group by week (not week+day)
   const measurementsByWeek = new Map<number, MeasurementEntry[]>();
   if (groupMeasurements) {
     for (const e of entries) {
@@ -335,8 +374,6 @@ function ByWeek({
       }
     }
   }
-
-  // Track which week we've printed a measurement summary for
   const printedMeasurementWeeks = new Set<number>();
 
   return (
@@ -344,17 +381,13 @@ function ByWeek({
       {groups.map(([k, list]) => {
         const [w, d] = k.split("+");
         const weekNum = Number(w);
-        const filtered = groupMeasurements
-          ? list.filter((e) => e.type !== "measurement")
-          : list;
-        const showMeasurementBlock = groupMeasurements
-          && !printedMeasurementWeeks.has(weekNum)
-          && measurementsByWeek.has(weekNum);
+        const filtered = groupMeasurements ? list.filter((e) => e.type !== "measurement") : list;
+        const showMeasurementBlock = groupMeasurements && !printedMeasurementWeeks.has(weekNum) && measurementsByWeek.has(weekNum);
         if (showMeasurementBlock) printedMeasurementWeeks.add(weekNum);
         if (filtered.length === 0 && !showMeasurementBlock) return null;
         return (
           <div key={k}>
-            <p className="text-xs font-mono uppercase tracking-widest text-ink-soft mb-1">Week {w} + {d}</p>
+            <p className="text-xs font-mono uppercase tracking-widest text-ink-soft mb-1">{t("home.week")} {w} + {d}</p>
             <ul className="space-y-1.5">
               {filtered.map((e) => <EntryRow key={e.id} entry={e} onRemove={onRemove} />)}
             </ul>
@@ -371,19 +404,20 @@ function ByWeek({
 }
 
 function MeasurementSummary({ measurements }: { measurements: MeasurementEntry[] }) {
+  const t = useT();
   const byKind = new Map<string, MeasurementEntry[]>();
   for (const m of measurements) {
-    const key = m.kind === "custom" ? (m.customLabel || "Custom") : measurementLabel(m);
+    const key = m.kind === "custom" ? (m.customLabel || tFn("m.custom")) : measurementLabel(m);
     if (!byKind.has(key)) byKind.set(key, []);
     byKind.get(key)!.push(m);
   }
   return (
     <div className="rounded-xl bg-blush-soft border border-border p-3 text-xs space-y-2">
-      <p className="font-mono uppercase tracking-widest text-ink-soft">Measurements this week</p>
+      <p className="font-mono uppercase tracking-widest text-ink-soft">{t("sum.measThisWeek")}</p>
       {Array.from(byKind.entries()).map(([label, list]) => (
         <div key={label}>
           <p className="font-semibold">{label}</p>
-          <p className="text-ink-soft">{list.length} reading{list.length === 1 ? "" : "s"} recorded</p>
+          <p className="text-ink-soft">{list.length} reading{list.length === 1 ? "" : "s"}</p>
           {rangeText(list) && <p className="text-ink-soft">Range: {rangeText(list)}</p>}
         </div>
       ))}
@@ -425,16 +459,16 @@ function EntryRow({ entry, onRemove }: { entry: Entry; onRemove?: (id: string) =
   );
 }
 
-function buildText(profile: Profile, entries: Entry[], groupMeasurements: boolean) {
+function buildText(profile: Profile, entries: Entry[], groupMeasurements: boolean, labourPlan?: LabourPlan) {
   const lines: string[] = [];
-  lines.push("BumpNotes Pregnancy Summary");
-  lines.push("A factual summary from my own pregnancy record.");
+  lines.push(tFn("sum.header.title"));
+  lines.push(tFn("sum.header.intro"));
   lines.push("");
-  lines.push(`Name: ${profile.userName}`);
-  lines.push(`Baby: ${profile.babyNickname}`);
-  lines.push(`Due date: ${formatUKDateLong(profile.dueDateISO)}`);
-  lines.push(`Today: ${formatGestation(gestationFromDueDate(profile.dueDateISO))}`);
-  lines.push(`Generated: ${formatUKDateTime(new Date())}`);
+  lines.push(`${tFn("sum.field.name")}: ${profile.userName}`);
+  lines.push(`${tFn("sum.field.baby")}: ${profile.babyNickname}`);
+  lines.push(`${tFn("sum.field.due")}: ${formatUKDateLong(profile.dueDateISO)}`);
+  lines.push(`${tFn("sum.field.today")}: ${formatGestation(gestationFromDueDate(profile.dueDateISO))}`);
+  lines.push(`${tFn("sum.field.generated")}: ${formatUKDateTime(new Date())}`);
   lines.push("");
 
   const map = new Map<string, Entry[]>();
@@ -461,20 +495,20 @@ function buildText(profile: Profile, entries: Entry[], groupMeasurements: boolea
     const showM = groupMeasurements && !printedWeeks.has(wn) && measurementsByWeek.has(wn);
     if (showM) printedWeeks.add(wn);
     if (filtered.length === 0 && !showM) return;
-    lines.push(`Week ${w} + ${d}`);
+    lines.push(`${tFn("home.week")} ${w} + ${d}`);
     filtered.forEach((e) => {
       const s = summariseEntry(e);
-      lines.push(`- ${formatUKDate(e.createdAt)} at ${formatUKTime(e.createdAt)} — ${s.headline}${s.detail ? ` · ${s.detail}` : ""}`);
+      lines.push(`- ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)} — ${s.headline}${s.detail ? ` · ${s.detail}` : ""}`);
     });
     if (showM) {
       const ms = measurementsByWeek.get(wn)!;
       const byKind = new Map<string, MeasurementEntry[]>();
       for (const m of ms) {
-        const key = m.kind === "custom" ? (m.customLabel || "Custom") : measurementLabel(m);
+        const key = m.kind === "custom" ? (m.customLabel || tFn("m.custom")) : measurementLabel(m);
         if (!byKind.has(key)) byKind.set(key, []);
         byKind.get(key)!.push(m);
       }
-      lines.push(`  Measurements this week:`);
+      lines.push(`  ${tFn("sum.measThisWeek")}:`);
       byKind.forEach((list, label) => {
         const r = rangeText(list);
         lines.push(`  - ${label}: ${list.length} reading${list.length === 1 ? "" : "s"}${r ? ` · range ${r}` : ""}`);
@@ -483,21 +517,32 @@ function buildText(profile: Profile, entries: Entry[], groupMeasurements: boolea
     lines.push("");
   });
 
-  lines.push("This is a personal record. It does not provide medical advice, diagnosis or triage.");
+  if (labourPlan && hasLabourData(labourPlan, entries)) {
+    lines.push(tFn("sum.labour.title"));
+    if (labourPlan.recordingStartISO) lines.push(`- ${tFn("sum.labour.started")}: ${formatUKDateTime(labourPlan.recordingStartISO)}`);
+    const contractions = entries.filter((e): e is ContractionEntry => e.type === "contraction");
+    contractions.forEach((c) => {
+      lines.push(`- ${tFn("type.contraction")}: ${formatUKDate(c.createdAt)} ${formatUKTime(c.createdAt)} · ${formatDuration(c.durationSec)}${c.note ? ` · ${c.note}` : ""}`);
+    });
+    const events = entries.filter((e): e is LabourEventEntry => e.type === "labour_event");
+    events.forEach((e) => {
+      lines.push(`- ${e.event}: ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)}${e.note ? ` · ${e.note}` : ""}`);
+    });
+    lines.push("");
+  }
+
+  lines.push(tFn("sum.foot"));
   return lines.join("\n");
 }
 
-async function sharePack(profile: Profile, entries: Entry[], groupMeasurements: boolean) {
-  const text = buildText(profile, entries, groupMeasurements);
+async function sharePack(profile: Profile, entries: Entry[], groupMeasurements: boolean, labourPlan?: LabourPlan) {
+  const text = buildText(profile, entries, groupMeasurements, labourPlan);
   if (typeof navigator !== "undefined" && navigator.share) {
     try {
-      await navigator.share({ title: "BumpNotes Pregnancy Summary", text });
+      await navigator.share({ title: tFn("sum.header.title"), text });
       return;
     } catch { /* user cancelled */ }
   }
   await navigator.clipboard.writeText(text);
-  toast.success("Copied to clipboard");
+  toast.success(tFn("sum.copied"));
 }
-
-function measurementValueUnused(_: MeasurementEntry) { return measurementValue(_); }
-void measurementValueUnused;

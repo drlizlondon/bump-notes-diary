@@ -1,26 +1,17 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, ClipboardList, FileText, Baby, Settings as SettingsIcon } from "lucide-react";
+import { Home, ClipboardList, FileText, Heart, Baby, Settings as SettingsIcon } from "lucide-react";
 import { BottomNav } from "./BottomNav";
-
-const navItems = [
-  { to: "/", label: "Home", Icon: Home },
-  { to: "/timeline", label: "Timeline", Icon: ClipboardList },
-  { to: "/pack", label: "Summary", Icon: FileText },
-  { to: "/details", label: "Baby", Icon: Baby },
-  { to: "/settings", label: "Settings", Icon: SettingsIcon },
-] as const;
+import { useT } from "@/lib/bumpnotes/i18n";
 
 export function AppShell({ children, hideNav = false, right }: { children: ReactNode; hideNav?: boolean; right?: ReactNode }) {
   return (
     <>
-      {/* Mobile / tablet */}
       <div className="app-shell flex flex-col lg:hidden">
         <div className="flex-1 flex flex-col">{children}</div>
         {!hideNav && <BottomNav />}
       </div>
 
-      {/* Desktop */}
       <div className="hidden lg:grid lg:grid-cols-[240px_minmax(0,1fr)_320px] lg:gap-8 lg:max-w-[1200px] lg:mx-auto lg:px-6 lg:py-8 lg:min-h-[100dvh]">
         <DesktopSidebar />
         <main className="min-w-0">{children}</main>
@@ -32,11 +23,20 @@ export function AppShell({ children, hideNav = false, right }: { children: React
 
 function DesktopSidebar() {
   const location = useLocation();
+  const t = useT();
+  const navItems = [
+    { to: "/", label: t("nav.home"), Icon: Home },
+    { to: "/timeline", label: t("nav.timeline"), Icon: ClipboardList },
+    { to: "/pack", label: t("nav.summary"), Icon: FileText },
+    { to: "/labour", label: t("nav.labour"), Icon: Heart },
+    { to: "/details", label: t("nav.baby"), Icon: Baby },
+    { to: "/settings", label: t("nav.settings"), Icon: SettingsIcon },
+  ] as const;
   return (
     <aside className="sticky top-8 self-start surface-card p-3">
       <div className="px-3 py-3">
         <p className="font-serif text-xl font-semibold">BumpNotes</p>
-        <p className="text-[11px] text-ink-soft uppercase tracking-widest mt-0.5">Your pregnancy record</p>
+        <p className="text-[11px] text-ink-soft uppercase tracking-widest mt-0.5">{t("brand.tagline")}</p>
       </div>
       <ul className="space-y-1 mt-2">
         {navItems.map(({ to, label, Icon }) => {
@@ -59,22 +59,19 @@ function DesktopSidebar() {
 }
 
 function DefaultAside() {
+  const t = useT();
   return (
     <div className="sticky top-8 space-y-4">
       <div className="surface-card p-5">
-        <h3 className="font-serif text-base font-semibold">Your pregnancy summary</h3>
-        <p className="text-sm text-ink-soft mt-2 leading-relaxed">
-          Everything you add is organised in your timeline. When you're ready, create a clear summary to share with your care team.
-        </p>
+        <h3 className="font-serif text-base font-semibold">{t("sum.title")}</h3>
+        <p className="text-sm text-ink-soft mt-2 leading-relaxed">{t("sum.intro")}</p>
         <Link to="/pack" className="mt-4 inline-flex w-full justify-center py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-          Create summary
+          {t("sum.stepCreate")}
         </Link>
       </div>
       <div className="surface-card p-5">
-        <h3 className="font-serif text-base font-semibold">Private by default</h3>
-        <p className="text-sm text-ink-soft mt-2 leading-relaxed">
-          Your data stays on this device unless you choose to share.
-        </p>
+        <h3 className="font-serif text-base font-semibold">{t("set.privacy")}</h3>
+        <p className="text-sm text-ink-soft mt-2 leading-relaxed">{t("home.privacy")}</p>
       </div>
     </div>
   );

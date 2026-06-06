@@ -1,12 +1,15 @@
 import { useState } from "react";
 import type { Profile } from "@/lib/bumpnotes/types";
 import { gestationFromDueDate, formatGestation } from "@/lib/bumpnotes/gestation";
+import { useT, setLang, useLang, type Lang } from "@/lib/bumpnotes/i18n";
 
 export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
   const [step, setStep] = useState(0);
   const [userName, setUserName] = useState("");
   const [babyNickname, setBabyNickname] = useState("");
   const [dueDateISO, setDueDateISO] = useState("");
+  const t = useT();
+  const lang = useLang();
 
   const canFinish = userName && babyNickname && dueDateISO;
   const gest = dueDateISO ? gestationFromDueDate(dueDateISO) : null;
@@ -20,48 +23,67 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
               <span className="font-serif text-4xl text-white">b</span>
             </div>
             <div>
-              <h1 className="font-serif text-4xl font-semibold">Welcome to BumpNotes</h1>
+              <h1 className="font-serif text-4xl font-semibold">{t("onb.welcome.title")}</h1>
               <p className="mt-3 text-ink-soft text-base leading-relaxed text-balance">
-                A simple place to record your pregnancy, your way.
+                {t("onb.welcome.subtitle")}
               </p>
             </div>
+
+            <div className="mt-2 flex items-center gap-2">
+              <label className="sr-only" htmlFor="lang-select">{t("lang.select")}</label>
+              <div className="relative">
+                <select
+                  id="lang-select"
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value as Lang)}
+                  className="appearance-none bg-transparent border border-border rounded-full pl-4 pr-9 py-2 text-sm font-medium focus:outline-none focus:border-primary/60"
+                >
+                  <option value="en">{t("lang.english")}</option>
+                  <option value="tr">{t("lang.turkish")}</option>
+                </select>
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft text-xs">▼</span>
+              </div>
+            </div>
+
             <button
               onClick={() => setStep(1)}
-              className="mt-4 w-full py-4 rounded-full bg-primary text-primary-foreground font-semibold"
+              className="mt-2 w-full max-w-[360px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold"
             >
-              Get started
+              {t("onb.welcome.cta")}
             </button>
           </div>
         )}
 
         {step === 1 && (
           <Step
-            title="What should we call you?"
+            title={t("onb.name.title")}
             value={userName}
             onChange={setUserName}
-            placeholder="Your name"
+            placeholder={t("onb.name.placeholder")}
             onNext={() => setStep(2)}
             disabled={!userName.trim()}
+            cta={t("common.continue")}
           />
         )}
 
         {step === 2 && (
           <Step
-            title="What would you like to call your baby for now?"
-            subtitle="You can use Baby, a nickname, or their name if you know it."
+            title={t("onb.baby.title")}
+            subtitle={t("onb.baby.subtitle")}
             value={babyNickname}
             onChange={setBabyNickname}
-            placeholder="Baby, Peanut, Nugget, Pearl, Diamond"
+            placeholder={t("onb.baby.placeholder")}
             onNext={() => setStep(3)}
             disabled={!babyNickname.trim()}
+            cta={t("common.continue")}
           />
         )}
 
         {step === 3 && (
           <div className="flex-1 flex flex-col gap-6">
             <div>
-              <h2 className="font-serif text-2xl font-semibold">What is your estimated due date?</h2>
-              <p className="mt-2 text-ink-soft text-sm">You can change this later in Pregnancy Details.</p>
+              <h2 className="font-serif text-2xl font-semibold">{t("onb.due.title")}</h2>
+              <p className="mt-2 text-ink-soft text-sm">{t("onb.due.subtitle")}</p>
             </div>
             <input
               type="date"
@@ -72,8 +94,7 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
             {gest && (
               <div className="rounded-2xl bg-peach-soft p-4 ring-1 ring-peach/30">
                 <p className="text-sm leading-relaxed">
-                  Today, <span className="font-semibold">{babyNickname || "Baby"}</span> is{" "}
-                  <span className="font-semibold text-primary">{formatGestation(gest)}</span>.
+                  {t("onb.due.today", { name: babyNickname || "Baby", gest: formatGestation(gest) })}
                 </p>
               </div>
             )}
@@ -85,16 +106,16 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
                 onboarded: true,
               })}
               disabled={!canFinish}
-              className="mt-auto w-full py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
+              className="mt-auto w-full max-w-[360px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
             >
-              Open BumpNotes
+              {t("onb.finish")}
             </button>
           </div>
         )}
 
         {step > 0 && step < 3 && (
           <button onClick={() => setStep(step - 1)} className="mt-6 text-sm text-ink-soft self-center">
-            Back
+            {t("common.back")}
           </button>
         )}
       </div>
@@ -103,10 +124,10 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
 }
 
 function Step({
-  title, subtitle, value, onChange, placeholder, onNext, disabled,
+  title, subtitle, value, onChange, placeholder, onNext, disabled, cta,
 }: {
   title: string; subtitle?: string; value: string; onChange: (s: string) => void;
-  placeholder: string; onNext: () => void; disabled: boolean;
+  placeholder: string; onNext: () => void; disabled: boolean; cta: string;
 }) {
   return (
     <div className="flex-1 flex flex-col gap-6">
@@ -124,9 +145,9 @@ function Step({
       <button
         onClick={onNext}
         disabled={disabled}
-        className="mt-auto w-full py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
+        className="mt-auto w-full max-w-[360px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
       >
-        Continue
+        {cta}
       </button>
     </div>
   );

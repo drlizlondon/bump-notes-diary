@@ -6,6 +6,7 @@ import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
 import { formatUKDate, formatUKTime } from "@/lib/bumpnotes/gestation";
 import { summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
+import { useT } from "@/lib/bumpnotes/i18n";
 import type { Entry } from "@/lib/bumpnotes/types";
 
 export const Route = createFileRoute("/timeline")({
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/timeline")({
 function TimelinePage() {
   const { entries } = useAppState();
   const [editing, setEditing] = useState<Entry | null>(null);
+  const t = useT();
 
   const grouped = useMemo(() => {
     const live = entries.filter((e) => !e.deletedAt);
@@ -37,11 +39,11 @@ function TimelinePage() {
     <>
       <Toaster position="top-center" />
       <AppShell>
-        <PageHeader title="Timeline" subtitle="Organised by pregnancy week" />
+        <PageHeader title={t("tl.title")} subtitle={t("tl.subtitle")} />
         <div className="px-4 lg:px-0 pb-10 space-y-8">
           {grouped.length === 0 && (
             <div className="surface-card blush-bg p-6 text-center text-sm text-ink-soft">
-              Nothing logged yet. Tap any card on Home to add your first entry.
+              {t("tl.empty")}
             </div>
           )}
           {grouped.map(([key, list]) => {
@@ -49,10 +51,10 @@ function TimelinePage() {
             return (
               <section key={key}>
                 <div className="flex items-center gap-3 mb-3 px-1">
-                  <h2 className="font-serif text-lg font-semibold">Week {w} + {d}</h2>
+                  <h2 className="font-serif text-lg font-semibold">{t("home.week")} {w} + {d}</h2>
                   <div className="flex-1 h-px bg-border" />
                   <span className="text-[10px] uppercase tracking-widest text-ink-soft font-semibold">
-                    {list.length} entr{list.length === 1 ? "y" : "ies"}
+                    {list.length === 1 ? t("tl.entries.one", { n: list.length }) : t("tl.entries.other", { n: list.length })}
                   </span>
                 </div>
                 <ul className="space-y-2.5">
@@ -77,10 +79,10 @@ function TimelinePage() {
                         </div>
                         <div className="mt-3 pt-3 border-t border-border flex gap-3">
                           <button onClick={() => setEditing(e)} className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
-                            <Pencil className="size-3.5" /> Edit
+                            <Pencil className="size-3.5" /> {t("common.edit")}
                           </button>
                           <button onClick={() => store.softDelete(e.id)} className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-destructive">
-                            <Trash2 className="size-3.5" /> Delete
+                            <Trash2 className="size-3.5" /> {t("common.delete")}
                           </button>
                         </div>
                       </li>
@@ -106,10 +108,11 @@ function getEditableText(entry: Entry): string {
     case "symptom":
     case "feeling":
     case "labour":
+    case "labour_event":
+    case "contraction":
     case "photo":
       return entry.note ?? "";
     case "appointment":
-      return entry.discussed ?? "";
     case "person":
       return entry.discussed ?? "";
     case "measurement":
@@ -120,6 +123,7 @@ function getEditableText(entry: Entry): string {
 }
 
 function EditDialog({ entry, onClose }: { entry: Entry; onClose: () => void }) {
+  const t = useT();
   const [text, setText] = useState(() => getEditableText(entry));
 
   function save() {
@@ -132,6 +136,8 @@ function EditDialog({ entry, onClose }: { entry: Entry; onClose: () => void }) {
       case "symptom":
       case "feeling":
       case "labour":
+      case "labour_event":
+      case "contraction":
       case "photo":
       case "measurement":
         (patch as { note?: string }).note = text || undefined; break;
@@ -146,12 +152,12 @@ function EditDialog({ entry, onClose }: { entry: Entry; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 bg-ink/40 grid place-items-end md:place-items-center px-4 py-6">
       <div className="surface-card p-5 w-full max-w-[440px] shadow-xl">
-        <h3 className="font-serif text-lg font-semibold mb-3">Edit entry</h3>
+        <h3 className="font-serif text-lg font-semibold mb-3">{t("tl.editEntry")}</h3>
         <textarea value={text} onChange={(e) => setText(e.target.value)} rows={5}
           className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm resize-none" />
         <div className="flex gap-2 mt-3">
-          <button onClick={onClose} className="flex-1 py-3 rounded-full bg-white border border-border text-sm font-medium">Cancel</button>
-          <button onClick={save} className="flex-1 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">Save</button>
+          <button onClick={onClose} className="flex-1 py-3 rounded-full bg-white border border-border text-sm font-medium">{t("common.cancel")}</button>
+          <button onClick={save} className="flex-1 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">{t("common.save")}</button>
         </div>
       </div>
     </div>
