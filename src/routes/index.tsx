@@ -1,21 +1,16 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { Activity, HelpCircle, Users, Gauge, Camera, NotebookPen, Heart } from "lucide-react";
 import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell } from "@/components/bumpnotes/AppShell";
 import { HomeHeader } from "@/components/bumpnotes/HomeHeader";
 import {
-  ActionCard,
-  SymptomPanelBody,
-  QuestionPanelBody,
-  PeopleCarePanelBody,
-  MeasurementPanelBody,
-  PhotoPanelBody,
-  FeelingPanelBody,
-  NotePanelBody,
+  ActionCard, SymptomPanelBody, QuestionPanelBody, PeopleCarePanelBody,
+  MeasurementPanelBody, PhotoPanelBody, FeelingPanelBody, NotePanelBody,
 } from "@/components/bumpnotes/Panels";
 import { Onboarding } from "@/components/bumpnotes/Onboarding";
+import { useT } from "@/lib/bumpnotes/i18n";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -38,6 +33,7 @@ type PanelKey = "symptom" | "question" | "people" | "measurement" | "photo" | "n
 function Index() {
   const { profile } = useAppState();
   const [open, setOpen] = useState<PanelKey | null>(null);
+  const t = useT();
 
   if (!profile?.onboarded) {
     return (
@@ -56,42 +52,63 @@ function Index() {
       <AppShell>
         <HomeHeader profile={profile} />
 
-        <section className="px-4 md:px-0 pb-10">
-          <h2 className="font-serif text-xl md:text-2xl font-semibold mt-2 mb-1 px-1">What would you like to capture?</h2>
-          <p className="text-sm text-ink-soft mb-4 px-1">Tap any card to add an entry.</p>
+        {/* Labour navigation card — distinct from capture categories */}
+        <div className="px-4 lg:px-0 mt-4">
+          <div className="surface-card p-5 lg:p-6 bg-gradient-to-br from-coral-soft via-blush-soft to-butter-soft">
+            <div className="flex items-start gap-4">
+              <span className="size-12 shrink-0 rounded-2xl grid place-items-center bg-white/70 backdrop-blur">
+                <Heart className="size-6 text-primary" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-serif text-lg font-semibold leading-tight">{t("home.labour.title")}</h2>
+                <p className="text-sm text-ink-soft mt-1 leading-relaxed">{t("home.labour.subtitle")}</p>
+                <Link
+                  to="/labour"
+                  className="mt-3 inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+                >
+                  {t("home.labour.cta")}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section className="px-4 md:px-0 pb-10 mt-6">
+          <h2 className="font-serif text-xl md:text-2xl font-semibold mt-2 mb-1 px-1">{t("home.capture.title")}</h2>
+          <p className="text-sm text-ink-soft mb-4 px-1">{t("home.capture.subtitle")}</p>
           <div className="space-y-2.5">
-            <ActionCard label="Symptoms" helper="Headache, swelling, bleeding, pain, movements" tone="coral"
+            <ActionCard label={t("cap.symptoms")} helper={t("cap.symptoms.helper")} tone="coral"
               icon={<Activity className="size-5" />} open={open === "symptom"} onToggle={() => toggle("symptom")}>
               <SymptomPanelBody />
             </ActionCard>
-            <ActionCard label="Save a Question" helper="Questions for your next appointment" tone="mint"
+            <ActionCard label={t("cap.question")} helper={t("cap.question.helper")} tone="mint"
               icon={<HelpCircle className="size-5" />} open={open === "question"} onToggle={() => toggle("question")}>
               <QuestionPanelBody />
             </ActionCard>
-            <ActionCard label="People & Care" helper="Who you saw and what was discussed" tone="butter"
+            <ActionCard label={t("cap.people")} helper={t("cap.people.helper")} tone="butter"
               icon={<Users className="size-5" />} open={open === "people"} onToggle={() => toggle("people")}>
               <PeopleCarePanelBody />
             </ActionCard>
-            <ActionCard label="Measurements" helper="Blood pressure, weight, movements +" tone="lavender"
+            <ActionCard label={t("cap.measurements")} helper={t("cap.measurements.helper")} tone="lavender"
               icon={<Gauge className="size-5" />} open={open === "measurement"} onToggle={() => toggle("measurement")}>
               <MeasurementPanelBody />
             </ActionCard>
-            <ActionCard label="Photo" helper="Add a photo or document" tone="blush"
+            <ActionCard label={t("cap.photo")} helper={t("cap.photo.helper")} tone="blush"
               icon={<Camera className="size-5" />} open={open === "photo"} onToggle={() => toggle("photo")}>
               <PhotoPanelBody />
             </ActionCard>
-            <ActionCard label="Note" helper="Notes, thoughts or anything else" tone="mint"
+            <ActionCard label={t("cap.note")} helper={t("cap.note.helper")} tone="mint"
               icon={<NotebookPen className="size-5" />} open={open === "note"} onToggle={() => toggle("note")}>
               <NotePanelBody />
             </ActionCard>
-            <ActionCard label="Feelings" helper="Mood and emotional wellbeing" tone="lavender"
+            <ActionCard label={t("cap.feelings")} helper={t("cap.feelings.helper")} tone="lavender"
               icon={<Heart className="size-5" />} open={open === "feeling"} onToggle={() => toggle("feeling")}>
               <FeelingPanelBody />
             </ActionCard>
           </div>
 
           <p className="text-center text-xs text-ink-soft pt-6 px-6 leading-relaxed">
-            Your data is private. Only on this device unless you choose to share.
+            {t("home.privacy")}
           </p>
         </section>
       </AppShell>

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PackRouteImport } from './routes/pack'
+import { Route as LabourRouteImport } from './routes/labour'
 import { Route as DetailsRouteImport } from './routes/details'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -30,6 +31,11 @@ const PackRoute = PackRouteImport.update({
   path: '/pack',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LabourRoute = LabourRouteImport.update({
+  id: '/labour',
+  path: '/labour',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DetailsRoute = DetailsRouteImport.update({
   id: '/details',
   path: '/details',
@@ -44,6 +50,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/details': typeof DetailsRoute
+  '/labour': typeof LabourRoute
   '/pack': typeof PackRoute
   '/settings': typeof SettingsRoute
   '/timeline': typeof TimelineRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/details': typeof DetailsRoute
+  '/labour': typeof LabourRoute
   '/pack': typeof PackRoute
   '/settings': typeof SettingsRoute
   '/timeline': typeof TimelineRoute
@@ -59,21 +67,30 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/details': typeof DetailsRoute
+  '/labour': typeof LabourRoute
   '/pack': typeof PackRoute
   '/settings': typeof SettingsRoute
   '/timeline': typeof TimelineRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/details' | '/pack' | '/settings' | '/timeline'
+  fullPaths: '/' | '/details' | '/labour' | '/pack' | '/settings' | '/timeline'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/details' | '/pack' | '/settings' | '/timeline'
-  id: '__root__' | '/' | '/details' | '/pack' | '/settings' | '/timeline'
+  to: '/' | '/details' | '/labour' | '/pack' | '/settings' | '/timeline'
+  id:
+    | '__root__'
+    | '/'
+    | '/details'
+    | '/labour'
+    | '/pack'
+    | '/settings'
+    | '/timeline'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DetailsRoute: typeof DetailsRoute
+  LabourRoute: typeof LabourRoute
   PackRoute: typeof PackRoute
   SettingsRoute: typeof SettingsRoute
   TimelineRoute: typeof TimelineRoute
@@ -102,6 +119,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/labour': {
+      id: '/labour'
+      path: '/labour'
+      fullPath: '/labour'
+      preLoaderRoute: typeof LabourRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/details': {
       id: '/details'
       path: '/details'
@@ -122,6 +146,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DetailsRoute: DetailsRoute,
+  LabourRoute: LabourRoute,
   PackRoute: PackRoute,
   SettingsRoute: SettingsRoute,
   TimelineRoute: TimelineRoute,
@@ -129,3 +154,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
