@@ -32,12 +32,19 @@ function LabourPage() {
             <>
               <button
                 onClick={() => setConfirmOpen(true)}
-                className="w-full py-5 rounded-2xl bg-primary text-primary-foreground text-base font-semibold shadow-md shadow-primary/20"
+                className="w-full text-left surface-card p-4 flex items-center gap-4 hover:ring-1 hover:ring-primary/30 transition"
               >
-                {t("lab.cta.iThink")}
+                <span className="size-11 shrink-0 rounded-2xl grid place-items-center bg-coral-soft">
+                  <span className="text-lg">❤️</span>
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block font-semibold text-[15px] leading-tight text-ink">{t("lab.cta.iThink")}</span>
+                  <span className="block text-[12.5px] text-ink-soft mt-0.5 leading-snug">{t("lab.cta.sub")}</span>
+                </span>
               </button>
 
               <BirthPlanSection plan={plan} />
+
               <HospitalBagSection plan={plan} />
               <ImportantInfoSection plan={plan} />
 
