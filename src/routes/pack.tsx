@@ -285,7 +285,7 @@ function PreviewCard({
       <p className="text-xs text-ink-soft mt-1">{t("sum.header.intro")}</p>
       <dl className="mt-4 grid grid-cols-2 gap-y-1 text-xs">
         <dt className="text-ink-soft">{t("sum.field.name")}</dt><dd className="font-medium">{profile.userName}</dd>
-        <dt className="text-ink-soft">{t("sum.field.baby")}</dt><dd className="font-medium">{profile.babyNickname}</dd>
+        <dt className="text-ink-soft">{t("sum.field.baby")}</dt><dd className="font-medium">{profile.babyNickname?.trim() || t("baby.fallback")}</dd>
         <dt className="text-ink-soft">{t("sum.field.due")}</dt><dd className="font-medium">{formatUKDateLong(profile.dueDateISO)}</dd>
         <dt className="text-ink-soft">{t("sum.field.today")}</dt><dd className="font-medium">{formatGestation(gestationFromDueDate(profile.dueDateISO))}</dd>
         <dt className="text-ink-soft">{t("sum.field.generated")}</dt><dd className="font-medium">{formatUKDateTime(new Date())}</dd>
@@ -465,7 +465,7 @@ function buildText(profile: Profile, entries: Entry[], groupMeasurements: boolea
   lines.push(tFn("sum.header.intro"));
   lines.push("");
   lines.push(`${tFn("sum.field.name")}: ${profile.userName}`);
-  lines.push(`${tFn("sum.field.baby")}: ${profile.babyNickname}`);
+  lines.push(`${tFn("sum.field.baby")}: ${profile.babyNickname?.trim() || tFn("baby.fallback")}`);
   lines.push(`${tFn("sum.field.due")}: ${formatUKDateLong(profile.dueDateISO)}`);
   lines.push(`${tFn("sum.field.today")}: ${formatGestation(gestationFromDueDate(profile.dueDateISO))}`);
   lines.push(`${tFn("sum.field.generated")}: ${formatUKDateTime(new Date())}`);

@@ -206,7 +206,12 @@ export function QuestionPanelBody() {
         <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2">{t("q.common")}</p>
         <div className="flex flex-wrap gap-2">
           {COMMON_PROMPTS.map((k) => (
-            <button key={k} onClick={() => save(t(k))} className="px-3.5 py-2 rounded-full bg-white border border-border text-sm text-left hover:border-primary/40">
+            <button
+              key={k}
+              type="button"
+              onClick={() => setText(t(k))}
+              className="px-3.5 py-2 rounded-full bg-white border border-border text-sm text-left hover:border-primary/40"
+            >
               {t(k)}
             </button>
           ))}
@@ -215,6 +220,7 @@ export function QuestionPanelBody() {
     </div>
   );
 }
+
 
 /* ------------------------------ PEOPLE & CARE ----------------------------- */
 
