@@ -11,6 +11,8 @@ import {
 } from "@/components/bumpnotes/Panels";
 import { Onboarding } from "@/components/bumpnotes/Onboarding";
 import { useT } from "@/lib/bumpnotes/i18n";
+import { useSyncSnapshot, closeMigrationPrompt } from "@/lib/bumpnotes/sync";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,6 +36,8 @@ function Index() {
   const { profile } = useAppState();
   const [open, setOpen] = useState<PanelKey | null>(null);
   const t = useT();
+  const { migrationPromptOpen } = useSyncSnapshot();
+
 
   if (!profile?.onboarded) {
     return (
