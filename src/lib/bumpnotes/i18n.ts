@@ -348,7 +348,34 @@ const en: Dict = {
   "lab.bag.defaults.toilet": "Toiletries",
   "lab.bag.defaults.snacks": "Snacks",
   "lab.summary.included": "Labour recording will appear in your Summary if Labour is included.",
+
+  // Auth & sync
+  "auth.intro": "Sign in to keep your record safe and access it from any device.",
+  "auth.signin": "Sign in",
+  "auth.signup": "Create account",
+  "auth.email": "Email",
+  "auth.password": "Password (min 6 characters)",
+  "auth.or": "or",
+  "auth.google": "Continue with Google",
+  "auth.signupOk": "Check your email to confirm your account.",
+  "auth.failed": "Sign in failed",
+  "auth.privacy": "Your record is private to you. Only you can read it. We don't sell or share it.",
+  "auth.continueLocal": "Continue without an account",
+  "auth.signOut": "Sign out",
+  "auth.signedOut": "Signed out",
+  "set.account": "Account",
+  "set.signedInAs": "Signed in as",
+  "set.notSignedIn": "Not signed in. Your record stays on this device.",
+  "set.signInCta": "Sign in or create an account",
+  "sync.local": "Saved locally",
+  "sync.syncing": "Syncing",
+  "sync.synced": "Synced",
+  "sync.error": "Sync failed",
+  "sync.migrate.title": "Records found in both places",
+  "sync.migrate.body": "We loaded the version saved to your account. Your previous local notes are still safe on this device — you can export them from Settings if you want to merge by hand.",
+  "sync.migrate.ok": "Got it",
 };
+
 
 const tr: Dict = {
   "common.back": "Geri",
@@ -645,7 +672,33 @@ const tr: Dict = {
   "lab.bag.defaults.toilet": "Tuvalet malzemeleri",
   "lab.bag.defaults.snacks": "Atıştırmalıklar",
   "lab.summary.included": "Doğum dahil edilirse, doğum kaydı Özetinizde görünecektir.",
+
+  "auth.intro": "Kaydınızı güvende tutmak ve her cihazdan erişmek için giriş yapın.",
+  "auth.signin": "Giriş yap",
+  "auth.signup": "Hesap oluştur",
+  "auth.email": "E-posta",
+  "auth.password": "Şifre (en az 6 karakter)",
+  "auth.or": "veya",
+  "auth.google": "Google ile devam et",
+  "auth.signupOk": "Hesabınızı onaylamak için e-postanızı kontrol edin.",
+  "auth.failed": "Giriş başarısız",
+  "auth.privacy": "Kaydınız size özeldir. Yalnızca siz okuyabilirsiniz. Satılmaz veya paylaşılmaz.",
+  "auth.continueLocal": "Hesap olmadan devam et",
+  "auth.signOut": "Çıkış yap",
+  "auth.signedOut": "Çıkış yapıldı",
+  "set.account": "Hesap",
+  "set.signedInAs": "Giriş yapan",
+  "set.notSignedIn": "Giriş yapılmadı. Kaydınız bu cihazda kalır.",
+  "set.signInCta": "Giriş yapın veya hesap oluşturun",
+  "sync.local": "Yerel olarak kaydedildi",
+  "sync.syncing": "Eşitleniyor",
+  "sync.synced": "Eşitlendi",
+  "sync.error": "Eşitleme başarısız",
+  "sync.migrate.title": "Her iki yerde de kayıt bulundu",
+  "sync.migrate.body": "Hesabınıza kayıtlı sürümü yükledik. Önceki yerel notlarınız bu cihazda hâlâ güvende — birleştirmek isterseniz Ayarlar'dan dışa aktarabilirsiniz.",
+  "sync.migrate.ok": "Anladım",
 };
+
 
 const dicts: Record<Lang, Dict> = { en, tr };
 

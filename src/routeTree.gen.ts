@@ -14,6 +14,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PackRouteImport } from './routes/pack'
 import { Route as LabourRouteImport } from './routes/labour'
 import { Route as DetailsRouteImport } from './routes/details'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
 const TimelineRoute = TimelineRouteImport.update({
@@ -41,6 +42,11 @@ const DetailsRoute = DetailsRouteImport.update({
   path: '/details',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -49,6 +55,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/details': typeof DetailsRoute
   '/labour': typeof LabourRoute
   '/pack': typeof PackRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/details': typeof DetailsRoute
   '/labour': typeof LabourRoute
   '/pack': typeof PackRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/details': typeof DetailsRoute
   '/labour': typeof LabourRoute
   '/pack': typeof PackRoute
@@ -74,12 +83,27 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/details' | '/labour' | '/pack' | '/settings' | '/timeline'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/details'
+    | '/labour'
+    | '/pack'
+    | '/settings'
+    | '/timeline'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/details' | '/labour' | '/pack' | '/settings' | '/timeline'
+  to:
+    | '/'
+    | '/auth'
+    | '/details'
+    | '/labour'
+    | '/pack'
+    | '/settings'
+    | '/timeline'
   id:
     | '__root__'
     | '/'
+    | '/auth'
     | '/details'
     | '/labour'
     | '/pack'
@@ -89,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   DetailsRoute: typeof DetailsRoute
   LabourRoute: typeof LabourRoute
   PackRoute: typeof PackRoute
@@ -133,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DetailsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -145,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   DetailsRoute: DetailsRoute,
   LabourRoute: LabourRoute,
   PackRoute: PackRoute,

@@ -11,6 +11,8 @@ import {
 } from "@/components/bumpnotes/Panels";
 import { Onboarding } from "@/components/bumpnotes/Onboarding";
 import { useT } from "@/lib/bumpnotes/i18n";
+import { useSyncSnapshot, closeMigrationPrompt } from "@/lib/bumpnotes/sync";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,6 +36,8 @@ function Index() {
   const { profile } = useAppState();
   const [open, setOpen] = useState<PanelKey | null>(null);
   const t = useT();
+  const { migrationPromptOpen } = useSyncSnapshot();
+
 
   if (!profile?.onboarded) {
     return (
@@ -49,8 +53,20 @@ function Index() {
   return (
     <>
       <Toaster position="top-center" />
+      {migrationPromptOpen && (
+        <div className="fixed inset-0 z-50 bg-ink/40 grid place-items-end md:place-items-center px-4 py-6">
+          <div className="surface-card p-5 w-full max-w-[440px] shadow-xl">
+            <h3 className="font-serif text-lg font-semibold">{t("sync.migrate.title")}</h3>
+            <p className="text-sm text-ink-soft mt-2 leading-relaxed">{t("sync.migrate.body")}</p>
+            <button onClick={closeMigrationPrompt} className="mt-4 w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+              {t("sync.migrate.ok")}
+            </button>
+          </div>
+        </div>
+      )}
       <AppShell>
         <HomeHeader profile={profile} />
+
 
         <section className="px-4 md:px-0 pb-10 mt-6">
           <h2 className="font-serif text-xl md:text-2xl font-semibold mt-2 mb-1 px-1">{t("home.capture.title")}</h2>

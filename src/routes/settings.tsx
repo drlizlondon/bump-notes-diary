@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { store, useAppState } from "@/lib/bumpnotes/store";
@@ -6,6 +6,8 @@ import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
 import { formatUKDateTime } from "@/lib/bumpnotes/gestation";
 import { summariseEntry } from "@/lib/bumpnotes/summary";
 import { useT, setLang, useLang, type Lang } from "@/lib/bumpnotes/i18n";
+import { useSyncSnapshot, signOut } from "@/lib/bumpnotes/sync";
+
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings · BumpNotes" }] }),
@@ -17,6 +19,8 @@ function SettingsPage() {
   const [confirmWipe, setConfirmWipe] = useState(false);
   const t = useT();
   const lang = useLang();
+  const { status, email, userId } = useSyncSnapshot();
+
 
   const deleted = useMemo(
     () => entries.filter((e) => e.deletedAt).sort((a, b) => (b.deletedAt ?? "").localeCompare(a.deletedAt ?? "")),
@@ -40,6 +44,34 @@ function SettingsPage() {
       <AppShell>
         <PageHeader title={t("set.title")} />
         <div className="px-4 pb-8 space-y-6">
+
+          <section className="space-y-2">
+            <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold px-1">{t("set.account")}</p>
+            <div className="bg-card rounded-2xl px-5 py-4 ring-1 ring-black/5 space-y-3">
+              {userId ? (
+                <>
+                  <div>
+                    <p className="text-xs text-ink-soft">{t("set.signedInAs")}</p>
+                    <p className="text-sm font-medium break-all">{email ?? "—"}</p>
+                  </div>
+                  <SyncBadge status={status} />
+                  <button
+                    onClick={async () => { await signOut(); toast.success(t("auth.signedOut")); }}
+                    className="w-full py-2.5 rounded-full bg-white border border-border text-sm font-medium"
+                  >{t("auth.signOut")}</button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-ink-soft">{t("set.notSignedIn")}</p>
+                  <Link to="/auth" className="block text-center w-full py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                    {t("set.signInCta")}
+                  </Link>
+                </>
+              )}
+            </div>
+          </section>
+
+
 
           <section className="space-y-2">
             <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold px-1">{t("set.language")}</p>
@@ -109,3 +141,21 @@ function SettingsPage() {
     </>
   );
 }
+
+export function SyncBadge({ status }: { status: "local" | "syncing" | "synced" | "error" }) {
+  const t = useT();
+  const map: Record<string, { label: string; cls: string }> = {
+    local:   { label: t("sync.local"),   cls: "bg-muted text-ink-soft" },
+    syncing: { label: t("sync.syncing"), cls: "bg-butter-soft text-ink" },
+    synced:  { label: t("sync.synced"),  cls: "bg-mint-soft text-ink" },
+    error:   { label: t("sync.error"),   cls: "bg-coral-soft text-ink" },
+  };
+  const m = map[status];
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${m.cls}`}>
+      <span className="size-1.5 rounded-full bg-current opacity-60" />
+      {m.label}
+    </span>
+  );
+}
+
