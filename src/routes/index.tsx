@@ -52,27 +52,6 @@ function Index() {
       <AppShell>
         <HomeHeader profile={profile} />
 
-        {/* Labour navigation card — distinct from capture categories */}
-        <div className="px-4 lg:px-0 mt-4">
-          <div className="surface-card p-5 lg:p-6 bg-gradient-to-br from-coral-soft via-blush-soft to-butter-soft">
-            <div className="flex items-start gap-4">
-              <span className="size-12 shrink-0 rounded-2xl grid place-items-center bg-white/70 backdrop-blur">
-                <Heart className="size-6 text-primary" />
-              </span>
-              <div className="flex-1 min-w-0">
-                <h2 className="font-serif text-lg font-semibold leading-tight">{t("home.labour.title")}</h2>
-                <p className="text-sm text-ink-soft mt-1 leading-relaxed">{t("home.labour.subtitle")}</p>
-                <Link
-                  to="/labour"
-                  className="mt-3 inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
-                >
-                  {t("home.labour.cta")}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <section className="px-4 md:px-0 pb-10 mt-6">
           <h2 className="font-serif text-xl md:text-2xl font-semibold mt-2 mb-1 px-1">{t("home.capture.title")}</h2>
           <p className="text-sm text-ink-soft mb-4 px-1">{t("home.capture.subtitle")}</p>
@@ -101,6 +80,7 @@ function Index() {
               icon={<NotebookPen className="size-5" />} open={open === "note"} onToggle={() => toggle("note")}>
               <NotePanelBody />
             </ActionCard>
+            <LabourLinkCard label={t("cap.labour")} helper={t("cap.labour.helper")} />
             <ActionCard label={t("cap.feelings")} helper={t("cap.feelings.helper")} tone="lavender"
               icon={<Heart className="size-5" />} open={open === "feeling"} onToggle={() => toggle("feeling")}>
               <FeelingPanelBody />
@@ -115,3 +95,19 @@ function Index() {
     </>
   );
 }
+
+function LabourLinkCard({ label, helper }: { label: string; helper: string }) {
+  return (
+    <Link to="/labour" className="surface-card flex items-center gap-4 px-4 py-4 text-left">
+      <span className="size-11 shrink-0 rounded-2xl grid place-items-center bg-coral-soft">
+        <Heart className="size-5 text-ink" />
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className="block font-semibold text-[15px] leading-tight text-ink">{label}</span>
+        <span className="block text-[12.5px] text-ink-soft mt-0.5 truncate">{helper}</span>
+      </span>
+      <span className="text-ink-soft text-lg">›</span>
+    </Link>
+  );
+}
+
