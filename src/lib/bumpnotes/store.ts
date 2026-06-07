@@ -48,15 +48,20 @@ function setState(next: AppState) { state = next; persist(); emit(); }
 
 if (typeof window !== "undefined") state = load();
 
-function subscribe(cb: () => void) { listeners.add(cb); return () => listeners.delete(cb); }
+function subscribeStore(cb: () => void) { listeners.add(cb); return () => listeners.delete(cb); }
+
+export function subscribe(cb: () => void) { return subscribeStore(cb); }
 
 export function useAppState(): AppState {
-  return useSyncExternalStore(subscribe, () => state, () => initial);
+  return useSyncExternalStore(subscribeStore, () => state, () => initial);
 }
 
 export const store = {
   getState: () => state,
+  subscribe: subscribeStore,
+  replaceState(next: AppState) { setState(next); },
   setProfile(p: Profile) { setState({ ...state, profile: p }); },
+
   updateProfile(patch: Partial<Profile>) {
     if (!state.profile) return;
     setState({ ...state, profile: { ...state.profile, ...patch } });
