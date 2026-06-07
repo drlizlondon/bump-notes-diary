@@ -120,6 +120,10 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    void import("@/lib/bumpnotes/sync").then((m) => m.initSync());
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
@@ -127,3 +131,4 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
