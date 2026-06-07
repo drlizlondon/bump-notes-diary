@@ -58,7 +58,7 @@ async function pushToCloud(state: AppState) {
   setStatus("syncing");
   const { error } = await supabase
     .from("bumpnotes_state")
-    .upsert({ user_id: currentUserId, state: state as unknown as Record<string, unknown> });
+    .upsert({ user_id: currentUserId, state: JSON.parse(JSON.stringify(state)) });
   if (error) { console.error("pushToCloud", error); setStatus("error"); return; }
   lastSerialized = JSON.stringify(state);
   setStatus("synced");
