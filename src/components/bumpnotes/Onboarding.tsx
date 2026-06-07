@@ -7,11 +7,14 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
   const [step, setStep] = useState(0);
   const [userName, setUserName] = useState("");
   const [babyNickname, setBabyNickname] = useState("");
+  const [babyBlank, setBabyBlank] = useState(false);
   const [dueDateISO, setDueDateISO] = useState("");
   const t = useT();
   const lang = useLang();
 
-  const canFinish = userName && babyNickname && dueDateISO;
+  const babyOk = babyBlank || babyNickname.trim().length > 0;
+  const canFinish = userName && babyOk && dueDateISO;
+
   const gest = dueDateISO ? gestationFromDueDate(dueDateISO) : null;
 
   return (
@@ -67,16 +70,39 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
         )}
 
         {step === 2 && (
-          <Step
-            title={t("onb.baby.title")}
-            subtitle={t("onb.baby.subtitle")}
-            value={babyNickname}
-            onChange={setBabyNickname}
-            placeholder={t("onb.baby.placeholder")}
-            onNext={() => setStep(3)}
-            disabled={!babyNickname.trim()}
-            cta={t("common.continue")}
-          />
+          <div className="flex-1 flex flex-col gap-6">
+            <div>
+              <h2 className="font-serif text-2xl font-semibold text-balance">{t("onb.baby.title")}</h2>
+              <p className="mt-2 text-ink-soft text-sm">{t("onb.baby.subtitle")}</p>
+            </div>
+            <input
+              autoFocus
+              value={babyNickname}
+              onChange={(e) => { setBabyNickname(e.target.value); if (e.target.value) setBabyBlank(false); }}
+              placeholder={t("onb.baby.placeholder")}
+              disabled={babyBlank}
+              className="w-full px-5 py-4 rounded-2xl bg-white ring-1 ring-black/10 text-base disabled:opacity-50"
+            />
+            <label className="flex items-start gap-3 px-1 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={babyBlank}
+                onChange={(e) => { setBabyBlank(e.target.checked); if (e.target.checked) setBabyNickname(""); }}
+                className="size-5 mt-0.5 accent-[var(--primary)] shrink-0"
+              />
+              <span>
+                <span className="block text-sm font-medium">{t("onb.baby.blank")}</span>
+                <span className="block text-xs text-ink-soft mt-1 leading-relaxed">{t("onb.baby.blankHelp")}</span>
+              </span>
+            </label>
+            <button
+              onClick={() => babyOk && setStep(3)}
+              disabled={!babyOk}
+              className="mt-auto w-full max-w-[360px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
+            >
+              {t("common.continue")}
+            </button>
+          </div>
         )}
 
         {step === 3 && (
@@ -85,23 +111,36 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
               <h2 className="font-serif text-2xl font-semibold">{t("onb.due.title")}</h2>
               <p className="mt-2 text-ink-soft text-sm">{t("onb.due.subtitle")}</p>
             </div>
-            <input
-              type="date"
-              value={dueDateISO}
-              onChange={(e) => setDueDateISO(e.target.value)}
-              className="w-full px-5 py-4 rounded-2xl bg-white ring-1 ring-black/10 text-base"
-            />
+            <label className="relative block w-full">
+              <input
+                type="date"
+                value={dueDateISO}
+                onChange={(e) => setDueDateISO(e.target.value)}
+                onClick={(e) => {
+                  const el = e.currentTarget as HTMLInputElement & { showPicker?: () => void };
+                  try { el.showPicker?.(); } catch { /* ignore */ }
+                }}
+                aria-label={t("onb.due.title")}
+                className="block w-full min-h-[64px] px-5 py-4 rounded-2xl bg-white ring-1 ring-black/10 text-base appearance-none cursor-pointer"
+                style={{ WebkitAppearance: "none", touchAction: "manipulation" }}
+              />
+              {!dueDateISO && (
+                <span className="pointer-events-none absolute inset-0 flex items-center px-5 text-ink-soft text-base">
+                  {t("onb.due.tap")}
+                </span>
+              )}
+            </label>
             {gest && (
               <div className="rounded-2xl bg-peach-soft p-4 ring-1 ring-peach/30">
                 <p className="text-sm leading-relaxed">
-                  {t("onb.due.today", { name: babyNickname || "Baby", gest: formatGestation(gest) })}
+                  {t("onb.due.today", { name: babyNickname.trim() || t("baby.fallback"), gest: formatGestation(gest) })}
                 </p>
               </div>
             )}
             <button
               onClick={() => canFinish && onDone({
                 userName: userName.trim(),
-                babyNickname: babyNickname.trim(),
+                babyNickname: babyBlank ? "" : babyNickname.trim(),
                 dueDateISO,
                 onboarded: true,
               })}
@@ -112,6 +151,7 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
             </button>
           </div>
         )}
+
 
         {step > 0 && step < 3 && (
           <button onClick={() => setStep(step - 1)} className="mt-6 text-sm text-ink-soft self-center">
