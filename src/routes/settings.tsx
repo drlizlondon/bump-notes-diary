@@ -141,3 +141,21 @@ function SettingsPage() {
     </>
   );
 }
+
+export function SyncBadge({ status }: { status: "local" | "syncing" | "synced" | "error" }) {
+  const t = useT();
+  const map: Record<string, { label: string; cls: string }> = {
+    local:   { label: t("sync.local"),   cls: "bg-muted text-ink-soft" },
+    syncing: { label: t("sync.syncing"), cls: "bg-butter-soft text-ink" },
+    synced:  { label: t("sync.synced"),  cls: "bg-mint-soft text-ink" },
+    error:   { label: t("sync.error"),   cls: "bg-coral-soft text-ink" },
+  };
+  const m = map[status];
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${m.cls}`}>
+      <span className="size-1.5 rounded-full bg-current opacity-60" />
+      {m.label}
+    </span>
+  );
+}
+
