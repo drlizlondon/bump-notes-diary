@@ -68,10 +68,15 @@ const en: Dict = {
   "onb.baby.title": "What would you like to call your baby for now?",
   "onb.baby.subtitle": "You can use Baby, a nickname, or their name if you know it.",
   "onb.baby.placeholder": "Baby, Peanut, Nugget, Pearl, Diamond",
+  "onb.baby.blank": "Leave name blank",
+  "onb.baby.blankHelp": "No problem if you don't have a name yet. We'll refer to your baby as \"Baby\" until you choose one.",
   "onb.due.title": "What is your estimated due date?",
   "onb.due.subtitle": "You can change this later in Pregnancy Details.",
   "onb.due.today": "Today, {name} is {gest}.",
+  "onb.due.tap": "Tap to choose your due date",
   "onb.finish": "Open BumpNotes",
+  "baby.fallback": "Baby",
+
 
   // Home
   "home.capture.title": "What would you like to capture?",
@@ -98,6 +103,9 @@ const en: Dict = {
   "cap.photo.helper": "Add a photo or document",
   "cap.note": "Note",
   "cap.note.helper": "Notes, thoughts or anything else",
+  "cap.labour": "Labour",
+  "cap.labour.helper": "Contractions, labour notes and birth preparation",
+
   "cap.feelings": "Feelings",
   "cap.feelings.helper": "Mood and emotional wellbeing",
 
@@ -308,6 +316,8 @@ const en: Dict = {
   "lab.info.notes": "Free notes",
   "lab.savedPlan": "Birth plan saved",
   "lab.cta.iThink": "I think I'm in labour",
+  "lab.cta.sub": "Start recording contractions and labour events →",
+
   "lab.confirm.title": "Start Labour Recording?",
   "lab.confirm.body": "You can record contractions, labour events and notes. BumpNotes does not provide medical advice or interpretation.",
   "lab.confirm.start": "Start Recording",
@@ -372,10 +382,15 @@ const tr: Dict = {
   "onb.baby.title": "Şimdilik bebeğinize ne demek istersiniz?",
   "onb.baby.subtitle": "Bebek, takma ad veya biliyorsanız ismini kullanabilirsiniz.",
   "onb.baby.placeholder": "Bebek, Fıstık, Minik, İnci",
+  "onb.baby.blank": "İsim girmeden devam et",
+  "onb.baby.blankHelp": "Henüz bir isminiz yoksa sorun değil. Siz seçene kadar bebeğinize \"Bebek\" diyeceğiz.",
   "onb.due.title": "Tahmini doğum tarihiniz nedir?",
   "onb.due.subtitle": "Bunu daha sonra Hamilelik Detayları'ndan değiştirebilirsiniz.",
   "onb.due.today": "Bugün {name} {gest} oldu.",
+  "onb.due.tap": "Tahmini tarihinizi seçmek için dokunun",
   "onb.finish": "BumpNotes'u aç",
+  "baby.fallback": "Bebek",
+
 
   "home.capture.title": "Ne eklemek istersiniz?",
   "home.capture.subtitle": "Bir kart için dokunarak giriş ekleyin.",
@@ -400,8 +415,11 @@ const tr: Dict = {
   "cap.photo.helper": "Bir fotoğraf veya belge ekleyin",
   "cap.note": "Not",
   "cap.note.helper": "Notlar, düşünceler veya başka bir şey",
+  "cap.labour": "Doğum",
+  "cap.labour.helper": "Kasılmalar, doğum notları ve doğum hazırlığı",
   "cap.feelings": "Duygular",
   "cap.feelings.helper": "Ruh hali ve duygusal iyilik",
+
 
   "sym.prompt": "Ne fark ediyorsunuz?",
   "sym.quantifier": "Nasıl tarif edersiniz?",
@@ -595,6 +613,8 @@ const tr: Dict = {
   "lab.info.notes": "Serbest notlar",
   "lab.savedPlan": "Doğum planı kaydedildi",
   "lab.cta.iThink": "Sanırım doğum sancım başladı",
+  "lab.cta.sub": "Kasılmaları ve doğum olaylarını kaydetmeye başlayın →",
+
   "lab.confirm.title": "Doğum kaydı başlatılsın mı?",
   "lab.confirm.body": "Kasılmaları, doğum olaylarını ve notları kaydedebilirsiniz. BumpNotes tıbbi tavsiye veya yorum sağlamaz.",
   "lab.confirm.start": "Kaydı başlat",
