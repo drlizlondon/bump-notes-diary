@@ -28,7 +28,7 @@ function OnboardingRoute() {
     if (tester || userId) {
       navigate({ to: "/", replace: true });
     } else {
-      navigate({ to: "/auth", search: { from: "onboarding" } as never, replace: true });
+      navigate({ to: "/auth", replace: true });
     }
   }
 
