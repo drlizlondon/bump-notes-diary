@@ -1,7 +1,11 @@
 import { useState } from "react";
 import type { Profile } from "@/lib/bumpnotes/types";
-import { gestationFromDueDate, formatGestation } from "@/lib/bumpnotes/gestation";
+import { gestationFromDueDate, formatGestation, formatUKDateLong } from "@/lib/bumpnotes/gestation";
 import { useT, setLang, useLang, type Lang } from "@/lib/bumpnotes/i18n";
+
+function formatDateDisplay(iso: string) {
+  try { return formatUKDateLong(iso); } catch { return iso; }
+}
 
 export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
   const [step, setStep] = useState(0);
@@ -111,25 +115,22 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
               <h2 className="font-serif text-2xl font-semibold">{t("onb.due.title")}</h2>
               <p className="mt-2 text-ink-soft text-sm">{t("onb.due.subtitle")}</p>
             </div>
-            <label className="relative block w-full">
+            <div className="relative w-full">
+              <div
+                className={`block w-full min-h-[64px] px-5 py-4 rounded-2xl bg-white ring-1 ring-black/10 text-base flex items-center ${dueDateISO ? "text-ink" : "text-ink-soft"}`}
+                aria-hidden="true"
+              >
+                {dueDateISO ? formatDateDisplay(dueDateISO) : t("onb.due.tap")}
+              </div>
               <input
                 type="date"
                 value={dueDateISO}
                 onChange={(e) => setDueDateISO(e.target.value)}
-                onClick={(e) => {
-                  const el = e.currentTarget as HTMLInputElement & { showPicker?: () => void };
-                  try { el.showPicker?.(); } catch { /* ignore */ }
-                }}
                 aria-label={t("onb.due.title")}
-                className="block w-full min-h-[64px] px-5 py-4 rounded-2xl bg-white ring-1 ring-black/10 text-base appearance-none cursor-pointer"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 style={{ WebkitAppearance: "none", touchAction: "manipulation" }}
               />
-              {!dueDateISO && (
-                <span className="pointer-events-none absolute inset-0 flex items-center px-5 text-ink-soft text-base">
-                  {t("onb.due.tap")}
-                </span>
-              )}
-            </label>
+            </div>
             {gest && (
               <div className="rounded-2xl bg-peach-soft p-4 ring-1 ring-peach/30">
                 <p className="text-sm leading-relaxed">
