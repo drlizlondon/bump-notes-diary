@@ -62,6 +62,54 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_submissions: {
+        Row: {
+          app_version: string | null
+          category: string
+          context: Json | null
+          created_at: string
+          id: string
+          is_tester: boolean
+          message: string
+          page_path: string | null
+          reply_email: string | null
+          tester_session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          viewport: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          category: string
+          context?: Json | null
+          created_at?: string
+          id?: string
+          is_tester?: boolean
+          message: string
+          page_path?: string | null
+          reply_email?: string | null
+          tester_session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewport?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          category?: string
+          context?: Json | null
+          created_at?: string
+          id?: string
+          is_tester?: boolean
+          message?: string
+          page_path?: string | null
+          reply_email?: string | null
+          tester_session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewport?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           accepted_privacy_at: string | null
