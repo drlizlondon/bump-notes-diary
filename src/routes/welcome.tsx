@@ -36,8 +36,11 @@ function Welcome() {
 
   // Authenticated users skip the landing entirely
   useEffect(() => {
-    if (userId) navigate({ to: "/", replace: true });
-  }, [userId, navigate]);
+    if (userId) {
+      if (profile?.onboarded) navigate({ to: "/", replace: true });
+      else navigate({ to: "/onboarding", replace: true });
+    }
+  }, [userId, profile, navigate]);
 
   // Existing tester / onboarded local user can keep going
   useEffect(() => {
