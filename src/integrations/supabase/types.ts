@@ -35,6 +35,111 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      feedback_submissions: {
+        Row: {
+          app_version: string | null
+          category: string
+          context: Json | null
+          created_at: string
+          id: string
+          is_tester: boolean
+          message: string
+          page_path: string | null
+          reply_email: string | null
+          tester_session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          viewport: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          category: string
+          context?: Json | null
+          created_at?: string
+          id?: string
+          is_tester?: boolean
+          message: string
+          page_path?: string | null
+          reply_email?: string | null
+          tester_session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewport?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          category?: string
+          context?: Json | null
+          created_at?: string
+          id?: string
+          is_tester?: boolean
+          message?: string
+          page_path?: string | null
+          reply_email?: string | null
+          tester_session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewport?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          accepted_privacy_at: string | null
+          accepted_terms_at: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_tester: boolean
+          updated_at: string
+        }
+        Insert: {
+          accepted_privacy_at?: string | null
+          accepted_terms_at?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          is_tester?: boolean
+          updated_at?: string
+        }
+        Update: {
+          accepted_privacy_at?: string | null
+          accepted_terms_at?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_tester?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

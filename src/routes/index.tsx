@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { Activity, HelpCircle, Users, Gauge, Camera, NotebookPen, Heart } from "lucide-react";
-import { store, useAppState } from "@/lib/bumpnotes/store";
+import { useAppState } from "@/lib/bumpnotes/store";
 import { AppShell } from "@/components/bumpnotes/AppShell";
 import { HomeHeader } from "@/components/bumpnotes/HomeHeader";
 import {
   ActionCard, SymptomPanelBody, QuestionPanelBody, PeopleCarePanelBody,
   MeasurementPanelBody, PhotoPanelBody, FeelingPanelBody, NotePanelBody,
 } from "@/components/bumpnotes/Panels";
-import { Onboarding } from "@/components/bumpnotes/Onboarding";
 import { useT } from "@/lib/bumpnotes/i18n";
 import { useSyncSnapshot, closeMigrationPrompt } from "@/lib/bumpnotes/sync";
+import { useTester } from "@/lib/bumpnotes/tester";
 
 
 export const Route = createFileRoute("/")({
@@ -36,16 +36,23 @@ function Index() {
   const { profile } = useAppState();
   const [open, setOpen] = useState<PanelKey | null>(null);
   const t = useT();
-  const { migrationPromptOpen } = useSyncSnapshot();
+  const { migrationPromptOpen, userId } = useSyncSnapshot();
+  const tester = useTester();
+  const navigate = useNavigate();
 
+  // Gate: route un-onboarded users appropriately
+  useEffect(() => {
+    if (profile?.onboarded) return;
+    if (userId || tester) navigate({ to: "/onboarding", replace: true });
+    else navigate({ to: "/welcome", replace: true });
+  }, [userId, tester, profile, navigate]);
+
+  // Onboarded local user, not authed, not tester → push to onboarding/auth to upgrade
+  // (We allow them through if they already have data, to preserve back-compat)
 
   if (!profile?.onboarded) {
-    return (
-      <>
-        <Toaster position="top-center" />
-        <Onboarding onDone={(p) => store.setProfile({ ...p, onboarded: true })} />
-      </>
-    );
+    // Don't render dashboard for users without a profile; navigation will redirect.
+    return null;
   }
 
   function toggle(k: PanelKey) { setOpen((p) => (p === k ? null : k)); }
@@ -54,8 +61,9 @@ function Index() {
     <>
       <Toaster position="top-center" />
       {migrationPromptOpen && (
-        <div className="fixed inset-0 z-50 bg-ink/40 grid place-items-end md:place-items-center px-4 py-6">
-          <div className="surface-card p-5 w-full max-w-[440px] shadow-xl">
+        <div className="fixed inset-0 z-50 bg-ink/40 flex items-end sm:items-center justify-center px-4 py-6">
+          <div className="surface-card p-5 w-full max-w-[440px] shadow-xl"
+            style={{ paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}>
             <h3 className="font-serif text-lg font-semibold">{t("sync.migrate.title")}</h3>
             <p className="text-sm text-ink-soft mt-2 leading-relaxed">{t("sync.migrate.body")}</p>
             <button onClick={closeMigrationPrompt} className="mt-4 w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
@@ -66,7 +74,6 @@ function Index() {
       )}
       <AppShell>
         <HomeHeader profile={profile} />
-
 
         <section className="px-4 md:px-0 pb-10 mt-6">
           <h2 className="font-serif text-xl md:text-2xl font-semibold mt-2 mb-1 px-1">{t("home.capture.title")}</h2>
@@ -126,4 +133,3 @@ function LabourLinkCard({ label, helper }: { label: string; helper: string }) {
     </Link>
   );
 }
-
