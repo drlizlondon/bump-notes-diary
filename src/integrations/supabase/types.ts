@@ -35,6 +35,63 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          accepted_privacy_at: string | null
+          accepted_terms_at: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_tester: boolean
+          updated_at: string
+        }
+        Insert: {
+          accepted_privacy_at?: string | null
+          accepted_terms_at?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          is_tester?: boolean
+          updated_at?: string
+        }
+        Update: {
+          accepted_privacy_at?: string | null
+          accepted_terms_at?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_tester?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
