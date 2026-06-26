@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useT } from "@/lib/bumpnotes/i18n";
+import { useAppState } from "@/lib/bumpnotes/store";
+import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in · BumpNotes" }] }),
@@ -13,14 +15,28 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const t = useT();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const { userId } = useSyncSnapshot();
+  const { profile } = useAppState();
+
+  // Default to sign-up if the user has just finished onboarding (and isn't already signed in)
+  const fromOnboarding = typeof window !== "undefined" && (window.location.search.includes("from=onboarding") || (!userId && profile?.onboarded));
+  const [mode, setMode] = useState<"signin" | "signup">(fromOnboarding ? "signup" : "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (userId) navigate({ to: "/", replace: true });
+  }, [userId, navigate]);
 
   async function onEmail(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) return;
+    if (mode === "signup" && !acceptTerms) {
+      toast.error("Please accept the Privacy Policy and Terms to create an account.");
+      return;
+    }
     setBusy(true);
     try {
       if (mode === "signup") {
@@ -30,6 +46,7 @@ function AuthPage() {
         });
         if (error) { toast.error(error.message); return; }
         toast.success(t("auth.signupOk"));
+        await recordAcceptance();
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) { toast.error(error.message); return; }
@@ -38,7 +55,24 @@ function AuthPage() {
     } finally { setBusy(false); }
   }
 
+  async function recordAcceptance() {
+    try {
+      const { data } = await supabase.auth.getUser();
+      const id = data.user?.id;
+      if (!id) return;
+      await supabase.from("profiles").upsert({
+        id,
+        accepted_terms_at: new Date().toISOString(),
+        accepted_privacy_at: new Date().toISOString(),
+      });
+    } catch (e) { console.warn("acceptance record failed", e); }
+  }
+
   async function onGoogle() {
+    if (mode === "signup" && !acceptTerms) {
+      toast.error("Please accept the Privacy Policy and Terms to continue.");
+      return;
+    }
     setBusy(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
@@ -55,11 +89,18 @@ function AuthPage() {
   return (
     <>
       <Toaster position="top-center" />
-      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 py-10 bg-background">
-        <div className="w-full max-w-sm space-y-6">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-5 sm:px-6 py-10 bg-background">
+        <div className="w-full max-w-sm space-y-5">
           <div className="text-center">
-            <p className="font-serif text-3xl font-semibold">BumpNotes</p>
-            <p className="text-sm text-ink-soft mt-2">{t("auth.intro")}</p>
+            <Link to="/welcome" className="inline-flex items-center gap-2">
+              <span className="size-9 rounded-full bg-gradient-to-br from-peach via-butter to-rose grid place-items-center text-white font-serif">b</span>
+              <span className="font-serif text-2xl font-semibold">BumpNotes</span>
+            </Link>
+            <p className="text-sm text-ink-soft mt-3">
+              {fromOnboarding
+                ? "Last step: create an account to keep your record safe and sync it to any device."
+                : t("auth.intro")}
+            </p>
           </div>
 
           <div className="surface-card p-5 space-y-4">
@@ -87,6 +128,23 @@ function AuthPage() {
                 placeholder={t("auth.password")}
                 className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
               />
+
+              {mode === "signup" && (
+                <label className="flex items-start gap-2 text-xs text-ink-soft cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    className="mt-0.5 size-4 accent-[var(--primary)] shrink-0"
+                  />
+                  <span>
+                    I agree to the{" "}
+                    <Link to="/privacy" className="text-primary font-medium underline">Privacy Policy</Link> and{" "}
+                    <Link to="/terms" className="text-primary font-medium underline">Terms of Use</Link>.
+                  </span>
+                </label>
+              )}
+
               <button
                 disabled={busy} type="submit"
                 className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
@@ -106,8 +164,13 @@ function AuthPage() {
           <p className="text-center text-xs text-ink-soft leading-relaxed">
             {t("auth.privacy")}
           </p>
+          {profile?.onboarded && !userId && (
+            <p className="text-center text-xs">
+              <Link to="/" className="text-primary font-medium">{t("auth.continueLocal")}</Link>
+            </p>
+          )}
           <p className="text-center text-xs">
-            <Link to="/" className="text-primary font-medium">{t("auth.continueLocal")}</Link>
+            <Link to="/welcome" className="text-ink-soft">← Back to welcome</Link>
           </p>
         </div>
       </div>
