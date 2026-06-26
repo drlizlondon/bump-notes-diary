@@ -40,13 +40,11 @@ function Index() {
   const tester = useTester();
   const navigate = useNavigate();
 
-  // Gate: route unauthenticated, non-tester, un-onboarded users to /welcome
+  // Gate: route un-onboarded users appropriately
   useEffect(() => {
-    if (!userId && !tester && !profile?.onboarded) {
-      navigate({ to: "/welcome", replace: true });
-    } else if (!userId && !tester && profile?.onboarded === false) {
-      navigate({ to: "/welcome", replace: true });
-    }
+    if (profile?.onboarded) return;
+    if (userId || tester) navigate({ to: "/onboarding", replace: true });
+    else navigate({ to: "/welcome", replace: true });
   }, [userId, tester, profile, navigate]);
 
   // Onboarded local user, not authed, not tester → push to onboarding/auth to upgrade
