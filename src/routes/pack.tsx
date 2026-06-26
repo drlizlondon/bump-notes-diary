@@ -9,6 +9,7 @@ import {
 import { formatDuration, measurementLabel, measurementValue, summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
 import { useT, t as tFn } from "@/lib/bumpnotes/i18n";
 import type { ContractionEntry, Entry, EntryType, LabourEventEntry, MeasurementEntry, Profile, LabourPlan } from "@/lib/bumpnotes/types";
+import { downloadSummaryPdf } from "@/lib/bumpnotes/pdf";
 
 export const Route = createFileRoute("/pack")({
   head: () => ({ meta: [{ title: "Pregnancy Summary · BumpNotes" }] }),
@@ -114,7 +115,10 @@ function SummaryPage() {
                 const txt = buildText(profile, selected, groupMeasurements, included.labour ? labourPlan : undefined);
                 navigator.clipboard.writeText(txt).then(() => toast.success(t("sum.copied")));
               }}
-              onPrint={() => window.print()}
+              onPrint={() => {
+                downloadSummaryPdf({ profile, entries: selected, groupMeasurements, labourPlan: included.labour ? labourPlan : undefined });
+                toast.success("PDF downloaded");
+              }}
               onShare={() => sharePack(profile, selected, groupMeasurements, included.labour ? labourPlan : undefined)}
             />
           )}
@@ -262,11 +266,11 @@ function StepCreate({
   return (
     <div className="space-y-3">
       <PreviewCard profile={profile} entries={entries} groupMeasurements={groupMeasurements} labourPlan={labourPlan} />
-      <div className="grid grid-cols-2 gap-2 print:hidden">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 print:hidden">
         <button onClick={onBack} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("common.back")}</button>
         <button onClick={onCopy} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("sum.copy")}</button>
-        <button onClick={onPrint} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("sum.pdf")}</button>
-        <button onClick={onShare} className="py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">{t("sum.share")}</button>
+        <button onClick={onShare} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("sum.share")}</button>
+        <button onClick={onPrint} className="py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">{t("sum.pdf")}</button>
       </div>
     </div>
   );
@@ -280,15 +284,15 @@ function PreviewCard({
 }) {
   const t = useT();
   return (
-    <div className="surface-card p-5 print:shadow-none print:border-0" id="pack-print">
-      <h2 className="font-serif text-xl font-semibold">{t("sum.header.title")}</h2>
+    <div className="surface-card p-4 sm:p-5 print:shadow-none print:border-0 overflow-hidden" id="pack-print">
+      <h2 className="font-serif text-lg sm:text-xl font-semibold break-words">{t("sum.header.title")}</h2>
       <p className="text-xs text-ink-soft mt-1">{t("sum.header.intro")}</p>
-      <dl className="mt-4 grid grid-cols-2 gap-y-1 text-xs">
-        <dt className="text-ink-soft">{t("sum.field.name")}</dt><dd className="font-medium">{profile.userName}</dd>
-        <dt className="text-ink-soft">{t("sum.field.baby")}</dt><dd className="font-medium">{profile.babyNickname?.trim() || t("baby.fallback")}</dd>
-        <dt className="text-ink-soft">{t("sum.field.due")}</dt><dd className="font-medium">{formatUKDateLong(profile.dueDateISO)}</dd>
-        <dt className="text-ink-soft">{t("sum.field.today")}</dt><dd className="font-medium">{formatGestation(gestationFromDueDate(profile.dueDateISO))}</dd>
-        <dt className="text-ink-soft">{t("sum.field.generated")}</dt><dd className="font-medium">{formatUKDateTime(new Date())}</dd>
+      <dl className="mt-4 grid grid-cols-[auto,1fr] sm:grid-cols-[auto,1fr,auto,1fr] gap-x-3 gap-y-1.5 text-xs">
+        <dt className="text-ink-soft">{t("sum.field.name")}</dt><dd className="font-medium break-words">{profile.userName}</dd>
+        <dt className="text-ink-soft">{t("sum.field.baby")}</dt><dd className="font-medium break-words">{profile.babyNickname?.trim() || t("baby.fallback")}</dd>
+        <dt className="text-ink-soft">{t("sum.field.due")}</dt><dd className="font-medium break-words">{formatUKDateLong(profile.dueDateISO)}</dd>
+        <dt className="text-ink-soft">{t("sum.field.today")}</dt><dd className="font-medium break-words">{formatGestation(gestationFromDueDate(profile.dueDateISO))}</dd>
+        <dt className="text-ink-soft">{t("sum.field.generated")}</dt><dd className="font-medium break-words">{formatUKDateTime(new Date())}</dd>
       </dl>
 
       <div className="mt-5 space-y-5">
@@ -444,16 +448,16 @@ function rangeText(list: MeasurementEntry[]): string | null {
 function EntryRow({ entry, onRemove }: { entry: Entry; onRemove?: (id: string) => void }) {
   const s = summariseEntry(entry);
   return (
-    <li className="text-xs leading-snug flex items-start gap-2">
-      <span className="text-ink-soft shrink-0">
-        {formatUKDate(entry.createdAt)} at {formatUKTime(entry.createdAt)} —
+    <li className="text-xs leading-snug flex flex-wrap items-start gap-x-2 gap-y-0.5">
+      <span className="text-ink-soft shrink-0 whitespace-nowrap">
+        {formatUKDate(entry.createdAt)} {formatUKTime(entry.createdAt)} —
       </span>
-      <span className="flex-1">
+      <span className="flex-1 min-w-0 break-words">
         <span className="font-medium">{s.headline}</span>
         {s.detail && <span className="text-ink-soft"> · {s.detail}</span>}
       </span>
       {onRemove && (
-        <button onClick={() => onRemove(entry.id)} className="text-destructive text-[10px] font-semibold uppercase tracking-wider print:hidden">remove</button>
+        <button onClick={() => onRemove(entry.id)} className="text-destructive text-[10px] font-semibold uppercase tracking-wider print:hidden shrink-0">remove</button>
       )}
     </li>
   );
