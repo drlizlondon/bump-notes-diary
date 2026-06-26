@@ -2,11 +2,14 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Home, ClipboardList, FileText, Heart, Baby, Settings as SettingsIcon } from "lucide-react";
 import { BottomNav } from "./BottomNav";
+import { FeedbackButton } from "./FeedbackButton";
+import { TesterBanner } from "./TesterBanner";
 import { useT } from "@/lib/bumpnotes/i18n";
 
 export function AppShell({ children, hideNav = false, right }: { children: ReactNode; hideNav?: boolean; right?: ReactNode }) {
   return (
     <>
+      <TesterBanner />
       <div className="app-shell flex flex-col lg:hidden">
         <div className="flex-1 flex flex-col">{children}</div>
         {!hideNav && <BottomNav />}
@@ -17,6 +20,8 @@ export function AppShell({ children, hideNav = false, right }: { children: React
         <main className="min-w-0">{children}</main>
         <aside className="min-w-0">{right ?? <DefaultAside />}</aside>
       </div>
+
+      <FeedbackButton />
     </>
   );
 }
@@ -80,9 +85,9 @@ function DefaultAside() {
 export function PageHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: ReactNode }) {
   return (
     <div className="px-5 lg:px-1 pt-6 lg:pt-2 pb-4 flex items-start justify-between gap-3">
-      <div>
-        <h1 className="font-serif text-2xl lg:text-3xl font-semibold leading-tight">{title}</h1>
-        {subtitle && <p className="text-sm text-ink-soft mt-1">{subtitle}</p>}
+      <div className="min-w-0">
+        <h1 className="font-serif text-2xl lg:text-3xl font-semibold leading-tight break-words">{title}</h1>
+        {subtitle && <p className="text-sm text-ink-soft mt-1 break-words">{subtitle}</p>}
       </div>
       {right}
     </div>
