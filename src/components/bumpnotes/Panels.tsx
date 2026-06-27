@@ -1,9 +1,10 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { store } from "@/lib/bumpnotes/store";
 import type { Entry, MeasurementKind } from "@/lib/bumpnotes/types";
 import { toast } from "sonner";
 import { useT } from "@/lib/bumpnotes/i18n";
+import { UndoStrip } from "./UndoStrip";
 
 type Tone = "coral" | "blush" | "mint" | "butter" | "lavender" | "primary";
 
@@ -93,26 +94,39 @@ const PAIN_LIKE = new Set(["Headache", "Abdominal pain", "Pelvic pain", "Back pa
 
 export function SymptomPanelBody() {
   const t = useT();
+  const [entryId, setEntryId] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [severity, setSeverity] = useState<number | null>(null);
   const [quantifier, setQuantifier] = useState<string | null>(null);
   const [note, setNote] = useState("");
+  const [showUndo, setShowUndo] = useState(false);
+  const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function reset() { setSelected(null); setSeverity(null); setQuantifier(null); setNote(""); }
-  function save() {
-    if (!selected) return;
-    store.addEntry({
-      type: "symptom",
-      symptom: selected,
-      severity: severity ?? undefined,
-      quantifier: quantifier ?? undefined,
-      note: note || undefined,
-    } as Omit<Entry, "id" | "createdAt" | "weekDay">);
-    loggedToast(t("sym.saved", { label: selected }));
-    reset();
+  function record(symptom: string) {
+    // Re-tapping the same chip is a no-op
+    if (selected === symptom && entryId) return;
+    const e = store.addEntry({ type: "symptom", symptom } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+    setEntryId(e.id);
+    setSelected(symptom);
+    setSeverity(null);
+    setQuantifier(null);
+    setNote("");
+    setShowUndo(true);
+    setTimeout(() => setShowUndo(false), 5200);
   }
 
-  const def = SYMPTOMS.find((s) => s.key === selected);
+  function undo() {
+    if (entryId) store.hardDelete(entryId);
+    setEntryId(null); setSelected(null); setSeverity(null); setQuantifier(null); setNote("");
+    toast.dismiss();
+  }
+
+  function patch(p: Partial<Entry>) {
+    if (!entryId) return;
+    store.updateEntry(entryId, p);
+  }
+
+  const def = selected ? SYMPTOMS.find((s) => s.key === selected) : undefined;
   const qtyOptions: { key: string; label: string }[] = (() => {
     if (!def) return [];
     if (def.qty === "severity") return [
@@ -134,24 +148,46 @@ export function SymptomPanelBody() {
     return [];
   })();
 
+  function commitNote(value: string) {
+    if (noteTimer.current) clearTimeout(noteTimer.current);
+    noteTimer.current = setTimeout(() => patch({ note: value || undefined } as Partial<Entry>), 300);
+  }
+
+  useEffect(() => () => { if (noteTimer.current) clearTimeout(noteTimer.current); }, []);
+
   return (
     <div className="space-y-4 pt-4">
       <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold">{t("sym.prompt")}</p>
       <div className="flex flex-wrap gap-2">
         {SYMPTOMS.map((s) => (
-          <Chip key={s.key} active={selected === s.key} onClick={() => { setSelected(s.key); setSeverity(null); setQuantifier(null); }}>
+          <Chip key={s.key} active={selected === s.key} onClick={() => record(s.key)}>
             {t(s.tKey)}
           </Chip>
         ))}
       </div>
-      {selected && (
-        <div className="space-y-4 pt-2 border-t border-border">
+
+      {selected && entryId && (
+        <div className="space-y-4 pt-2 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
+          {showUndo && (
+            <UndoStrip label={`${t(def?.tKey || "sym.other")} recorded`} onUndo={undo} />
+          )}
+
           {qtyOptions.length > 0 && (
             <div>
               <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2">{t("sym.quantifier")}</p>
               <div className="flex flex-wrap gap-2">
                 {qtyOptions.map((q) => (
-                  <Chip key={q.key} active={quantifier === q.key} onClick={() => setQuantifier(q.key)}>{q.label}</Chip>
+                  <Chip
+                    key={q.key}
+                    active={quantifier === q.key}
+                    onClick={() => {
+                      const next = quantifier === q.key ? null : q.key;
+                      setQuantifier(next);
+                      patch({ quantifier: next ?? undefined } as Partial<Entry>);
+                    }}
+                  >
+                    {q.label}
+                  </Chip>
                 ))}
               </div>
             </div>
@@ -161,19 +197,32 @@ export function SymptomPanelBody() {
               <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2">{t("sym.severity")}</p>
               <div className="grid grid-cols-10 gap-1">
                 {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                  <button key={n} onClick={() => setSeverity(n)}
-                    className={`h-9 rounded-lg text-xs font-semibold border ${severity === n ? "bg-primary text-primary-foreground border-primary" : "bg-white border-border"}`}>
+                  <button
+                    key={n}
+                    onClick={() => { setSeverity(n); patch({ severity: n } as Partial<Entry>); }}
+                    className={`h-9 rounded-lg text-xs font-semibold border ${severity === n ? "bg-primary text-primary-foreground border-primary" : "bg-white border-border"}`}
+                  >
                     {n}
                   </button>
                 ))}
               </div>
             </div>
           )}
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("common.notes")} rows={2} className={inputClass + " resize-none"} />
-          <div className="flex gap-2">
-            <button onClick={reset} className={secondaryBtn}>{t("common.cancel")}</button>
-            <button onClick={save} className={primaryBtn + " flex-[2]"}>{t("sym.save")}</button>
-          </div>
+          <textarea
+            value={note}
+            onChange={(e) => { setNote(e.target.value); commitNote(e.target.value); }}
+            onBlur={() => patch({ note: note || undefined } as Partial<Entry>)}
+            placeholder={t("common.notes")}
+            rows={2}
+            className={inputClass + " resize-none"}
+          />
+          <button
+            type="button"
+            onClick={() => { setEntryId(null); setSelected(null); setSeverity(null); setQuantifier(null); setNote(""); setShowUndo(false); }}
+            className="text-xs text-ink-soft underline"
+          >
+            Done
+          </button>
         </div>
       )}
     </div>
