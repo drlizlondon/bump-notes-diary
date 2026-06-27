@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
-import { Activity, HelpCircle, Users, Gauge, Camera, NotebookPen, Heart } from "lucide-react";
+import { Activity, HelpCircle, Users, Gauge, Camera, NotebookPen, Heart, Sparkles } from "lucide-react";
 import { useAppState } from "@/lib/bumpnotes/store";
 import { AppShell } from "@/components/bumpnotes/AppShell";
 import { HomeHeader } from "@/components/bumpnotes/HomeHeader";
@@ -12,6 +12,7 @@ import {
 import { useT } from "@/lib/bumpnotes/i18n";
 import { useSyncSnapshot, closeMigrationPrompt } from "@/lib/bumpnotes/sync";
 import { useTester } from "@/lib/bumpnotes/tester";
+import { gestationFromDueDate } from "@/lib/bumpnotes/gestation";
 
 
 export const Route = createFileRoute("/")({
@@ -33,27 +34,20 @@ export const Route = createFileRoute("/")({
 type PanelKey = "symptom" | "question" | "people" | "measurement" | "photo" | "note" | "feeling";
 
 function Index() {
-  const { profile } = useAppState();
+  const { profile, entries } = useAppState();
   const [open, setOpen] = useState<PanelKey | null>(null);
   const t = useT();
   const { migrationPromptOpen, userId } = useSyncSnapshot();
   const tester = useTester();
   const navigate = useNavigate();
 
-  // Gate: route un-onboarded users appropriately
   useEffect(() => {
     if (profile?.onboarded) return;
     if (userId || tester) navigate({ to: "/onboarding", replace: true });
     else navigate({ to: "/welcome", replace: true });
   }, [userId, tester, profile, navigate]);
 
-  // Onboarded local user, not authed, not tester → push to onboarding/auth to upgrade
-  // (We allow them through if they already have data, to preserve back-compat)
-
-  if (!profile?.onboarded) {
-    // Don't render dashboard for users without a profile; navigation will redirect.
-    return null;
-  }
+  if (!profile?.onboarded) return null;
 
   function toggle(k: PanelKey) { setOpen((p) => (p === k ? null : k)); }
 
@@ -74,6 +68,8 @@ function Index() {
       )}
       <AppShell>
         <HomeHeader profile={profile} />
+
+        <ThisWeekCard />
 
         <section className="px-4 md:px-0 pb-10 mt-6">
           <h2 className="font-serif text-xl md:text-2xl font-semibold mt-2 mb-1 px-1">{t("home.capture.title")}</h2>
@@ -109,10 +105,6 @@ function Index() {
               <FeelingPanelBody />
             </ActionCard>
           </div>
-
-          <p className="text-center text-xs text-ink-soft pt-6 px-6 leading-relaxed">
-            {t("home.privacy")}
-          </p>
         </section>
       </AppShell>
     </>
@@ -131,5 +123,66 @@ function LabourLinkCard({ label, helper }: { label: string; helper: string }) {
       </span>
       <span className="text-ink-soft text-lg">›</span>
     </Link>
+  );
+}
+
+function ThisWeekCard() {
+  const { entries, profile } = useAppState();
+  const { weeks: currentWeek } = useMemo(
+    () => (profile ? gestationFromDueDate(profile.dueDateISO) : { weeks: 0, days: 0 }),
+    [profile],
+  );
+
+  const stats = useMemo(() => {
+    const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recent = entries.filter((e) => !e.deletedAt && new Date(e.createdAt).getTime() >= since);
+    const total = recent.length;
+    const counts: Record<string, number> = {};
+    for (const e of recent) counts[e.type] = (counts[e.type] ?? 0) + 1;
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    return { total, top };
+  }, [entries]);
+
+  const labelMap: Record<string, string> = {
+    symptom: "symptoms",
+    question: "questions",
+    person: "appointments",
+    measurement: "measurements",
+    photo: "photos",
+    note: "notes",
+    feeling: "feelings",
+  };
+
+  return (
+    <section className="px-4 md:px-0 mt-4">
+      <div className="surface-card p-4 sm:p-5">
+        <div className="flex items-center gap-2 text-primary">
+          <Sparkles className="size-4" />
+          <p className="text-[11px] uppercase tracking-[0.2em] font-semibold">This week</p>
+        </div>
+        {stats.total === 0 ? (
+          <p className="mt-2 text-sm text-ink-soft leading-relaxed">
+            Nothing recorded yet this week. Tap anything below to start — we'll save it automatically.
+          </p>
+        ) : (
+          <>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="font-serif text-3xl font-semibold text-ink leading-none">{stats.total}</span>
+              <span className="text-sm text-ink-soft">{stats.total === 1 ? "entry" : "entries"} added in week {currentWeek}</span>
+            </div>
+            {stats.top.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {stats.top.map(([k, n]) => (
+                  <span key={k} className="px-2.5 py-1 rounded-full bg-blush-soft text-xs text-ink">
+                    {n} {labelMap[k] ?? k}
+                  </span>
+                ))}
+              </div>
+            )}
+            <Link to="/timeline" className="mt-3 inline-block text-xs font-semibold text-primary">View timeline →</Link>
+          </>
+        )}
+      </div>
+    </section>
   );
 }
