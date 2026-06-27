@@ -4,6 +4,7 @@ import { Home, ClipboardList, FileText, Heart, Baby, Settings as SettingsIcon } 
 import { BottomNav } from "./BottomNav";
 import { FeedbackButton } from "./FeedbackButton";
 import { TesterBanner } from "./TesterBanner";
+import { LogoIcon } from "./Logo";
 import { useT } from "@/lib/bumpnotes/i18n";
 
 export function AppShell({ children, hideNav = false, right }: { children: ReactNode; hideNav?: boolean; right?: ReactNode }) {
@@ -39,9 +40,9 @@ function DesktopSidebar() {
   ] as const;
   return (
     <aside className="sticky top-8 self-start surface-card p-3">
-      <div className="px-3 py-3">
-        <p className="font-serif text-xl font-semibold">BumpNotes</p>
-        <p className="text-[11px] text-ink-soft uppercase tracking-widest mt-0.5">{t("brand.tagline")}</p>
+      <div className="px-3 py-3 flex items-center gap-2.5">
+        <LogoIcon className="size-9" />
+        <p className="font-serif text-lg font-semibold leading-none">BumpNotes</p>
       </div>
       <ul className="space-y-1 mt-2">
         {navItems.map(({ to, label, Icon }) => {
@@ -74,17 +75,13 @@ function DefaultAside() {
           {t("sum.stepCreate")}
         </Link>
       </div>
-      <div className="surface-card p-5">
-        <h3 className="font-serif text-base font-semibold">{t("set.privacy")}</h3>
-        <p className="text-sm text-ink-soft mt-2 leading-relaxed">{t("home.privacy")}</p>
-      </div>
     </div>
   );
 }
 
 export function PageHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: ReactNode }) {
   return (
-    <div className="px-5 lg:px-1 pt-6 lg:pt-2 pb-4 flex items-start justify-between gap-3">
+    <div className="px-5 lg:px-1 pt-6 lg:pt-2 pb-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
       <div className="min-w-0">
         <h1 className="font-serif text-2xl lg:text-3xl font-semibold leading-tight break-words">{title}</h1>
         {subtitle && <p className="text-sm text-ink-soft mt-1 break-words">{subtitle}</p>}

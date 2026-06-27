@@ -5,7 +5,7 @@ import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
 import { formatUKDateTime } from "@/lib/bumpnotes/gestation";
 import { summariseEntry } from "@/lib/bumpnotes/summary";
-import { useT, setLang, useLang, type Lang } from "@/lib/bumpnotes/i18n";
+import { useT } from "@/lib/bumpnotes/i18n";
 import { useSyncSnapshot, signOut } from "@/lib/bumpnotes/sync";
 import { supabase } from "@/integrations/supabase/client";
 import { useTester, exitTesterMode } from "@/lib/bumpnotes/tester";
@@ -22,7 +22,7 @@ function SettingsPage() {
   const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
   const [showStored, setShowStored] = useState(false);
   const t = useT();
-  const lang = useLang();
+  
   const tester = useTester();
   const navigate = useNavigate();
   const { status, email, userId } = useSyncSnapshot();
@@ -112,22 +112,6 @@ function SettingsPage() {
             </div>
           </section>
 
-          <section className="space-y-2">
-            <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold px-1">{t("set.language")}</p>
-            <div className="surface-card px-5 py-4">
-              <div className="relative">
-                <select
-                  value={lang}
-                  onChange={(e) => setLang(e.target.value as Lang)}
-                  className="appearance-none w-full bg-transparent text-base font-medium focus:outline-none pr-8"
-                >
-                  <option value="en">{t("lang.english")}</option>
-                  <option value="tr">{t("lang.turkish")}</option>
-                </select>
-                <span className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-ink-soft text-xs">▼</span>
-              </div>
-            </div>
-          </section>
 
           <section className="space-y-2">
             <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold px-1">Privacy &amp; Data</p>

@@ -6,20 +6,15 @@ const KEY = "bumpnotes:lang";
 const listeners = new Set<() => void>();
 let current: Lang = "en";
 
+// English-only for public beta. Turkish translations are kept for later, but
+// the language selector is hidden until localisation is complete.
 if (typeof window !== "undefined") {
-  try {
-    const stored = window.localStorage.getItem(KEY) as Lang | null;
-    if (stored === "en" || stored === "tr") current = stored;
-  } catch { /* ignore */ }
+  try { window.localStorage.removeItem(KEY); } catch { /* ignore */ }
 }
 
 export function getLang(): Lang { return current; }
-export function setLang(l: Lang) {
-  current = l;
-  if (typeof window !== "undefined") {
-    try { window.localStorage.setItem(KEY, l); } catch { /* ignore */ }
-  }
-  listeners.forEach((cb) => cb());
+export function setLang(_l: Lang) {
+  // No-op during beta. English only.
 }
 
 export function useLang(): Lang {
@@ -53,11 +48,11 @@ const en: Dict = {
   // Nav
   "nav.home": "Home",
   "nav.timeline": "Timeline",
-  "nav.summary": "Summary",
+  "nav.summary": "Pregnancy Summary",
   "nav.labour": "Labour",
   "nav.baby": "Baby",
   "nav.settings": "Settings",
-  "brand.tagline": "Your pregnancy record",
+  "brand.tagline": "",
 
   // Onboarding
   "onb.welcome.title": "Welcome to BumpNotes",
@@ -79,9 +74,9 @@ const en: Dict = {
 
 
   // Home
-  "home.capture.title": "What would you like to capture?",
-  "home.capture.subtitle": "Tap any card to add an entry.",
-  "home.privacy": "Your data is private. Only on this device unless you choose to share.",
+  "home.capture.title": "What happened?",
+  "home.capture.subtitle": "Tap any card to record it. We'll save it automatically.",
+  "home.privacy": "Your record stays private to you.",
   "home.labour.title": "Labour & Birth",
   "home.labour.subtitle": "Prepare your birth plan, hospital bag and labour notes.",
   "home.labour.cta": "Open Labour",
@@ -219,12 +214,12 @@ const en: Dict = {
 
   // Summary
   "sum.title": "Pregnancy Summary",
-  "sum.subtitle": "Your record. Your summary. Your way.",
-  "sum.intro": "Everything you add is organised in your timeline. When you're ready, create a clear summary to share with your care team.",
+  "sum.subtitle": "Generate a clear, printable document from your record.",
+  "sum.intro": "Your Pregnancy Record is everything you've saved in BumpNotes. Your Pregnancy Summary is the formatted document you can share with your care team. Choose what to include below.",
   "sum.stepWeeks": "Choose weeks",
   "sum.stepReview": "Review",
   "sum.stepCustomise": "Customise",
-  "sum.stepCreate": "Create summary",
+  "sum.stepCreate": "Generate Pregnancy Summary",
   "sum.step": "Step {n} of 4",
   "sum.weeks.title": "Which weeks to include?",
   "sum.weeks.subtitle": "Pick the pregnancy weeks you want in this summary.",
