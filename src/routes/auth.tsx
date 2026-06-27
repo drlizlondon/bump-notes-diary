@@ -6,9 +6,10 @@ import { lovable } from "@/integrations/lovable/index";
 import { useT } from "@/lib/bumpnotes/i18n";
 import { useAppState } from "@/lib/bumpnotes/store";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
+import { LogoWordmark } from "@/components/bumpnotes/Logo";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in · BumpNotes" }] }),
+  head: () => ({ meta: [{ title: "Create your account · BumpNotes" }] }),
   component: AuthPage,
 });
 
@@ -18,9 +19,8 @@ function AuthPage() {
   const { userId } = useSyncSnapshot();
   const { profile } = useAppState();
 
-  // Default to sign-up if the user has just finished onboarding (and isn't already signed in)
-  const fromOnboarding = typeof window !== "undefined" && (window.location.search.includes("from=onboarding") || (!userId && profile?.onboarded));
-  const [mode, setMode] = useState<"signin" | "signup">(fromOnboarding ? "signup" : "signin");
+  // Default to "Create account". Sign-in is only for returning users.
+  const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -86,46 +86,47 @@ function AuthPage() {
     } finally { setBusy(false); }
   }
 
+  const intro = mode === "signup"
+    ? (profile?.onboarded
+        ? "Last step — create your account to securely save your pregnancy record and access it again later."
+        : "Create your account to securely save your pregnancy record and access it again later.")
+    : "Welcome back. Sign in to continue your pregnancy record.";
+
   return (
     <>
       <Toaster position="top-center" />
       <div className="min-h-[100dvh] flex flex-col items-center justify-center px-5 sm:px-6 py-10 bg-background">
         <div className="w-full max-w-sm space-y-5">
           <div className="text-center">
-            <Link to="/welcome" className="inline-flex items-center gap-2">
-              <span className="size-9 rounded-full bg-gradient-to-br from-peach via-butter to-rose grid place-items-center text-white font-serif">b</span>
-              <span className="font-serif text-2xl font-semibold">BumpNotes</span>
+            <Link to="/welcome" className="inline-flex items-center justify-center">
+              <LogoWordmark className="h-20 w-auto" />
             </Link>
-            <p className="text-sm text-ink-soft mt-3">
-              {fromOnboarding
-                ? "Last step: create an account to keep your record safe and sync it to any device."
-                : t("auth.intro")}
-            </p>
+            <p className="text-sm text-ink-soft mt-3 text-balance leading-relaxed">{intro}</p>
           </div>
 
           <div className="surface-card p-5 space-y-4">
             <div className="flex gap-2">
               <button
-                onClick={() => setMode("signin")}
-                className={`flex-1 py-2 rounded-full text-sm font-medium ${mode === "signin" ? "bg-primary text-primary-foreground" : "bg-white border border-border"}`}
-              >{t("auth.signin")}</button>
-              <button
                 onClick={() => setMode("signup")}
                 className={`flex-1 py-2 rounded-full text-sm font-medium ${mode === "signup" ? "bg-primary text-primary-foreground" : "bg-white border border-border"}`}
-              >{t("auth.signup")}</button>
+              >Create account</button>
+              <button
+                onClick={() => setMode("signin")}
+                className={`flex-1 py-2 rounded-full text-sm font-medium ${mode === "signin" ? "bg-primary text-primary-foreground" : "bg-white border border-border"}`}
+              >Sign in</button>
             </div>
 
             <form onSubmit={onEmail} className="space-y-3">
               <input
                 type="email" autoComplete="email" required value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={t("auth.email")}
+                placeholder="Email"
                 className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
               />
               <input
                 type="password" autoComplete={mode === "signin" ? "current-password" : "new-password"} required minLength={6}
                 value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder={t("auth.password")}
+                placeholder="Password (min 6 characters)"
                 className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
               />
 
@@ -139,8 +140,8 @@ function AuthPage() {
                   />
                   <span>
                     I agree to the{" "}
-                    <Link to="/privacy" className="text-primary font-medium underline">Privacy Policy</Link> and{" "}
-                    <Link to="/terms" className="text-primary font-medium underline">Terms of Use</Link>.
+                    <Link to="/privacy" target="_blank" rel="noopener" className="text-primary font-medium underline">Privacy Policy</Link> and{" "}
+                    <Link to="/terms" target="_blank" rel="noopener" className="text-primary font-medium underline">Terms of Use</Link>.
                   </span>
                 </label>
               )}
@@ -148,27 +149,22 @@ function AuthPage() {
               <button
                 disabled={busy} type="submit"
                 className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
-              >{mode === "signin" ? t("auth.signin") : t("auth.signup")}</button>
+              >{mode === "signup" ? "Create account" : "Sign in"}</button>
             </form>
 
             <div className="relative text-center">
-              <span className="px-2 bg-card text-[11px] uppercase tracking-widest text-ink-soft">{t("auth.or")}</span>
+              <span className="px-2 bg-card text-[11px] uppercase tracking-widest text-ink-soft">or</span>
             </div>
 
             <button
               onClick={onGoogle} disabled={busy}
               className="w-full py-3 rounded-full bg-white border border-border text-sm font-medium disabled:opacity-60"
-            >{t("auth.google")}</button>
+            >Continue with Google</button>
           </div>
 
           <p className="text-center text-xs text-ink-soft leading-relaxed">
-            {t("auth.privacy")}
+            Your record is private to you. Only you can read it. We don't sell or share it.
           </p>
-          {profile?.onboarded && !userId && (
-            <p className="text-center text-xs">
-              <Link to="/" className="text-primary font-medium">{t("auth.continueLocal")}</Link>
-            </p>
-          )}
           <p className="text-center text-xs">
             <Link to="/welcome" className="text-ink-soft">← Back to welcome</Link>
           </p>

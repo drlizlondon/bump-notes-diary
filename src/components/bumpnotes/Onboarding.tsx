@@ -1,34 +1,35 @@
 import { useState } from "react";
+import { format, parseISO } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import type { Profile } from "@/lib/bumpnotes/types";
-import { gestationFromDueDate, formatGestation, formatUKDateLong } from "@/lib/bumpnotes/gestation";
-import { useT, setLang, useLang, type Lang } from "@/lib/bumpnotes/i18n";
-
-function formatDateDisplay(iso: string) {
-  try { return formatUKDateLong(iso); } catch { return iso; }
-}
+import { gestationFromDueDate, formatGestation } from "@/lib/bumpnotes/gestation";
+import { useT } from "@/lib/bumpnotes/i18n";
+import { LogoWordmark } from "./Logo";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
   const [step, setStep] = useState(0);
   const [userName, setUserName] = useState("");
   const [babyNickname, setBabyNickname] = useState("");
   const [babyBlank, setBabyBlank] = useState(false);
-  const [dueDateISO, setDueDateISO] = useState("");
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const t = useT();
-  const lang = useLang();
 
+  const dueDateISO = dueDate ? new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()).toISOString() : "";
   const babyOk = babyBlank || babyNickname.trim().length > 0;
   const canFinish = userName && babyOk && dueDateISO;
 
   const gest = dueDateISO ? gestationFromDueDate(dueDateISO) : null;
 
   return (
-    <div className="app-shell flex flex-col bg-cream">
-      <div className="flex-1 flex flex-col px-6 pt-16 pb-10">
+    <div className="app-shell flex flex-col bg-background">
+      <div className="flex-1 flex flex-col px-6 pt-10 pb-10">
         {step === 0 && (
           <div className="flex-1 flex flex-col items-center text-center justify-center gap-6">
-            <div className="size-24 rounded-full bg-gradient-to-br from-peach via-butter to-rose grid place-items-center shadow-lg shadow-peach/40">
-              <span className="font-serif text-4xl text-white">b</span>
-            </div>
+            <LogoWordmark className="h-32 w-auto" />
             <div>
               <h1 className="font-serif text-4xl font-semibold">{t("onb.welcome.title")}</h1>
               <p className="mt-3 text-ink-soft text-base leading-relaxed text-balance">
@@ -36,25 +37,9 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
               </p>
             </div>
 
-            <div className="mt-2 flex items-center gap-2">
-              <label className="sr-only" htmlFor="lang-select">{t("lang.select")}</label>
-              <div className="relative">
-                <select
-                  id="lang-select"
-                  value={lang}
-                  onChange={(e) => setLang(e.target.value as Lang)}
-                  className="appearance-none bg-transparent border border-border rounded-full pl-4 pr-9 py-2 text-sm font-medium focus:outline-none focus:border-primary/60"
-                >
-                  <option value="en">{t("lang.english")}</option>
-                  <option value="tr">{t("lang.turkish")}</option>
-                </select>
-                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft text-xs">▼</span>
-              </div>
-            </div>
-
             <button
               onClick={() => setStep(1)}
-              className="mt-2 w-full max-w-[360px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold"
+              className="mt-2 w-full max-w-[320px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold"
             >
               {t("onb.welcome.cta")}
             </button>
@@ -102,7 +87,7 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
             <button
               onClick={() => babyOk && setStep(3)}
               disabled={!babyOk}
-              className="mt-auto w-full max-w-[360px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
+              className="mt-auto w-full max-w-[320px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
             >
               {t("common.continue")}
             </button>
@@ -115,24 +100,34 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
               <h2 className="font-serif text-2xl font-semibold">{t("onb.due.title")}</h2>
               <p className="mt-2 text-ink-soft text-sm">{t("onb.due.subtitle")}</p>
             </div>
-            <div className="relative w-full">
-              <div
-                className={`block w-full min-h-[64px] px-5 py-4 rounded-2xl bg-white ring-1 ring-black/10 text-base flex items-center ${dueDateISO ? "text-ink" : "text-ink-soft"}`}
-                aria-hidden="true"
-              >
-                {dueDateISO ? formatDateDisplay(dueDateISO) : t("onb.due.tap")}
-              </div>
-              <input
-                type="date"
-                value={dueDateISO}
-                onChange={(e) => setDueDateISO(e.target.value)}
-                aria-label={t("onb.due.title")}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                style={{ WebkitAppearance: "none", touchAction: "manipulation" }}
-              />
-            </div>
+
+            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "w-full min-h-[64px] px-5 py-4 rounded-2xl bg-white ring-1 ring-black/10 text-base flex items-center justify-between text-left",
+                    !dueDate && "text-ink-soft",
+                  )}
+                >
+                  <span>{dueDate ? format(dueDate, "dd/MM/yyyy") : t("onb.due.tap")}</span>
+                  <CalendarIcon className="size-5 text-ink-soft shrink-0 ml-3" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dueDate}
+                  onSelect={(d) => { setDueDate(d ?? undefined); if (d) setDatePickerOpen(false); }}
+                  initialFocus
+                  weekStartsOn={1}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+
             {gest && (
-              <div className="rounded-2xl bg-peach-soft p-4 ring-1 ring-peach/30">
+              <div className="rounded-2xl bg-blush-soft p-4 ring-1 ring-coral/15">
                 <p className="text-sm leading-relaxed">
                   {t("onb.due.today", { name: babyNickname.trim() || t("baby.fallback"), gest: formatGestation(gest) })}
                 </p>
@@ -146,15 +141,14 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
                 onboarded: true,
               })}
               disabled={!canFinish}
-              className="mt-auto w-full max-w-[360px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
+              className="mt-auto w-full max-w-[320px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
             >
               {t("onb.finish")}
             </button>
           </div>
         )}
 
-
-        {step > 0 && step < 3 && (
+        {step > 0 && step < 4 && (
           <button onClick={() => setStep(step - 1)} className="mt-6 text-sm text-ink-soft self-center">
             {t("common.back")}
           </button>
@@ -181,12 +175,13 @@ function Step({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        onKeyDown={(e) => { if (e.key === "Enter" && !disabled) onNext(); }}
         className="w-full px-5 py-4 rounded-2xl bg-white ring-1 ring-black/10 text-base"
       />
       <button
         onClick={onNext}
         disabled={disabled}
-        className="mt-auto w-full max-w-[360px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
+        className="mt-auto w-full max-w-[320px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
       >
         {cta}
       </button>
