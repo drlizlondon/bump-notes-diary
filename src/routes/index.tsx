@@ -34,7 +34,7 @@ export const Route = createFileRoute("/")({
 type PanelKey = "symptom" | "question" | "people" | "measurement" | "photo" | "note" | "feeling";
 
 function Index() {
-  const { profile, entries } = useAppState();
+  const { profile } = useAppState();
   const [open, setOpen] = useState<PanelKey | null>(null);
   const t = useT();
   const { migrationPromptOpen, userId } = useSyncSnapshot();
