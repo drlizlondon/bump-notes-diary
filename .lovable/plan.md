@@ -1,78 +1,76 @@
-## Phase A — Foundations
+## BumpNotes Public Beta Polish — Plan
 
-Three workstreams. End state: a public marketing surface, a cleaner sign-up flow, and a working tester mode. No changes to the dashboard itself, summary PDF, feedback system, or GDPR settings — those land in Phase B/C.
+A focused refinement pass. No redesign — preserve the existing layouts, palette, typography, and components. Each change strengthens what's already there.
 
-### 1. Public landing experience
+### 1. Branding
+- Save both uploaded logos as project assets (`bumpnotes-wordmark.png`, `bumpnotes-icon.png`).
+- Replace every circular gradient "b" badge with:
+  - **Wordmark** on `/welcome`, `/auth`, `/demo`, `/contact`, `/privacy`, `/terms`, onboarding header, and PDF cover.
+  - **Icon-only** in `AppShell` sidebar/header, `BottomNav` brand mark, favicon, PWA manifest, splash.
+- Remove the tagline everywhere (welcome hero, footer, meta strap line). Do not introduce a new one.
+- Normalise sizing (header icon 28px, hero wordmark max-width 240px) and spacing.
 
-New public routes (all SSR, no auth gate, sharing the existing blush/white design language):
+### 2. Public landing
+- Refresh `/welcome` with a calm hero: wordmark, short "What BumpNotes is / what you can do", primary CTA **Start your pregnancy record**, secondary **Already have an account? Sign in**, tester checkbox, footer links to Privacy & Terms.
+- Move screenshots/example content off Home → `/demo` (dashboard shot, Pregnancy Summary excerpt, finished PDF preview).
+- Root route (`/`) already redirects authenticated users to dashboard — verify.
+- Trim `PublicShell` nav: Home / Demo / Contact / Sign in.
 
-```text
-/                  → Home (replaces current onboarding-on-root)
-/demo              → Demo / Preview with real app screenshots
-/contact           → Contact form (writes to contact_messages table)
-/privacy           → Privacy Policy
-/terms             → Terms of Use
-/auth              → existing sign-in/up (kept)
-/app               → authenticated dashboard (current "/" content moves here)
-```
+### 3. Auth flow
+- Onboarding → Create account (default tab) → Dashboard. Sign-in is a secondary tab for returning users.
+- Remove "Continue without an account".
+- Auth page copy: "Create your account to securely save your pregnancy record and access it again later."
+- Open Privacy/Terms in a new tab so onboarding state isn't lost; preserve `pendingOnboarding` in localStorage and resume on return.
+- Hide Apple sign-in and magic links (not configured). Keep Email + Google.
 
-Home page sections (compact, calm, not a marketing wall):
-- Hero: "A gentle, structured record of your pregnancy" + primary CTA **Start your pregnancy record** → `/onboarding`, secondary **Already have an account? Sign in** → `/auth`.
-- Three short value points: structured timeline, weekly summary, downloadable record for clinicians.
-- Tester invite checkbox: "I've been invited to test BumpNotes" → opens tester modal with the copy you provided, then routes into tester mode.
-- Privacy commitment paragraph (no compliance claims).
-- Footer with links to Demo, Contact, Privacy, Terms, and a small discreet "Admin" link (code-gated `/admin-access`).
+### 4. Tester mode (password)
+- Add `TESTER_PASSWORD` env var + server function `verifyTesterPassword` (timing-safe).
+- On landing, ticking the tester checkbox opens a modal → password field → on success store `bumpnotes:tester=1` and show welcome message ("Fake data only, please don't enter real pregnancy info, explore freely, report anything broken, thank you 💛") then enter app.
+- Tester data stays local-only; no cloud writes. Existing `TesterBanner` retained.
 
-Routing behavior:
-- Root route checks for an active Supabase session; signed-in users redirect straight to `/app`.
-- Public pages all link to `/auth` and `/onboarding` consistently.
+### 5. Feedback
+- Keep persistent `FeedbackButton`. Categories: Suggestion / Problem / Question / Positive.
+- Auto-capture: path, app version, timestamp, UA, user id or tester session id. Stored in existing `feedback_submissions` table.
+- Contact page remains separate (public form → `contact_messages`).
 
-Demo page: real screenshots captured via Playwright against the dev preview (dashboard, timeline, summary view) + a sample PDF preview image. No interactive demo in Phase A.
+### 6. UI polish
+- Replace native date input in Onboarding with a shadcn Popover + Calendar that auto-closes on select and shows the chosen date as DD/MM/YYYY.
+- Fix overlap/clipping on small screens using the responsive grid pattern (`grid-cols-[minmax(0,1fr)_auto]`, `min-w-0`, `shrink-0`, `truncate`).
+- Audit modals (Feedback, tester) for safe-area & centred positioning.
+- Tighten typography scale and spacing on Pregnancy Summary and Settings.
 
-### 2. Onboarding → Account flow
+### 7. English only
+- Hide the language selector on welcome and in settings. Keep i18n plumbing but force `en`.
 
-New flow:
-```text
-Landing → /onboarding (collects name, baby nickname, due date, language)
-        → /auth?mode=signup&pending=1 (account creation, prefilled context preserved)
-        → /app (dashboard)
-```
+### 8. Pregnancy Summary
+- Rename all UI strings: "Summary" → "Pregnancy Summary", action → **Generate Pregnancy Summary**.
+- Confirm PDF path uses `jsPDF` structured data (already in `pdf.ts`); remove any leftover screenshot fallback.
+- Add a short intro panel clarifying Pregnancy Record vs Pregnancy Summary.
 
-- Onboarding data is staged in `localStorage` under `bumpnotes:pending-profile` until account creation succeeds, then promoted into the user's synced state.
-- `/auth` reads `?pending=1` and shows "Finish setting up your record" framing.
-- `_authenticated` layout already gates `/app`; we add a redirect on `/` for signed-in users.
-- Acceptance of Privacy Policy + Terms recorded as a boolean + timestamp during sign-up, stored on the user's state blob (full GDPR table comes in Phase C).
+### 9. Privacy & GDPR
+- Settings → **Privacy & Data** section:
+  - View my data (modal with JSON preview)
+  - Download my data (JSON)
+  - Delete pregnancy record (clears entries, keeps account)
+  - Delete account (signs out + removes `bumpnotes_state` and `profiles` row)
+  - Links to Privacy Policy and Terms.
+- Verify RLS policies on `bumpnotes_state`, `profiles`, `feedback_submissions`, `contact_messages` (already user-scoped).
 
-### 3. Tester mode (cloud, flagged)
-
-Tester accounts live in the database with a flag, fully isolated from real users:
-
-- New column `is_tester boolean` on a new `profiles` table (id references auth.users, is_tester, accepted_terms_at, created_at, updated_at). Standard RLS: users see only their own row; service role full access.
-- Existing `bumpnotes_state` continues to hold the JSONB blob — tester rows are just rows where the linked profile has `is_tester = true`.
-- Tester sign-up flow: anonymous Supabase auth (`signInAnonymously`) → creates auth user → profile row inserted with `is_tester=true` → fresh empty state. No email required.
-- Tester banner persists across the app: "Tester mode — fake data only" with a **Reset demo data** button that wipes their `bumpnotes_state` row.
-- Settings shows tester status; "Convert to real account" is **out of scope** for Phase A (testers stay testers).
-- Future feedback submissions (Phase B) will join on `profiles.is_tester` so admin can filter.
+### 10. Effortless recording UX
+Core change to `Panels.tsx`:
+- **Tap-to-record**: tapping a symptom/feeling/photo-tag immediately creates the entry and shows an inline `✓ <label> recorded · Undo` strip that fades after 5s.
+- **Progressive disclosure**: after recording, smoothly expand only the qualifiers relevant to that entry (no "Optional details" heading). Editing any field patches the existing entry via new `store.updateEntry(id, patch)`.
+- **Auto-save** on blur / change / collapse / navigation; remove explicit Save buttons from Symptoms, Feelings, Photos, Note, Measurements, People & Care. Multi-field flows (People & Care, Measurements) keep a single "Done" affordance only when the entry can't be inferred from one tap.
+- **Tailored qualifiers** per category (Nausea: severity, vomiting, trigger, notes; Pain: location, severity, constant/intermittent, notes; Movement: more/normal/less + notes; etc.).
+- **Save feedback**: silent by default; toast only on first record, offline, error, syncing.
+- **Dashboard copy**: "What would you like to capture?" → **What happened?**
+- **Dashboard cards**: replace static Privacy card with **This week** (entries this week, last entry, summary status).
 
 ### Technical notes
+- New: `src/lib/bumpnotes/tester-auth.functions.ts` (verify password), `src/components/bumpnotes/TesterPasswordModal.tsx`, `src/components/bumpnotes/UndoStrip.tsx`, `src/assets/bumpnotes-wordmark.png.asset.json`, `src/assets/bumpnotes-icon.png.asset.json`.
+- Edited: `Onboarding.tsx`, `welcome.tsx`, `auth.tsx`, `demo.tsx`, `PublicShell.tsx`, `AppShell.tsx`, `BottomNav.tsx`, `HomeHeader.tsx`, `index.tsx` (home), `Panels.tsx`, `pack.tsx`, `settings.tsx`, `store.ts` (add `updateEntry`), `pdf.ts` (header logo + title rename), `i18n.ts` (force en, new copy), `__root.tsx` (favicon + manifest), `feedback.ts`.
+- Secret: `TESTER_PASSWORD` added via add_secret.
+- No schema migration needed (existing tables cover feedback, profiles, state). Only verify GRANTs + RLS.
 
-- Migration: create `profiles` table with grants + RLS; enable Supabase **anonymous sign-ins** via `configure_auth`.
-- New files: `src/routes/index.tsx` (rewritten as landing), `src/routes/demo.tsx`, `src/routes/contact.tsx`, `src/routes/privacy.tsx`, `src/routes/terms.tsx`, `src/routes/onboarding.tsx`, `src/routes/_authenticated/app.tsx` (move current dashboard here), `src/routes/admin-access.tsx` (code-gated stub linking to future admin).
-- The current `/` content (dashboard) moves to `/app` under `_authenticated/`; bottom nav and sidebar paths update accordingly.
-- `src/lib/bumpnotes/tester.ts` — helpers for `startTesterSession()`, `resetTesterData()`, `isTester()`.
-- Existing visual language preserved: same `bg-cream`, `peach`, `rose`, `butter` tokens; same serif headings; same card styling. No new fonts, no new palette.
-- Screenshots for `/demo`: captured into `src/assets/demo/*.png` via a Playwright script after the new dashboard route stabilises.
-
-### What does NOT change in Phase A
-
-- Dashboard, timeline, labour, settings UI internals.
-- Existing summary export (PDF generation lands in Phase B).
-- Feedback button (Phase B).
-- Privacy & Data settings panel (Phase C).
-- Date picker / responsive polish / overlapping text (Phase C).
-
-### Deliverable
-
-After Phase A you can: visit the published URL, see a calm landing page, click through to Demo/Privacy/Terms/Contact, start onboarding without an account, finish onboarding into account creation with data preserved, or enter tester mode and get a fully isolated sandbox.
-
-Approve to proceed, or tell me what to adjust.
+### Out of scope
+Visual redesign, Turkish localisation, new colour tokens, push notifications, native mobile build.
