@@ -4,13 +4,10 @@ import { Home, ClipboardList, FileText, Heart, Baby, Settings as SettingsIcon } 
 import { BottomNav } from "./BottomNav";
 import { FeedbackButton } from "./FeedbackButton";
 import { TesterBanner } from "./TesterBanner";
-import { TesterFeedbackButton } from "./TesterFeedbackButton";
-import { useTester } from "@/lib/bumpnotes/tester";
 import { LogoIcon } from "./Logo";
 import { useT } from "@/lib/bumpnotes/i18n";
 
 export function AppShell({ children, hideNav = false, right }: { children: ReactNode; hideNav?: boolean; right?: ReactNode }) {
-  const tester = useTester();
   return (
     <>
       <TesterBanner />
@@ -25,7 +22,7 @@ export function AppShell({ children, hideNav = false, right }: { children: React
         <aside className="min-w-0">{right ?? <DefaultAside />}</aside>
       </div>
 
-      {tester ? <TesterFeedbackButton variant="floating" /> : <FeedbackButton />}
+      <FeedbackButton />
     </>
   );
 }
