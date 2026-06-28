@@ -67,8 +67,8 @@ function Hero() {
             <Lock className="size-3.5 text-primary" /> Private by default
           </span>
 
-          <h1 className="mt-5 font-serif text-[34px] sm:text-[44px] lg:text-[56px] font-semibold leading-[1.05] tracking-tight text-balance">
-            Your pregnancy,<br className="hidden sm:block" /> clearly organised<span className="text-primary">.</span>
+          <h1 className="mt-5 font-serif text-[34px] sm:text-[44px] lg:text-[56px] font-semibold leading-[1.05] tracking-tight text-balance text-ink">
+            The pregnancy record that helps you feel <span className="text-primary">organised, informed and confident</span><span className="text-primary">.</span>
           </h1>
 
           <p className="mt-5 text-[15.5px] sm:text-lg text-ink-soft leading-relaxed">
