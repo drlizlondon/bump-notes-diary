@@ -1,15 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
-import {
-  ArrowRight, Lock, Share2, Star, TrendingUp, HelpCircle, Calendar, ShieldCheck,
-} from "lucide-react";
+import { ArrowRight, Lock, Share2, Stethoscope } from "lucide-react";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { useTester } from "@/lib/bumpnotes/tester";
 import { useAppState } from "@/lib/bumpnotes/store";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
-import { SilhouetteIllustration } from "@/components/bumpnotes/SilhouetteIllustration";
-import iconAsset from "@/assets/bumpnotes-icon.png.asset.json";
+import { PregnancySummaryPreview } from "@/components/bumpnotes/PregnancySummaryPreview";
+import { buildDemoSummary } from "@/lib/bumpnotes/demo-summary";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -25,7 +23,7 @@ export const Route = createFileRoute("/welcome")({
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=Caveat:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" },
     ],
   }),
   component: Welcome,
@@ -52,186 +50,192 @@ function Welcome() {
     <>
       <Toaster position="top-center" />
       <PublicShell>
-        <HeroSection />
-        <SummarySection />
-        <FeaturesSection />
-        <FootnoteSection />
+        <Hero />
+        <Features />
       </PublicShell>
     </>
   );
 }
 
-function HeroSection() {
+function Hero() {
   return (
-    <section className="relative px-4 sm:px-8 pt-5 sm:pt-10 pb-5 sm:pb-10 bg-gradient-to-b from-blush-soft/60 to-transparent overflow-hidden">
-      {/* Mobile: faint decorative silhouette in background */}
-      <div className="pointer-events-none absolute -right-10 top-0 bottom-0 w-[180px] opacity-[0.07] sm:hidden flex items-center" aria-hidden>
-        <SilhouetteIllustration className="w-full h-auto" />
-      </div>
+    <section className="px-5 sm:px-8 pt-8 sm:pt-16 lg:pt-20 pb-12 sm:pb-20">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[45fr_55fr] gap-10 lg:gap-14 items-center">
+        {/* Copy column */}
+        <div className="text-left max-w-[560px] mx-auto lg:mx-0 w-full">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blush-soft border border-border text-[12px] font-medium text-ink">
+            <Lock className="size-3.5 text-primary" /> Private by default
+          </span>
 
-      <div className="relative max-w-[1200px] mx-auto sm:grid sm:grid-cols-[1.05fr_0.95fr] sm:gap-10 sm:items-center">
-        <div className="text-left min-w-0">
-          <h1 className="font-serif text-[30px] sm:text-[40px] lg:text-[52px] font-semibold leading-[1.08] tracking-tight">
-            Your pregnancy, clearly organised<span className="text-primary">.</span>
+          <h1 className="mt-5 font-serif text-[34px] sm:text-[44px] lg:text-[56px] font-semibold leading-[1.05] tracking-tight text-balance">
+            Your pregnancy,<br className="hidden sm:block" /> clearly organised<span className="text-primary">.</span>
           </h1>
-          <p className="mt-3 sm:mt-5 text-[14.5px] sm:text-base lg:text-lg text-ink-soft leading-relaxed max-w-[520px]">
-            Record symptoms, appointments and questions privately. Share a clear summary when you need it.
-          </p>
 
-          <div className="mt-4 sm:mt-6 flex items-center gap-3">
-            <span className="size-10 sm:size-11 shrink-0 rounded-full bg-blush-soft grid place-items-center text-primary">
-              <Lock className="size-4 sm:size-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[14px] sm:text-[15px] font-semibold text-ink leading-tight">Private by default.</p>
-              <p className="text-[12.5px] sm:text-sm text-ink-soft leading-tight">Share only what you choose.</p>
-            </div>
-          </div>
+          <p className="mt-5 text-[15.5px] sm:text-lg text-ink-soft leading-relaxed">
+            Record symptoms, appointments and questions privately. Generate a clear summary to share whenever you need it.
+          </p>
 
           <Link
             to="/onboarding"
-            className="mt-4 sm:mt-6 w-full sm:w-auto inline-flex items-center justify-center gap-3 px-5 sm:px-7 py-3.5 sm:py-3 rounded-2xl sm:rounded-full bg-primary text-primary-foreground text-[15px] sm:text-base font-semibold shadow-sm shadow-primary/20 hover:opacity-95"
+            className="mt-7 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-primary text-primary-foreground text-[15px] font-semibold shadow-sm shadow-primary/20 hover:opacity-95"
           >
-            <span>Start your pregnancy record</span>
-            <ArrowRight className="size-5 shrink-0" />
+            Start your pregnancy record <ArrowRight className="size-4" />
           </Link>
         </div>
 
-        {/* Desktop/tablet silhouette */}
-        <div className="hidden sm:block justify-self-end w-full max-w-[360px] lg:max-w-[440px]">
-          <SilhouetteIllustration className="w-full h-auto" />
+        {/* Product preview column — becomes the hero visual */}
+        <div className="w-full">
+          <SummaryShowcase />
         </div>
       </div>
     </section>
   );
 }
 
-function SummarySection() {
+/**
+ * Floating, slightly angled preview of the real Pregnancy Summary component,
+ * populated with demo data. Auto-scrolls slowly through the content and gently
+ * returns to the top. Pauses on hover/touch.
+ */
+function SummaryShowcase() {
+  const [demo, setDemo] = useState<ReturnType<typeof buildDemoSummary> | null>(null);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const pausedRef = useRef(false);
+
+  // Build demo data client-side to avoid SSR/hydration drift (uses `new Date()`).
+  useEffect(() => {
+    setDemo(buildDemoSummary());
+  }, []);
+
+  // Gentle auto-scroll loop: ~15s down, brief hold, ease back to start.
+  useEffect(() => {
+    if (!demo) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+    let raf = 0;
+    let start = performance.now();
+    const DURATION = 15000;
+    const HOLD = 1500;
+    const RETURN = 1200;
+
+    function tick(now: number) {
+      if (!el) return;
+      if (pausedRef.current) {
+        start = now - (start ? 0 : 0); // freeze: rebase start so progress doesn't jump
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+      const max = Math.max(0, el.scrollHeight - el.clientHeight);
+      if (max <= 0) { raf = requestAnimationFrame(tick); return; }
+      const elapsed = (now - start) % (DURATION + HOLD + RETURN);
+      let target: number;
+      if (elapsed < DURATION) {
+        target = (elapsed / DURATION) * max;
+      } else if (elapsed < DURATION + HOLD) {
+        target = max;
+      } else {
+        const p = (elapsed - DURATION - HOLD) / RETURN;
+        const eased = 1 - Math.pow(1 - p, 3);
+        target = max * (1 - eased);
+      }
+      el.scrollTop = target;
+      raf = requestAnimationFrame(tick);
+    }
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [demo]);
+
+  function pause() { pausedRef.current = true; }
+  function resume() { pausedRef.current = false; }
+
   return (
-    <section className="px-4 sm:px-8 pt-2 sm:pt-10 pb-8 sm:pb-16">
-      <div className="max-w-[1120px] mx-auto">
-        <div className="surface-card p-3.5 sm:p-7 relative">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="font-serif text-[19px] sm:text-[30px] font-semibold leading-tight">
-                Ready to share at appointments<span className="text-primary">.</span>
-              </h2>
-              <p className="mt-1.5 text-[12.5px] sm:text-base text-ink-soft leading-snug">
-                Bring a clear, organised summary to your midwife, doctor or care team in seconds.
-              </p>
-            </div>
-            <span className="size-9 sm:size-11 shrink-0 rounded-full bg-blush-soft grid place-items-center text-primary">
-              <Share2 className="size-4 sm:size-5" />
-            </span>
-          </div>
-
-          <div className="mt-3 sm:mt-6">
-            <SummaryPreview />
-          </div>
-
-          <div className="mt-4 sm:mt-5 flex justify-center sm:justify-end">
-            <div className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-blush-soft text-primary text-sm sm:text-base font-semibold">
-              <Share2 className="size-4" /> Share summary
-            </div>
-          </div>
+    <div className="relative mx-auto w-full max-w-[560px] lg:max-w-none">
+      {/* Soft ambient glow */}
+      <div className="pointer-events-none absolute -inset-6 sm:-inset-10 bg-gradient-to-br from-blush-soft/80 via-transparent to-mint-soft/40 blur-3xl -z-10 rounded-[40px]" aria-hidden />
+      <div
+        className="rounded-[28px] bg-white shadow-[0_30px_80px_-30px_rgba(36,27,27,0.25),0_10px_30px_-15px_rgba(246,95,124,0.25)] ring-1 ring-border overflow-hidden transition-transform duration-500 will-change-transform lg:rotate-[2deg] lg:hover:rotate-0"
+        onMouseEnter={pause}
+        onMouseLeave={resume}
+        onTouchStart={pause}
+        onTouchEnd={resume}
+      >
+        <FauxBrowserChrome />
+        <div
+          ref={scrollerRef}
+          className="overflow-hidden h-[420px] sm:h-[520px] lg:h-[620px] px-3 sm:px-4 pb-4"
+          aria-label="Live preview of a BumpNotes Pregnancy Summary"
+        >
+          {demo ? (
+            <PregnancySummaryPreview
+              profile={demo.profile}
+              entries={demo.entries}
+              groupMeasurements
+            />
+          ) : (
+            <SummarySkeleton />
+          )}
         </div>
-      </div>
-    </section>
-  );
-}
-
-function SummaryPreview() {
-  return (
-    <div className="rounded-2xl border border-border bg-white p-4 sm:p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-3 pb-3 border-b border-border">
-        <div className="min-w-0">
-          <h3 className="font-serif text-[15px] sm:text-lg font-semibold leading-tight">BumpNotes Summary</h3>
-          <p className="text-[11px] sm:text-xs text-ink-soft mt-0.5">Prepared on 12 May 2025</p>
-        </div>
-        <img src={iconAsset.url} alt="" className="size-7 sm:size-9 object-contain shrink-0" />
-      </div>
-
-      <div className="divide-y divide-border">
-        <SummaryRow icon={<Star className="size-4" />} title="Overview">
-          <p className="text-[12px] sm:text-[13px] text-ink">12w 3d <span className="text-ink-soft">·</span> First pregnancy</p>
-        </SummaryRow>
-
-        <SummaryRow icon={<TrendingUp className="size-4" />} title="Key updates">
-          <ul className="text-[12px] sm:text-[13px] text-ink space-y-0.5 list-disc pl-4 marker:text-primary">
-            <li><span className="font-semibold">Nausea</span> improving</li>
-            <li><span className="font-semibold">Fatigue</span> continues in afternoons</li>
-            <li><span className="font-semibold">Heartburn</span> a few times this week</li>
-          </ul>
-        </SummaryRow>
-
-        <SummaryRow icon={<HelpCircle className="size-4" />} title="Questions for my team">
-          <ul className="text-[12px] sm:text-[13px] text-ink space-y-0.5 list-disc pl-4 marker:text-primary">
-            <li>Is it normal to feel dizzy after meals?</li>
-            <li>Safe pain relief for headaches?</li>
-          </ul>
-        </SummaryRow>
-
-        <SummaryRow icon={<Calendar className="size-4" />} title="Appointments">
-          <ul className="text-[12px] sm:text-[13px] text-ink space-y-0.5">
-            <li className="grid grid-cols-[auto_1fr] gap-x-3"><span>• 22 Apr 2025</span><span className="text-ink-soft">First scan</span></li>
-            <li className="grid grid-cols-[auto_1fr] gap-x-3"><span>• 15 May 2025</span><span className="text-ink-soft">Midwife check-in</span></li>
-          </ul>
-        </SummaryRow>
       </div>
     </div>
   );
 }
 
-function SummaryRow({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+function FauxBrowserChrome() {
   return (
-    <div className="grid grid-cols-[auto_1fr] gap-3 py-3">
-      <span className="size-7 rounded-full bg-blush-soft grid place-items-center text-primary shrink-0 mt-0.5">{icon}</span>
-      <div className="min-w-0">
-        <p className="text-[13px] sm:text-sm font-semibold text-ink leading-tight">{title}</p>
-        <div className="mt-1">{children}</div>
-      </div>
+    <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-blush-soft/60">
+      <span className="size-2.5 rounded-full bg-coral-soft" />
+      <span className="size-2.5 rounded-full bg-butter-soft" />
+      <span className="size-2.5 rounded-full bg-mint-soft" />
+      <span className="ml-3 text-[11px] font-mono uppercase tracking-widest text-ink-soft">Pregnancy Summary</span>
     </div>
   );
 }
 
-function FeaturesSection() {
+function SummarySkeleton() {
   return (
-    <section className="px-4 sm:px-8 pb-8 sm:pb-16">
-      <div className="max-w-[1120px] mx-auto grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-5">
-        <FeatureCard icon={<Lock className="size-4 sm:size-5" />} title="Record privately" body="Add notes, symptoms and photos as you go." />
-        <FeatureCard icon={<HelpCircle className="size-4 sm:size-5" />} title="Prepare easily" body="Keep questions and appointments in one place." />
-        <FeatureCard icon={<Share2 className="size-4 sm:size-5" />} title="Share selectively" body="Create a clear summary for your care team." />
-      </div>
-    </section>
-  );
-}
-
-function FeatureCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
-  return (
-    <div className="surface-card p-3.5 sm:p-5 flex sm:block items-center gap-3 sm:text-center">
-      <span className="size-10 sm:size-10 shrink-0 sm:mx-auto rounded-full bg-blush-soft grid place-items-center text-primary">{icon}</span>
-      <div className="min-w-0 sm:mt-0">
-        <h3 className="font-serif text-[15px] sm:mt-3 sm:text-base font-semibold leading-tight">{title}</h3>
-        <p className="text-[12.5px] sm:text-sm text-ink-soft mt-0.5 sm:mt-1 leading-snug">{body}</p>
-      </div>
+    <div className="animate-pulse space-y-3 py-4">
+      <div className="h-5 w-2/3 bg-blush-soft rounded" />
+      <div className="h-3 w-1/2 bg-blush-soft rounded" />
+      <div className="h-24 bg-blush-soft rounded-xl mt-4" />
+      <div className="h-24 bg-blush-soft rounded-xl" />
+      <div className="h-24 bg-blush-soft rounded-xl" />
     </div>
   );
 }
 
-function FootnoteSection() {
+function Features() {
+  const cards = useMemo(() => ([
+    {
+      icon: <Lock className="size-5" />,
+      title: "Private by default",
+      body: "Your information stays yours.",
+    },
+    {
+      icon: <Share2 className="size-5" />,
+      title: "Share your summary",
+      body: "Generate a clear report to share with your midwife, GP or maternity team.",
+    },
+    {
+      icon: <Stethoscope className="size-5" />,
+      title: "Built for appointments",
+      body: "Keep symptoms, questions and care notes organised so they are easier to discuss.",
+    },
+  ]), []);
+
   return (
-    <section className="px-4 sm:px-8 pb-10">
-      <div className="max-w-[720px] mx-auto text-center">
-        <p className="text-[12px] sm:text-xs text-ink-soft leading-relaxed inline-flex items-start justify-center gap-2">
-          <ShieldCheck className="size-3.5 text-primary shrink-0 mt-0.5" />
-          <span>BumpNotes is for personal organisation and support, not medical advice.</span>
-        </p>
-        <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
-          <Link to="/privacy" className="text-primary font-medium">Privacy</Link>
-          <Link to="/terms" className="text-primary font-medium">Terms</Link>
-          <Link to="/contact" className="text-primary font-medium">Get in contact</Link>
-        </div>
+    <section id="features" className="px-5 sm:px-8 pb-20 sm:pb-28 scroll-mt-20">
+      <div className="max-w-[1120px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5">
+        {cards.map((c) => (
+          <div key={c.title} className="rounded-2xl bg-white border border-border p-5 sm:p-6">
+            <span className="inline-grid place-items-center size-10 rounded-full bg-blush-soft text-primary">{c.icon}</span>
+            <h3 className="mt-4 font-serif text-lg font-semibold leading-tight">{c.title}</h3>
+            <p className="mt-1.5 text-sm text-ink-soft leading-relaxed">{c.body}</p>
+          </div>
+        ))}
       </div>
+      <p className="mt-10 max-w-[640px] mx-auto text-center text-[12px] text-ink-soft leading-relaxed">
+        BumpNotes is for personal organisation and support, not medical advice.
+      </p>
     </section>
   );
 }
