@@ -7,10 +7,11 @@ import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
 import {
   formatGestation, formatUKDate, formatUKDateLong, formatUKDateTime, formatUKTime, gestationFromDueDate,
 } from "@/lib/bumpnotes/gestation";
-import { formatDuration, measurementLabel, measurementValue, summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
+import { formatDuration, measurementLabel, summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
 import { useT, t as tFn } from "@/lib/bumpnotes/i18n";
 import type { ContractionEntry, Entry, EntryType, LabourEventEntry, MeasurementEntry, Profile, LabourPlan } from "@/lib/bumpnotes/types";
 import { downloadSummaryPdf } from "@/lib/bumpnotes/pdf";
+import { PregnancySummaryPreview, hasLabourData } from "@/components/bumpnotes/PregnancySummaryPreview";
 
 export const Route = createFileRoute("/pack")({
   head: () => ({ meta: [{ title: "Pregnancy Summary · BumpNotes" }] }),
