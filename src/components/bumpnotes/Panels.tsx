@@ -26,17 +26,17 @@ export function ActionCard({
   const tn = tonemap[tone];
   return (
     <div className={`surface-card overflow-hidden transition-all ${open ? "ring-1 " + tn.ring : ""}`}>
-      <button onClick={onToggle} className="w-full flex items-center gap-4 px-4 py-4 text-left">
-        <span className={`size-11 shrink-0 rounded-2xl grid place-items-center ${tn.bg}`}>
+      <button onClick={onToggle} className="w-full flex items-center gap-3 px-3.5 py-3 sm:px-4 sm:py-3.5 text-left">
+        <span className={`size-10 shrink-0 rounded-2xl grid place-items-center ${tn.bg}`}>
           <span className="text-ink">{icon}</span>
         </span>
         <span className="flex-1 min-w-0">
-          <span className="block font-semibold text-[15px] leading-tight text-ink">{label}</span>
-          {helper && <span className="block text-[12.5px] text-ink-soft mt-0.5 truncate">{helper}</span>}
+          <span className="block font-semibold text-[14.5px] leading-tight text-ink">{label}</span>
+          {helper && <span className="block text-[12px] text-ink-soft mt-0.5 truncate">{helper}</span>}
         </span>
         <ChevronDown className={`size-5 text-ink-soft transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="px-4 pb-5 pt-1 border-t border-border">{children}</div>}
+      {open && <div className="px-3.5 sm:px-4 pb-4 pt-1 border-t border-border">{children}</div>}
     </div>
   );
 }
