@@ -6,17 +6,12 @@ import { getTesterSessionId } from "@/lib/bumpnotes/tester";
 
 type Yes = "yes" | "no";
 type Mostly = "yes" | "mostly" | "no";
-type Maybe = "yes" | "maybe" | "no";
+type YN = "yes" | "no";
 
-type Stage =
-  | "intro"
-  | "identity"
-  | "route"
-  | "done";
-
+type Stage = "intro" | "identity" | "route" | "done";
 type Route = "yes_to_both" | "yes_to_either" | "no_to_both";
 
-const YN: { v: Yes; label: string }[] = [
+const YN_OPTS: { v: Yes; label: string }[] = [
   { v: "yes", label: "Yes" },
   { v: "no", label: "No" },
 ];
@@ -27,12 +22,6 @@ const MOSTLY: { v: Mostly; label: string }[] = [
   { v: "no", label: "No" },
 ];
 
-const MAYBE: { v: Maybe; label: string }[] = [
-  { v: "yes", label: "Yes" },
-  { v: "maybe", label: "Maybe" },
-  { v: "no", label: "No" },
-];
-
 export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
   const submit = useServerFn(submitTesterFeedback);
 
@@ -40,8 +29,11 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
   const [pregnancy, setPregnancy] = useState<Yes | null>(null);
   const [professional, setProfessional] = useState<Yes | null>(null);
   const [q1, setQ1] = useState<Mostly | null>(null);
-  const [q2, setQ2] = useState<Maybe | null>(null);
-  const [q3, setQ3] = useState<Maybe | null>(null);
+  const [personalUse, setPersonalUse] = useState<YN | null>(null);
+  const [personalWhy, setPersonalWhy] = useState("");
+  const [proUse, setProUse] = useState<YN | null>(null);
+  const [proWhy, setProWhy] = useState("");
+  const [neitherWho, setNeitherWho] = useState("");
   const [improvement, setImprovement] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +47,10 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
           ? "no_to_both"
           : null;
 
+  const showPersonal = pregnancy === "yes";
+  const showPro = professional === "yes";
+  const showNeither = pregnancy === "no" && professional === "no";
+
   async function send() {
     if (!route || !pregnancy || !professional) return;
     const sessionId = getTesterSessionId();
@@ -64,6 +60,22 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
     }
     setBusy(true);
     setError(null);
+
+    // Pack the "why" reasoning and any extra notes into improvement_text.
+    const parts: string[] = [];
+    if (showPersonal) {
+      parts.push(`Personal use: ${personalUse ?? "—"}${personalWhy.trim() ? ` — ${personalWhy.trim()}` : ""}`);
+    }
+    if (showPro) {
+      parts.push(`Professional use: ${proUse ?? "—"}${proWhy.trim() ? ` — ${proWhy.trim()}` : ""}`);
+    }
+    if (showNeither && neitherWho.trim()) {
+      parts.push(`Who is it for: ${neitherWho.trim()}`);
+    }
+    if (improvement.trim()) {
+      parts.push(`Improve / add / change: ${improvement.trim()}`);
+    }
+
     try {
       await submit({
         data: {
@@ -72,9 +84,10 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
           professionalIdentity: professional,
           feedbackRoute: route,
           q1,
-          q2,
-          q3,
-          improvementText: improvement,
+          // Reuse legacy fields: q2 = personal yes/no, q3 = professional yes/no.
+          q2: personalUse ? (personalUse === "yes" ? "yes" : "no") : null,
+          q3: proUse ? (proUse === "yes" ? "yes" : "no") : null,
+          improvementText: parts.join("\n\n"),
         },
       });
       setStage("done");
@@ -86,7 +99,10 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
   }
 
   const canContinueFromIdentity = pregnancy !== null && professional !== null;
-  const canSubmit = q1 !== null && q2 !== null && q3 !== null;
+  const canSubmit =
+    q1 !== null &&
+    (!showPersonal || personalUse !== null) &&
+    (!showPro || proUse !== null);
 
   return (
     <div
@@ -137,13 +153,13 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
             <ChoiceQuestion
               label="Have you ever been pregnant, are you currently pregnant, or are you planning a pregnancy?"
               value={pregnancy}
-              options={YN}
+              options={YN_OPTS}
               onChange={setPregnancy}
             />
             <ChoiceQuestion
               label="Are you a clinician or professional who works with pregnant people, such as a GP, midwife, doula, or other support role?"
               value={professional}
-              options={YN}
+              options={YN_OPTS}
               onChange={setProfessional}
             />
 
@@ -162,35 +178,67 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
             <RouteIntro route={route} />
 
             <ChoiceQuestion
-              label={routeQ1(route)}
+              label="Was BumpNotes easy to understand and use?"
               value={q1}
               options={MOSTLY}
               onChange={setQ1}
             />
-            <ChoiceQuestion
-              label={routeQ2(route, pregnancy === "yes")}
-              value={q2}
-              options={MAYBE}
-              onChange={setQ2}
-            />
-            <ChoiceQuestion
-              label={routeQ3(route)}
-              value={q3}
-              options={MAYBE}
-              onChange={setQ3}
-            />
 
-            <label className="mt-4 block">
-              <span className="block text-[13px] font-semibold text-ink mb-1.5">What would you improve, add or change?</span>
-              <textarea
+            {showPersonal && (
+              <div className="mt-5 pt-4 border-t border-border/60">
+                <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-primary">As someone close to pregnancy</p>
+                <ChoiceQuestion
+                  label="Would you use BumpNotes yourself?"
+                  value={personalUse}
+                  options={YN_OPTS}
+                  onChange={setPersonalUse}
+                />
+                <TextField
+                  label="Why? / Why not?"
+                  value={personalWhy}
+                  onChange={setPersonalWhy}
+                  placeholder="A sentence or two is plenty."
+                />
+              </div>
+            )}
+
+            {showPro && (
+              <div className="mt-5 pt-4 border-t border-border/60">
+                <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-primary">As a professional</p>
+                <ChoiceQuestion
+                  label="Would you recommend BumpNotes to someone you support?"
+                  value={proUse}
+                  options={YN_OPTS}
+                  onChange={setProUse}
+                />
+                <TextField
+                  label="Why? / Why not?"
+                  value={proWhy}
+                  onChange={setProWhy}
+                  placeholder="What would help or get in the way?"
+                />
+              </div>
+            )}
+
+            {showNeither && (
+              <div className="mt-5 pt-4 border-t border-border/60">
+                <TextField
+                  label="Can you imagine who BumpNotes would be useful for?"
+                  value={neitherWho}
+                  onChange={setNeitherWho}
+                  placeholder="Optional — anyone who comes to mind."
+                />
+              </div>
+            )}
+
+            <div className="mt-5 pt-4 border-t border-border/60">
+              <TextField
+                label="What would you improve, add or change?"
                 value={improvement}
-                onChange={(e) => setImprovement(e.target.value)}
-                rows={4}
-                maxLength={4000}
+                onChange={setImprovement}
                 placeholder="Optional — anything that comes to mind."
-                className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm resize-none focus:outline-none focus:border-primary/60"
               />
-            </label>
+            </div>
 
             {error && (
               <p className="mt-3 text-sm text-coral leading-relaxed" role="alert">{error}</p>
@@ -262,11 +310,30 @@ function ChoiceQuestion<T extends string>({
   );
 }
 
+function TextField({
+  label, value, onChange, placeholder,
+}: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <label className="mt-3 block">
+      <span className="block text-[13px] font-semibold text-ink mb-1.5">{label}</span>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={3}
+        maxLength={2000}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm resize-none focus:outline-none focus:border-primary/60"
+      />
+    </label>
+  );
+}
+
 function RouteIntro({ route }: { route: Route }) {
   if (route === "yes_to_both") {
     return (
       <p className="text-sm text-ink-soft leading-relaxed">
-        Thank you, this is especially helpful because you can look at BumpNotes from both sides.
+        Thank you, this is especially helpful because you can look at BumpNotes from both sides. There are a
+        couple of questions for each perspective below.
       </p>
     );
   }
@@ -280,33 +347,8 @@ function RouteIntro({ route }: { route: Route }) {
   }
   return (
     <p className="text-sm text-ink-soft leading-relaxed">
-      Thank you, this is still really helpful. Even if BumpNotes is not directly relevant to you, I'd love to
+      Thank you, this is still really helpful. Even if BumpNotes isn't directly relevant to you, I'd love to
       know whether it makes sense and feels easy to use.
     </p>
   );
-}
-
-function routeQ1(route: Route): string {
-  if (route === "no_to_both") return "Did you understand what BumpNotes is for?";
-  return "Was BumpNotes easy to understand and use?";
-}
-
-function routeQ2(route: Route, pregnancyYes: boolean): string {
-  if (route === "yes_to_both") {
-    return "Would BumpNotes feel useful, either personally or if someone came to you with their summary?";
-  }
-  if (route === "yes_to_either") {
-    return pregnancyYes
-      ? "Would you use BumpNotes yourself, or would you have found it useful during a pregnancy journey?"
-      : "Would you find it useful if someone came to you with this summary?";
-  }
-  return "Was it easy to click around and know what to do?";
-}
-
-function routeQ3(route: Route): string {
-  if (route === "no_to_both") return "Can you imagine who BumpNotes would be useful for?";
-  if (route === "yes_to_both") {
-    return "Would you recommend BumpNotes to someone who is pregnant, planning a pregnancy, or supporting someone through pregnancy?";
-  }
-  return "Would you recommend BumpNotes to someone who is pregnant or planning a pregnancy?";
 }
