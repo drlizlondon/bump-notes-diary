@@ -17,7 +17,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1 text-sm shrink-0">
-            <Link to="/welcome" hash="features" className="px-3 py-1.5 text-ink-soft hover:text-ink">Features</Link>
+            <Link to="/features" className="px-3 py-1.5 text-ink-soft hover:text-ink">Features</Link>
             <Link to="/privacy" className="px-3 py-1.5 text-ink-soft hover:text-ink">Privacy</Link>
             <Link to="/auth" className="ml-1 px-3.5 py-1.5 rounded-full bg-white border border-border font-medium hover:bg-blush-soft">Sign in</Link>
           </nav>
@@ -41,7 +41,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
         {menuOpen && (
           <div className="md:hidden border-t border-border bg-white">
             <div className="max-w-[1200px] mx-auto px-4 py-2 flex flex-col">
-              <Link to="/welcome" hash="features" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Features</Link>
+              <Link to="/features" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Features</Link>
               <Link to="/privacy" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Privacy</Link>
               <Link to="/contact" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Get in contact</Link>
 
