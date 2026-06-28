@@ -10,10 +10,8 @@ export function PublicShell({ children }: { children: ReactNode }) {
           <Link to="/welcome" aria-label="BumpNotes home" className="flex items-center">
             <LogoWordmark className="h-9 w-auto" />
           </Link>
-          <nav className="flex items-center gap-1 sm:gap-3 text-sm">
-            <Link to="/demo" className="hidden sm:inline px-2 py-1 text-ink-soft hover:text-ink">Preview</Link>
-            <Link to="/contact" className="hidden sm:inline px-2 py-1 text-ink-soft hover:text-ink">Contact</Link>
-            <Link to="/auth" className="px-3 py-1.5 rounded-full bg-white border border-border text-sm font-medium">Sign in</Link>
+          <nav className="flex items-center gap-2 text-sm">
+            <Link to="/auth" className="px-3.5 py-1.5 rounded-full bg-white border border-border text-sm font-medium hover:bg-blush-soft">Sign in</Link>
           </nav>
         </div>
       </header>
