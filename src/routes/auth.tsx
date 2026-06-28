@@ -34,8 +34,8 @@ function AuthPage() {
   async function onEmail(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) return;
-    if (mode === "signup" && !acceptTerms) {
-      toast.error("Please accept the Privacy Policy and Terms to create an account.");
+    if (mode === "signup" && (!acceptTerms || !acceptPrivacy)) {
+      toast.error("Please confirm both the Terms of Use and Privacy Policy to create an account.");
       return;
     }
     setBusy(true);
