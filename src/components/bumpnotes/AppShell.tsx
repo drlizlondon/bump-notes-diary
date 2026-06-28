@@ -10,6 +10,7 @@ import { LogoIcon } from "./Logo";
 import { useT } from "@/lib/bumpnotes/i18n";
 
 export function AppShell({ children, hideNav = false, right }: { children: ReactNode; hideNav?: boolean; right?: ReactNode }) {
+  const tester = useTester();
   return (
     <>
       <TesterBanner />
@@ -24,7 +25,7 @@ export function AppShell({ children, hideNav = false, right }: { children: React
         <aside className="min-w-0">{right ?? <DefaultAside />}</aside>
       </div>
 
-      <FeedbackButton />
+      {tester ? <TesterFeedbackButton variant="floating" /> : <FeedbackButton />}
     </>
   );
 }
