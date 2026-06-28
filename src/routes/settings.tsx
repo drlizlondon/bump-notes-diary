@@ -2,6 +2,7 @@ import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButto
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
 import { formatUKDateTime } from "@/lib/bumpnotes/gestation";
@@ -10,6 +11,7 @@ import { useT } from "@/lib/bumpnotes/i18n";
 import { useSyncSnapshot, signOut } from "@/lib/bumpnotes/sync";
 import { supabase } from "@/integrations/supabase/client";
 import { useTester, exitTesterMode } from "@/lib/bumpnotes/tester";
+import { deleteOwnAccount } from "@/lib/bumpnotes/admin.functions";
 
 
 export const Route = createFileRoute("/settings")({
@@ -27,6 +29,7 @@ function SettingsPage() {
   const tester = useTester();
   const navigate = useNavigate();
   const { status, email, userId } = useSyncSnapshot();
+  const deleteOwnAccountFn = useServerFn(deleteOwnAccount);
 
 
   const deleted = useMemo(
@@ -60,13 +63,10 @@ function SettingsPage() {
     if (!userId) return;
     if (!confirmDeleteAccount) { setConfirmDeleteAccount(true); return; }
     try {
-      // Remove cloud data first
-      await supabase.from("bumpnotes_state").delete().eq("user_id", userId);
-      await supabase.from("profiles").delete().eq("id", userId);
-      // Sign out (full deletion of auth.users requires a server function)
-      await signOut();
+      await deleteOwnAccountFn({ data: undefined } as never);
+      await supabase.auth.signOut();
       store.clearAll();
-      toast.success("Your record and profile were deleted. Sign in is now disabled until your account is fully removed by our team.");
+      toast.success("Your account and all BumpNotes data have been permanently deleted.");
       navigate({ to: "/welcome" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not complete account deletion.");

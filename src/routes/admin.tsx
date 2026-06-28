@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { Shield, Plus, Copy, Power, Download, RefreshCcw, MessageSquareHeart, Trash2 } from "lucide-react";
+import { Shield, Plus, Copy, Power, Download, RefreshCcw, MessageSquareHeart, Trash2, Mail, Bug, Users } from "lucide-react";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import {
@@ -10,6 +10,9 @@ import {
   listAccessCodes, generateAccessCodeBatch, createCustomAccessCode,
   setAccessCodeStatus, deleteAccessCode, deleteUnusedAccessCodes,
   listFeedbackResponses, adminDashboardSummary,
+  listContactMessages, deleteContactMessage,
+  listFeedbackSubmissions, deleteFeedbackSubmission,
+  listUserAccounts, deleteUserAccount,
 } from "@/lib/bumpnotes/admin.functions";
 
 export const Route = createFileRoute("/admin")({
@@ -230,10 +233,193 @@ function AdminDashboard() {
 
       <FeedbackPanel feedback={feedback} />
 
+      <ContactMessagesPanel />
+      <FeedbackSubmissionsPanel />
+      <UsersPanel />
+
       <p className="text-xs text-ink-soft pt-4">
         <Link to="/welcome" className="text-primary font-medium">← Back to BumpNotes</Link>
       </p>
     </div>
+  );
+}
+
+function ContactMessagesPanel() {
+  const fetchAll = useServerFn(listContactMessages);
+  const removeOne = useServerFn(deleteContactMessage);
+  const [items, setItems] = useState<Array<{ id: string; created_at: string; name: string | null; email: string | null; message: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function refresh() {
+    setLoading(true);
+    try {
+      const r = await fetchAll({ data: undefined } as never);
+      setItems(r.messages as never);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't load"); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+
+  async function del(id: string) {
+    if (!confirm("Delete this contact message?")) return;
+    try { await removeOne({ data: { id } }); setItems((x) => x.filter((m) => m.id !== id)); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't delete"); }
+  }
+
+  return (
+    <section className="surface-card p-4">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h2 className="font-serif text-xl font-semibold flex items-center gap-2"><Mail className="size-5 text-primary" /> Contact messages</h2>
+        <button onClick={refresh} className="px-2.5 py-1 rounded-full text-xs border border-border hover:bg-blush-soft"><RefreshCcw className="size-3 inline mr-1" />Refresh</button>
+      </div>
+      {loading ? <p className="text-sm text-ink-soft">Loading…</p> : items.length === 0 ? (
+        <p className="text-sm text-ink-soft">No contact messages yet.</p>
+      ) : (
+        <ul className="space-y-2">
+          {items.map((m) => (
+            <li key={m.id} className="rounded-xl border border-border bg-white p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{m.name || "Anonymous"} <span className="text-ink-soft font-normal">· {m.email || "no email"}</span></p>
+                  <p className="text-[11px] text-ink-soft">{new Date(m.created_at).toLocaleString("en-GB")}</p>
+                </div>
+                <button onClick={() => del(m.id)} className="p-1.5 rounded-full hover:bg-blush-soft text-ink-soft" title="Delete"><Trash2 className="size-4" /></button>
+              </div>
+              <p className="text-sm mt-2 whitespace-pre-wrap">{m.message}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function FeedbackSubmissionsPanel() {
+  const fetchAll = useServerFn(listFeedbackSubmissions);
+  const removeOne = useServerFn(deleteFeedbackSubmission);
+  const [items, setItems] = useState<Array<{ id: string; created_at: string; category: string; message: string; reply_email: string | null; is_tester: boolean; page_path: string | null }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function refresh() {
+    setLoading(true);
+    try {
+      const r = await fetchAll({ data: undefined } as never);
+      setItems(r.submissions as never);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't load"); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+
+  async function del(id: string) {
+    if (!confirm("Delete this feedback submission?")) return;
+    try { await removeOne({ data: { id } }); setItems((x) => x.filter((m) => m.id !== id)); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't delete"); }
+  }
+
+  return (
+    <section className="surface-card p-4">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h2 className="font-serif text-xl font-semibold flex items-center gap-2"><Bug className="size-5 text-primary" /> Feedback submissions</h2>
+        <button onClick={refresh} className="px-2.5 py-1 rounded-full text-xs border border-border hover:bg-blush-soft"><RefreshCcw className="size-3 inline mr-1" />Refresh</button>
+      </div>
+      {loading ? <p className="text-sm text-ink-soft">Loading…</p> : items.length === 0 ? (
+        <p className="text-sm text-ink-soft">No in-app feedback yet.</p>
+      ) : (
+        <ul className="space-y-2">
+          {items.map((m) => (
+            <li key={m.id} className="rounded-xl border border-border bg-white p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">
+                    <span className="inline-block px-2 py-0.5 rounded-full bg-blush-soft text-[11px] mr-2">{m.category}</span>
+                    {m.is_tester && <span className="inline-block px-2 py-0.5 rounded-full bg-sage/20 text-[11px] mr-2">Tester</span>}
+                    {m.reply_email || "no reply email"}
+                  </p>
+                  <p className="text-[11px] text-ink-soft">{new Date(m.created_at).toLocaleString("en-GB")} · {m.page_path || "-"}</p>
+                </div>
+                <button onClick={() => del(m.id)} className="p-1.5 rounded-full hover:bg-blush-soft text-ink-soft" title="Delete"><Trash2 className="size-4" /></button>
+              </div>
+              <p className="text-sm mt-2 whitespace-pre-wrap">{m.message}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function UsersPanel() {
+  const fetchAll = useServerFn(listUserAccounts);
+  const removeOne = useServerFn(deleteUserAccount);
+  const [items, setItems] = useState<Array<{ id: string; email: string | null; created_at: string; last_sign_in_at: string | null; provider: string; is_tester: boolean; display_name: string | null; roles: string[] }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function refresh() {
+    setLoading(true);
+    try {
+      const r = await fetchAll({ data: undefined } as never);
+      setItems(r.users as never);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't load"); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+
+  async function del(id: string, email: string | null) {
+    if (!confirm(`Permanently delete ${email ?? id} and all their BumpNotes data?\n\nThis cannot be undone.`)) return;
+    try {
+      await removeOne({ data: { userId: id } });
+      setItems((x) => x.filter((m) => m.id !== id));
+      toast.success("Account deleted");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't delete"); }
+  }
+
+  return (
+    <section className="surface-card p-4">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h2 className="font-serif text-xl font-semibold flex items-center gap-2"><Users className="size-5 text-primary" /> User accounts</h2>
+        <button onClick={refresh} className="px-2.5 py-1 rounded-full text-xs border border-border hover:bg-blush-soft"><RefreshCcw className="size-3 inline mr-1" />Refresh</button>
+      </div>
+      {loading ? <p className="text-sm text-ink-soft">Loading…</p> : items.length === 0 ? (
+        <p className="text-sm text-ink-soft">No users yet.</p>
+      ) : (
+        <div className="overflow-x-auto -mx-1">
+          <table className="w-full text-sm">
+            <thead className="text-[11px] uppercase tracking-wide text-ink-soft">
+              <tr className="border-b border-border">
+                <th className="text-left py-2 px-1 font-semibold">Email</th>
+                <th className="text-left py-2 px-1 font-semibold">Provider</th>
+                <th className="text-left py-2 px-1 font-semibold">Created</th>
+                <th className="text-left py-2 px-1 font-semibold">Last sign-in</th>
+                <th className="text-left py-2 px-1 font-semibold">Roles</th>
+                <th className="text-right py-2 px-1 font-semibold">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((u) => (
+                <tr key={u.id} className="border-b border-border/60">
+                  <td className="py-2 px-1">
+                    <p className="font-medium">{u.email ?? "—"}</p>
+                    {u.display_name && <p className="text-[11px] text-ink-soft">{u.display_name}</p>}
+                  </td>
+                  <td className="py-2 px-1 text-ink-soft">{u.provider}</td>
+                  <td className="py-2 px-1 text-ink-soft">{new Date(u.created_at).toLocaleDateString("en-GB")}</td>
+                  <td className="py-2 px-1 text-ink-soft">{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-GB") : "—"}</td>
+                  <td className="py-2 px-1">
+                    {u.is_tester && <span className="inline-block px-1.5 py-0.5 rounded-full bg-sage/20 text-[10px] mr-1">Tester</span>}
+                    {u.roles.map((r) => (
+                      <span key={r} className="inline-block px-1.5 py-0.5 rounded-full bg-blush-soft text-[10px] mr-1">{r}</span>
+                    ))}
+                  </td>
+                  <td className="py-2 px-1 text-right">
+                    <button onClick={() => del(u.id, u.email)} className="p-1.5 rounded-full hover:bg-blush-soft text-ink-soft" title="Delete user"><Trash2 className="size-4" /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 

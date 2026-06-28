@@ -24,6 +24,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -33,8 +34,8 @@ function AuthPage() {
   async function onEmail(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) return;
-    if (mode === "signup" && !acceptTerms) {
-      toast.error("Please accept the Privacy Policy and Terms to create an account.");
+    if (mode === "signup" && (!acceptTerms || !acceptPrivacy)) {
+      toast.error("Please confirm both the Terms of Use and Privacy Policy to create an account.");
       return;
     }
     setBusy(true);
@@ -69,8 +70,8 @@ function AuthPage() {
   }
 
   async function onGoogle() {
-    if (mode === "signup" && !acceptTerms) {
-      toast.error("Please accept the Privacy Policy and Terms to continue.");
+    if (mode === "signup" && (!acceptTerms || !acceptPrivacy)) {
+      toast.error("Please confirm both the Terms of Use and Privacy Policy to continue.");
       return;
     }
     setBusy(true);
@@ -131,19 +132,36 @@ function AuthPage() {
               />
 
               {mode === "signup" && (
-                <label className="flex items-start gap-2 text-xs text-ink-soft cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
-                    className="mt-0.5 size-4 accent-[var(--primary)] shrink-0"
-                  />
-                  <span>
-                    I agree to the{" "}
-                    <Link to="/privacy" target="_blank" rel="noopener" className="text-primary font-medium underline">Privacy Policy</Link> and{" "}
-                    <Link to="/terms" target="_blank" rel="noopener" className="text-primary font-medium underline">Terms of Use</Link>.
-                  </span>
-                </label>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-2 text-xs text-ink-soft cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptTerms}
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      className="mt-0.5 size-4 accent-[var(--primary)] shrink-0"
+                    />
+                    <span>
+                      I agree to the{" "}
+                      <Link to="/terms" target="_blank" rel="noopener" className="text-primary font-medium underline">Terms of Use</Link>.
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-2 text-xs text-ink-soft cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptPrivacy}
+                      onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                      className="mt-0.5 size-4 accent-[var(--primary)] shrink-0"
+                    />
+                    <span>
+                      I have read the{" "}
+                      <Link to="/privacy" target="_blank" rel="noopener" className="text-primary font-medium underline">Privacy Policy</Link>{" "}
+                      and understand how my data will be used.
+                    </span>
+                  </label>
+                  <p className="text-[11px] text-ink-soft leading-relaxed pt-1">
+                    BumpNotes helps you organise your pregnancy notes and questions. It is not a medical device and does not replace your midwife, doctor or emergency care. Do not use it for urgent symptoms.
+                  </p>
+                </div>
               )}
 
               <button
