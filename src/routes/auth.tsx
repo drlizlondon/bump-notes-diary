@@ -70,8 +70,8 @@ function AuthPage() {
   }
 
   async function onGoogle() {
-    if (mode === "signup" && !acceptTerms) {
-      toast.error("Please accept the Privacy Policy and Terms to continue.");
+    if (mode === "signup" && (!acceptTerms || !acceptPrivacy)) {
+      toast.error("Please confirm both the Terms of Use and Privacy Policy to continue.");
       return;
     }
     setBusy(true);
