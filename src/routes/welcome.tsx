@@ -197,7 +197,7 @@ function SummaryRow({ icon, title, children }: { icon: React.ReactNode; title: s
 function FeaturesSection() {
   return (
     <section className="px-4 sm:px-8 pb-8 sm:pb-16">
-      <div className="max-w-[1120px] mx-auto grid grid-cols-3 gap-2.5 sm:gap-5">
+      <div className="max-w-[1120px] mx-auto grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-5">
         <FeatureCard icon={<Lock className="size-4 sm:size-5" />} title="Record privately" body="Add notes, symptoms and photos as you go." />
         <FeatureCard icon={<HelpCircle className="size-4 sm:size-5" />} title="Prepare easily" body="Keep questions and appointments in one place." />
         <FeatureCard icon={<Share2 className="size-4 sm:size-5" />} title="Share selectively" body="Create a clear summary for your care team." />
@@ -208,10 +208,12 @@ function FeaturesSection() {
 
 function FeatureCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
   return (
-    <div className="surface-card p-3 sm:p-5 text-center">
-      <span className="size-9 sm:size-10 mx-auto rounded-full bg-blush-soft grid place-items-center text-primary">{icon}</span>
-      <h3 className="mt-2 sm:mt-3 font-serif text-[13px] sm:text-base font-semibold leading-tight">{title}</h3>
-      <p className="text-[11.5px] sm:text-sm text-ink-soft mt-1 leading-snug">{body}</p>
+    <div className="surface-card p-3.5 sm:p-5 flex sm:block items-center gap-3 sm:text-center">
+      <span className="size-10 sm:size-10 shrink-0 sm:mx-auto rounded-full bg-blush-soft grid place-items-center text-primary">{icon}</span>
+      <div className="min-w-0 sm:mt-0">
+        <h3 className="font-serif text-[15px] sm:mt-3 sm:text-base font-semibold leading-tight">{title}</h3>
+        <p className="text-[12.5px] sm:text-sm text-ink-soft mt-0.5 sm:mt-1 leading-snug">{body}</p>
+      </div>
     </div>
   );
 }
