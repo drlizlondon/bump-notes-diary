@@ -132,19 +132,36 @@ function AuthPage() {
               />
 
               {mode === "signup" && (
-                <label className="flex items-start gap-2 text-xs text-ink-soft cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
-                    className="mt-0.5 size-4 accent-[var(--primary)] shrink-0"
-                  />
-                  <span>
-                    I agree to the{" "}
-                    <Link to="/privacy" target="_blank" rel="noopener" className="text-primary font-medium underline">Privacy Policy</Link> and{" "}
-                    <Link to="/terms" target="_blank" rel="noopener" className="text-primary font-medium underline">Terms of Use</Link>.
-                  </span>
-                </label>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-2 text-xs text-ink-soft cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptTerms}
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      className="mt-0.5 size-4 accent-[var(--primary)] shrink-0"
+                    />
+                    <span>
+                      I agree to the{" "}
+                      <Link to="/terms" target="_blank" rel="noopener" className="text-primary font-medium underline">Terms of Use</Link>.
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-2 text-xs text-ink-soft cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptPrivacy}
+                      onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                      className="mt-0.5 size-4 accent-[var(--primary)] shrink-0"
+                    />
+                    <span>
+                      I have read the{" "}
+                      <Link to="/privacy" target="_blank" rel="noopener" className="text-primary font-medium underline">Privacy Policy</Link>{" "}
+                      and understand how my data will be used.
+                    </span>
+                  </label>
+                  <p className="text-[11px] text-ink-soft leading-relaxed pt-1">
+                    BumpNotes helps you organise your pregnancy notes and questions. It is not a medical device and does not replace your midwife, doctor or emergency care. Do not use it for urgent symptoms.
+                  </p>
+                </div>
               )}
 
               <button
