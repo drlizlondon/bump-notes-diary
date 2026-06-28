@@ -18,7 +18,11 @@ export const verifyTesterPassword = createServerFn({ method: "POST" })
       // If unset, tester mode is disabled.
       return { ok: false as const, reason: "disabled" as const };
     }
-    if (!data.password) return { ok: false as const, reason: "empty" as const };
-    if (passwordMatches(data.password, expected)) return { ok: true as const };
+    const submitted = data.password.trim();
+    if (!submitted) return { ok: false as const, reason: "empty" as const };
+    // Case-insensitive comparison so access codes are forgiving.
+    if (passwordMatches(submitted.toLowerCase(), expected.trim().toLowerCase())) {
+      return { ok: true as const };
+    }
     return { ok: false as const, reason: "wrong" as const };
   });
