@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
-import { ArrowRight, Lock, Share2, Stethoscope } from "lucide-react";
+import { ArrowRight, Lock } from "lucide-react";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { useTester } from "@/lib/bumpnotes/tester";
 import { useAppState } from "@/lib/bumpnotes/store";
