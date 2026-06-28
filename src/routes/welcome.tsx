@@ -147,8 +147,6 @@ function SummaryShowcase() {
       } else {
         // second half: scroll back up (1 -> 0)
         const local = (p - 0.5) / 0.5;
-        eased = 1 - local; // linear back for snapier return, or ease
-        // Actually keep ease-in-out for smooth return
         eased = Math.pow(1 - local, 3);
       }
       el.scrollTop = reveal * eased;
