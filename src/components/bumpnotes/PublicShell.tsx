@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { LogoWordmark } from "./Logo";
+import { LogoIcon, LogoWordmark } from "./Logo";
 
 export function PublicShell({ children }: { children: ReactNode }) {
   return (
