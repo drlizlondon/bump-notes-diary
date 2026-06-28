@@ -72,7 +72,7 @@ function Hero() {
           </h1>
 
           <p className="mt-5 text-[15.5px] sm:text-lg text-ink-soft leading-relaxed">
-            Record symptoms, appointments and questions privately. Generate a clear summary to share whenever you need it.
+            Capture symptoms, thoughts, questions and advice as they happen. Keep everything together in one private place, then create a clear summary whenever you need it.
           </p>
 
           <Link
