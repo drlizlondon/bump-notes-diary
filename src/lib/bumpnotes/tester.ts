@@ -18,11 +18,13 @@ export function getTesterSessionId(): string | null {
   try { return window.localStorage.getItem(SESSION_KEY); } catch { return null; }
 }
 
-export function enterTesterMode() {
+export function enterTesterMode(sessionId?: string | null) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(KEY, "1");
-    if (!window.localStorage.getItem(SESSION_KEY)) {
+    if (sessionId) {
+      window.localStorage.setItem(SESSION_KEY, sessionId);
+    } else if (!window.localStorage.getItem(SESSION_KEY)) {
       window.localStorage.setItem(SESSION_KEY, `tester-${crypto.randomUUID()}`);
     }
   } catch { /* ignore */ }
