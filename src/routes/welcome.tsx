@@ -198,39 +198,3 @@ function SummarySkeleton() {
   );
 }
 
-function Features() {
-  const cards = useMemo(() => ([
-    {
-      icon: <Lock className="size-5" />,
-      title: "Private by default",
-      body: "Your information stays yours.",
-    },
-    {
-      icon: <Share2 className="size-5" />,
-      title: "Share your summary",
-      body: "Generate a clear report to share with your midwife, GP or maternity team.",
-    },
-    {
-      icon: <Stethoscope className="size-5" />,
-      title: "Built for appointments",
-      body: "Keep symptoms, questions and care notes organised so they are easier to discuss.",
-    },
-  ]), []);
-
-  return (
-    <section id="features" className="px-5 sm:px-8 pb-20 sm:pb-28 scroll-mt-20">
-      <div className="max-w-[1120px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5">
-        {cards.map((c) => (
-          <div key={c.title} className="rounded-2xl bg-white border border-border p-5 sm:p-6">
-            <span className="inline-grid place-items-center size-10 rounded-full bg-blush-soft text-primary">{c.icon}</span>
-            <h3 className="mt-4 font-serif text-lg font-semibold leading-tight">{c.title}</h3>
-            <p className="mt-1.5 text-sm text-ink-soft leading-relaxed">{c.body}</p>
-          </div>
-        ))}
-      </div>
-      <p className="mt-10 max-w-[640px] mx-auto text-center text-[12px] text-ink-soft leading-relaxed">
-        BumpNotes is for personal organisation and support, not medical advice.
-      </p>
-    </section>
-  );
-}
