@@ -1,11 +1,15 @@
 import { useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { LogoBadge } from "./Logo";
+import { TesterPasswordModal } from "./TesterPasswordModal";
 
 
 export function PublicShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showTesterModal, setShowTesterModal] = useState(false);
+  const location = useLocation();
+  const isWelcome = location.pathname === "/welcome";
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
       <header className="lg:sticky lg:top-0 z-20 bg-white/85 backdrop-blur border-b border-border print:hidden">
@@ -61,9 +65,19 @@ export function PublicShell({ children }: { children: ReactNode }) {
             <Link to="/privacy" className="hover:text-ink">Privacy</Link>
             <Link to="/terms" className="hover:text-ink">Terms</Link>
             <Link to="/contact" className="hover:text-ink">Get in contact</Link>
+            {isWelcome && (
+              <button
+                type="button"
+                onClick={() => setShowTesterModal(true)}
+                className="hover:text-primary hover:underline transition-colors"
+              >
+                Testing BumpNotes? Enter tester access code
+              </button>
+            )}
           </div>
         </div>
       </footer>
+      {showTesterModal && <TesterPasswordModal onClose={() => setShowTesterModal(false)} />}
     </div>
   );
 }
