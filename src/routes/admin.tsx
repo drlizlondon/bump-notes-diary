@@ -127,6 +127,8 @@ function AdminDashboard() {
   const generateBatch = useServerFn(generateAccessCodeBatch);
   const createCustom = useServerFn(createCustomAccessCode);
   const setStatus = useServerFn(setAccessCodeStatus);
+  const deleteCode = useServerFn(deleteAccessCode);
+  const deleteUnused = useServerFn(deleteUnusedAccessCodes);
 
   const [codes, setCodes] = useState<CodeRow[]>([]);
   const [feedback, setFeedback] = useState<FeedbackRow[]>([]);
@@ -161,28 +163,26 @@ function AdminDashboard() {
     return { total, active, used, unused, fbDone, completion };
   }, [codes]);
 
-  const breakdown = useMemo(() => {
-    const groups: Record<string, number> = { yes_to_both: 0, yes_to_either: 0, no_to_both: 0 };
-    for (const r of feedback) groups[r.feedback_route] = (groups[r.feedback_route] ?? 0) + 1;
-    const q = (key: "q1_answer" | "q2_answer" | "q3_answer") => {
-      const counts: Record<string, number> = {};
-      let n = 0;
-      for (const r of feedback) {
-        const v = r[key];
-        if (!v) continue;
-        counts[v] = (counts[v] ?? 0) + 1;
-        n += 1;
-      }
-      return { counts, n };
-    };
-    return { groups, q1: q("q1_answer"), q2: q("q2_answer"), q3: q("q3_answer") };
-  }, [feedback]);
-
   return (
     <div className="mt-6 space-y-8">
       <div className="flex flex-wrap items-center gap-2">
         <button onClick={refresh} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium bg-white">
           <RefreshCcw className="size-3.5" /> Refresh
+        </button>
+        <button
+          onClick={async () => {
+            if (!confirm("Delete every unused code (codes never claimed by a tester)? This cannot be undone.")) return;
+            try {
+              const res = await deleteUnused({ data: undefined } as never);
+              toast.success(`Deleted ${res.deleted} unused code(s)`);
+              refresh();
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : "Couldn't delete");
+            }
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium bg-white text-coral"
+        >
+          <Trash2 className="size-3.5" /> Delete all unused
         </button>
         <span className="text-xs text-ink-soft">{loading ? "Loading…" : `${sessionCount} tester sessions recorded`}</span>
       </div>
@@ -216,9 +216,19 @@ function AdminDashboard() {
           await setStatus({ data: { id, status: next } });
           refresh();
         }}
+        onDelete={async (id, code) => {
+          if (!confirm(`Delete code ${code}? Any tester sessions and feedback linked to this code will also be removed. This cannot be undone.`)) return;
+          try {
+            await deleteCode({ data: { id } });
+            toast.success(`Deleted ${code}`);
+            refresh();
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : "Couldn't delete");
+          }
+        }}
       />
 
-      <FeedbackPanel feedback={feedback} breakdown={breakdown} />
+      <FeedbackPanel feedback={feedback} />
 
       <p className="text-xs text-ink-soft pt-4">
         <Link to="/welcome" className="text-primary font-medium">← Back to BumpNotes</Link>
