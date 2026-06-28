@@ -4,6 +4,8 @@ import { Home, ClipboardList, FileText, Heart, Baby, Settings as SettingsIcon } 
 import { BottomNav } from "./BottomNav";
 import { FeedbackButton } from "./FeedbackButton";
 import { TesterBanner } from "./TesterBanner";
+import { TesterFeedbackButton } from "./TesterFeedbackButton";
+import { useTester } from "@/lib/bumpnotes/tester";
 import { LogoIcon } from "./Logo";
 import { useT } from "@/lib/bumpnotes/i18n";
 
