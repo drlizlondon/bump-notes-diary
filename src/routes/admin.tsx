@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { Shield, Plus, Copy, Power, Download, RefreshCcw, MessageSquareHeart, Trash2 } from "lucide-react";
+import { Shield, Plus, Copy, Power, Download, RefreshCcw, MessageSquareHeart, Trash2, Mail, Bug, Users } from "lucide-react";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import {
@@ -10,6 +10,9 @@ import {
   listAccessCodes, generateAccessCodeBatch, createCustomAccessCode,
   setAccessCodeStatus, deleteAccessCode, deleteUnusedAccessCodes,
   listFeedbackResponses, adminDashboardSummary,
+  listContactMessages, deleteContactMessage,
+  listFeedbackSubmissions, deleteFeedbackSubmission,
+  listUserAccounts, deleteUserAccount,
 } from "@/lib/bumpnotes/admin.functions";
 
 export const Route = createFileRoute("/admin")({
