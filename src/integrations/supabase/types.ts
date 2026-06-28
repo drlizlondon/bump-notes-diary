@@ -62,6 +62,63 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_responses: {
+        Row: {
+          access_code_id: string | null
+          created_at: string
+          feedback_route: string
+          id: string
+          improvement_text: string | null
+          pregnancy_identity_answer: string
+          professional_identity_answer: string
+          q1_answer: string | null
+          q2_answer: string | null
+          q3_answer: string | null
+          tester_session_id: string | null
+        }
+        Insert: {
+          access_code_id?: string | null
+          created_at?: string
+          feedback_route: string
+          id?: string
+          improvement_text?: string | null
+          pregnancy_identity_answer: string
+          professional_identity_answer: string
+          q1_answer?: string | null
+          q2_answer?: string | null
+          q3_answer?: string | null
+          tester_session_id?: string | null
+        }
+        Update: {
+          access_code_id?: string | null
+          created_at?: string
+          feedback_route?: string
+          id?: string
+          improvement_text?: string | null
+          pregnancy_identity_answer?: string
+          professional_identity_answer?: string
+          q1_answer?: string | null
+          q2_answer?: string | null
+          q3_answer?: string | null
+          tester_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_responses_access_code_id_fkey"
+            columns: ["access_code_id"]
+            isOneToOne: false
+            referencedRelation: "tester_access_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_responses_tester_session_id_fkey"
+            columns: ["tester_session_id"]
+            isOneToOne: false
+            referencedRelation: "tester_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback_submissions: {
         Row: {
           app_version: string | null
@@ -140,15 +197,134 @@ export type Database = {
         }
         Relationships: []
       }
+      tester_access_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          feedback_submitted_at: string | null
+          first_used_at: string | null
+          id: string
+          label: string | null
+          last_used_at: string | null
+          notes: string | null
+          status: string
+          updated_at: string
+          use_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          feedback_submitted_at?: string | null
+          first_used_at?: string | null
+          id?: string
+          label?: string | null
+          last_used_at?: string | null
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          use_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          feedback_submitted_at?: string | null
+          first_used_at?: string | null
+          id?: string
+          label?: string | null
+          last_used_at?: string | null
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          use_count?: number
+        }
+        Relationships: []
+      }
+      tester_sessions: {
+        Row: {
+          access_code_id: string
+          browser: string | null
+          created_at: string
+          device_type: string | null
+          feedback_completed_at: string | null
+          feedback_started_at: string | null
+          id: string
+          last_seen_at: string
+          pages_viewed_count: number
+          started_at: string
+        }
+        Insert: {
+          access_code_id: string
+          browser?: string | null
+          created_at?: string
+          device_type?: string | null
+          feedback_completed_at?: string | null
+          feedback_started_at?: string | null
+          id?: string
+          last_seen_at?: string
+          pages_viewed_count?: number
+          started_at?: string
+        }
+        Update: {
+          access_code_id?: string
+          browser?: string | null
+          created_at?: string
+          device_type?: string | null
+          feedback_completed_at?: string | null
+          feedback_started_at?: string | null
+          id?: string
+          last_seen_at?: string
+          pages_viewed_count?: number
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tester_sessions_access_code_id_fkey"
+            columns: ["access_code_id"]
+            isOneToOne: false
+            referencedRelation: "tester_access_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -275,6 +451,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin"],
+    },
   },
 } as const
