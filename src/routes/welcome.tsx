@@ -63,40 +63,44 @@ function Welcome() {
 
 function HeroSection() {
   return (
-    <section className="px-4 sm:px-8 pt-4 sm:pt-10 pb-4 sm:pb-10 bg-gradient-to-b from-blush-soft/60 to-transparent">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-[1.15fr_0.85fr] gap-3 sm:gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 items-center">
-        <div className="text-left min-w-0">
-          <h1 className="font-serif text-[24px] sm:text-[40px] lg:text-[52px] font-semibold leading-[1.05] tracking-tight">
-            Your pregnancy,<br /> clearly organised<span className="text-primary">.</span>
-          </h1>
-          <p className="mt-2.5 sm:mt-5 text-[13px] sm:text-base lg:text-lg text-ink-soft leading-snug sm:leading-relaxed max-w-[480px]">
-            Record symptoms, appointments and questions privately. Share a clear summary when you need it.
-          </p>
-        </div>
-
-        <div className="justify-self-end w-full max-w-[150px] sm:max-w-[320px] lg:max-w-none">
-          <SilhouetteIllustration className="w-full h-auto" />
-        </div>
+    <section className="relative px-4 sm:px-8 pt-5 sm:pt-10 pb-5 sm:pb-10 bg-gradient-to-b from-blush-soft/60 to-transparent overflow-hidden">
+      {/* Mobile: faint decorative silhouette in background */}
+      <div className="pointer-events-none absolute -right-10 top-0 bottom-0 w-[180px] opacity-[0.07] sm:hidden flex items-center" aria-hidden>
+        <SilhouetteIllustration className="w-full h-auto" />
       </div>
 
-      <div className="max-w-[1200px] mx-auto mt-3 sm:mt-6">
-        <div className="flex items-center gap-3">
-          <span className="size-9 sm:size-11 shrink-0 rounded-full bg-blush-soft grid place-items-center text-primary">
-            <Lock className="size-4 sm:size-5" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-[13.5px] sm:text-[15px] font-semibold text-ink leading-tight">Private by default.</p>
-            <p className="text-[12px] sm:text-sm text-ink-soft leading-tight">Share only what you choose.</p>
+      <div className="relative max-w-[1200px] mx-auto sm:grid sm:grid-cols-[1.05fr_0.95fr] sm:gap-10 sm:items-center">
+        <div className="text-left min-w-0">
+          <h1 className="font-serif text-[30px] sm:text-[40px] lg:text-[52px] font-semibold leading-[1.08] tracking-tight">
+            Your pregnancy, clearly organised<span className="text-primary">.</span>
+          </h1>
+          <p className="mt-3 sm:mt-5 text-[14.5px] sm:text-base lg:text-lg text-ink-soft leading-relaxed max-w-[520px]">
+            Record symptoms, appointments and questions privately. Share a clear summary when you need it.
+          </p>
+
+          <div className="mt-4 sm:mt-6 flex items-center gap-3">
+            <span className="size-10 sm:size-11 shrink-0 rounded-full bg-blush-soft grid place-items-center text-primary">
+              <Lock className="size-4 sm:size-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[14px] sm:text-[15px] font-semibold text-ink leading-tight">Private by default.</p>
+              <p className="text-[12.5px] sm:text-sm text-ink-soft leading-tight">Share only what you choose.</p>
+            </div>
           </div>
+
+          <Link
+            to="/onboarding"
+            className="mt-4 sm:mt-6 w-full sm:w-auto inline-flex items-center justify-center gap-3 px-5 sm:px-7 py-3.5 sm:py-3 rounded-2xl sm:rounded-full bg-primary text-primary-foreground text-[15px] sm:text-base font-semibold shadow-sm shadow-primary/20 hover:opacity-95"
+          >
+            <span>Start your pregnancy record</span>
+            <ArrowRight className="size-5 shrink-0" />
+          </Link>
         </div>
 
-        <Link
-          to="/onboarding"
-          className="mt-3 sm:mt-5 w-full sm:w-auto inline-flex items-center justify-between sm:justify-center gap-3 px-5 sm:px-7 py-3 sm:py-3 rounded-2xl sm:rounded-full bg-primary text-primary-foreground text-[15px] sm:text-base font-semibold shadow-sm shadow-primary/20 hover:opacity-95"
-        >
-          <span>Start your pregnancy record</span>
-          <ArrowRight className="size-5 shrink-0" />
-        </Link>
+        {/* Desktop/tablet silhouette */}
+        <div className="hidden sm:block justify-self-end w-full max-w-[360px] lg:max-w-[440px]">
+          <SilhouetteIllustration className="w-full h-auto" />
+        </div>
       </div>
     </section>
   );
