@@ -106,6 +106,7 @@ function Index() {
               <FeelingPanelBody />
             </ActionCard>
           </div>
+          <TesterFeedbackButton />
         </section>
       </AppShell>
     </>
