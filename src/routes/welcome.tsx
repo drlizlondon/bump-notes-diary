@@ -68,11 +68,12 @@ function Hero() {
           </span>
 
           <h1 className="mt-5 font-serif text-[34px] sm:text-[44px] lg:text-[56px] font-semibold leading-[1.05] tracking-tight text-balance text-ink">
-            The pregnancy record that helps you feel <span className="text-primary">organised, informed and confident</span><span className="text-primary">.</span>
+            Everything about your pregnancy.<br className="hidden sm:block" />
+            <span className="text-primary">Ready when you need it.</span>
           </h1>
 
-          <p className="mt-5 text-[15.5px] sm:text-lg text-ink-soft leading-relaxed">
-            Capture symptoms, thoughts, questions and advice as they happen. Keep everything together in one private place, then create a clear summary whenever you need it.
+          <p className="mt-5 text-[15.5px] sm:text-lg text-ink-soft leading-[1.7] max-w-[520px]">
+            Capture symptoms, thoughts, questions and advice as they happen. Keep everything about your pregnancy together in one private place, then create a clear summary of what you want to share whenever you need it.
           </p>
 
           <Link
