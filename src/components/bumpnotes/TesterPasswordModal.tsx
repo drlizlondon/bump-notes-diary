@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { FlaskConical, X, Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
-import { verifyTesterPassword } from "@/lib/bumpnotes/tester-auth.functions";
+import { verifyTesterCode } from "@/lib/bumpnotes/tester-feedback.functions";
 import { enterTesterMode } from "@/lib/bumpnotes/tester";
 
 export function TesterPasswordModal({ onClose }: { onClose: () => void }) {
-  const verify = useServerFn(verifyTesterPassword);
+  const verify = useServerFn(verifyTesterCode);
   const navigate = useNavigate();
   const [code, setCode] = useState("");
   const [reveal, setReveal] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stage, setStage] = useState<"code" | "welcome">("code");
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,11 +22,13 @@ export function TesterPasswordModal({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      const res = await verify({ data: { password: trimmed } });
+      const ua = typeof navigator !== "undefined" ? navigator.userAgent : null;
+      const res = await verify({ data: { code: trimmed, userAgent: ua } });
       if (res.ok) {
+        setSessionId(res.sessionId);
         setStage("welcome");
-      } else if (res.reason === "disabled") {
-        setError("Tester mode isn't available right now. Please message Lizzie.");
+      } else if (res.reason === "inactive") {
+        setError("That code has been turned off. Please message Lizzie.");
       } else {
         setError("That code didn't work. Please check it or message Lizzie for access.");
       }
@@ -38,10 +40,11 @@ export function TesterPasswordModal({ onClose }: { onClose: () => void }) {
   }
 
   function enter() {
-    enterTesterMode();
+    enterTesterMode(sessionId);
     onClose();
     navigate({ to: "/onboarding" });
   }
+
 
   return (
     <div
