@@ -25,8 +25,8 @@ export function TesterBanner() {
     <div className="sticky top-0 z-30 bg-butter-soft border-b border-butter/50 print:hidden">
       <div className="max-w-[1200px] mx-auto px-3 py-2 flex flex-wrap items-center gap-2 text-[12px]">
         <FlaskConical className="size-4 shrink-0" />
-        <span className="font-semibold">Tester mode</span>
-        <span className="text-ink-soft hidden sm:inline">— fake data only. Thanks for helping test!</span>
+        <span className="font-semibold">Tester mode.</span>
+        <span className="text-ink-soft hidden sm:inline">Thanks for helping improve BumpNotes.</span>
         <div className="ml-auto flex gap-1.5">
           <button onClick={reset} className="px-2.5 py-1 rounded-full bg-white border border-border text-[11px] font-medium">
             {confirmReset ? "Tap to confirm" : "Reset"}
