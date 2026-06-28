@@ -63,40 +63,44 @@ function Welcome() {
 
 function HeroSection() {
   return (
-    <section className="px-4 sm:px-8 pt-4 sm:pt-10 pb-4 sm:pb-10 bg-gradient-to-b from-blush-soft/60 to-transparent">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-[1.15fr_0.85fr] gap-3 sm:gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 items-center">
-        <div className="text-left min-w-0">
-          <h1 className="font-serif text-[24px] sm:text-[40px] lg:text-[52px] font-semibold leading-[1.05] tracking-tight">
-            Your pregnancy,<br /> clearly organised<span className="text-primary">.</span>
-          </h1>
-          <p className="mt-2.5 sm:mt-5 text-[13px] sm:text-base lg:text-lg text-ink-soft leading-snug sm:leading-relaxed max-w-[480px]">
-            Record symptoms, appointments and questions privately. Share a clear summary when you need it.
-          </p>
-        </div>
-
-        <div className="justify-self-end w-full max-w-[150px] sm:max-w-[320px] lg:max-w-none">
-          <SilhouetteIllustration className="w-full h-auto" />
-        </div>
+    <section className="relative px-4 sm:px-8 pt-5 sm:pt-10 pb-5 sm:pb-10 bg-gradient-to-b from-blush-soft/60 to-transparent overflow-hidden">
+      {/* Mobile: faint decorative silhouette in background */}
+      <div className="pointer-events-none absolute -right-10 top-0 bottom-0 w-[180px] opacity-[0.07] sm:hidden flex items-center" aria-hidden>
+        <SilhouetteIllustration className="w-full h-auto" />
       </div>
 
-      <div className="max-w-[1200px] mx-auto mt-3 sm:mt-6">
-        <div className="flex items-center gap-3">
-          <span className="size-9 sm:size-11 shrink-0 rounded-full bg-blush-soft grid place-items-center text-primary">
-            <Lock className="size-4 sm:size-5" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-[13.5px] sm:text-[15px] font-semibold text-ink leading-tight">Private by default.</p>
-            <p className="text-[12px] sm:text-sm text-ink-soft leading-tight">Share only what you choose.</p>
+      <div className="relative max-w-[1200px] mx-auto sm:grid sm:grid-cols-[1.05fr_0.95fr] sm:gap-10 sm:items-center">
+        <div className="text-left min-w-0">
+          <h1 className="font-serif text-[30px] sm:text-[40px] lg:text-[52px] font-semibold leading-[1.08] tracking-tight">
+            Your pregnancy, clearly organised<span className="text-primary">.</span>
+          </h1>
+          <p className="mt-3 sm:mt-5 text-[14.5px] sm:text-base lg:text-lg text-ink-soft leading-relaxed max-w-[520px]">
+            Record symptoms, appointments and questions privately. Share a clear summary when you need it.
+          </p>
+
+          <div className="mt-4 sm:mt-6 flex items-center gap-3">
+            <span className="size-10 sm:size-11 shrink-0 rounded-full bg-blush-soft grid place-items-center text-primary">
+              <Lock className="size-4 sm:size-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[14px] sm:text-[15px] font-semibold text-ink leading-tight">Private by default.</p>
+              <p className="text-[12.5px] sm:text-sm text-ink-soft leading-tight">Share only what you choose.</p>
+            </div>
           </div>
+
+          <Link
+            to="/onboarding"
+            className="mt-4 sm:mt-6 w-full sm:w-auto inline-flex items-center justify-center gap-3 px-5 sm:px-7 py-3.5 sm:py-3 rounded-2xl sm:rounded-full bg-primary text-primary-foreground text-[15px] sm:text-base font-semibold shadow-sm shadow-primary/20 hover:opacity-95"
+          >
+            <span>Start your pregnancy record</span>
+            <ArrowRight className="size-5 shrink-0" />
+          </Link>
         </div>
 
-        <Link
-          to="/onboarding"
-          className="mt-3 sm:mt-5 w-full sm:w-auto inline-flex items-center justify-between sm:justify-center gap-3 px-5 sm:px-7 py-3 sm:py-3 rounded-2xl sm:rounded-full bg-primary text-primary-foreground text-[15px] sm:text-base font-semibold shadow-sm shadow-primary/20 hover:opacity-95"
-        >
-          <span>Start your pregnancy record</span>
-          <ArrowRight className="size-5 shrink-0" />
-        </Link>
+        {/* Desktop/tablet silhouette */}
+        <div className="hidden sm:block justify-self-end w-full max-w-[360px] lg:max-w-[440px]">
+          <SilhouetteIllustration className="w-full h-auto" />
+        </div>
       </div>
     </section>
   );
@@ -125,17 +129,8 @@ function SummarySection() {
             <SummaryPreview />
           </div>
 
-          <div className="mt-3 sm:mt-5 grid grid-cols-[auto_1fr] items-center gap-2 sm:gap-3">
-            <div className="text-right">
-              <p className="font-[Caveat] text-primary text-[15px] sm:text-lg leading-tight">
-                Your appointment<br />summary
-              </p>
-              <svg className="ml-auto -mt-1" width="48" height="22" viewBox="0 0 60 24" fill="none" aria-hidden>
-                <path d="M2 4 C 18 18, 38 22, 56 16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="text-primary" fill="none"/>
-                <path d="M50 13 L 56 16 L 52 21" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-primary" fill="none"/>
-              </svg>
-            </div>
-            <div className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-3 rounded-xl sm:rounded-2xl bg-blush-soft text-primary text-sm sm:text-base font-semibold">
+          <div className="mt-4 sm:mt-5 flex justify-center sm:justify-end">
+            <div className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-blush-soft text-primary text-sm sm:text-base font-semibold">
               <Share2 className="size-4" /> Share summary
             </div>
           </div>
@@ -202,7 +197,7 @@ function SummaryRow({ icon, title, children }: { icon: React.ReactNode; title: s
 function FeaturesSection() {
   return (
     <section className="px-4 sm:px-8 pb-8 sm:pb-16">
-      <div className="max-w-[1120px] mx-auto grid grid-cols-3 gap-2.5 sm:gap-5">
+      <div className="max-w-[1120px] mx-auto grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-5">
         <FeatureCard icon={<Lock className="size-4 sm:size-5" />} title="Record privately" body="Add notes, symptoms and photos as you go." />
         <FeatureCard icon={<HelpCircle className="size-4 sm:size-5" />} title="Prepare easily" body="Keep questions and appointments in one place." />
         <FeatureCard icon={<Share2 className="size-4 sm:size-5" />} title="Share selectively" body="Create a clear summary for your care team." />
@@ -213,10 +208,12 @@ function FeaturesSection() {
 
 function FeatureCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
   return (
-    <div className="surface-card p-3 sm:p-5 text-center">
-      <span className="size-9 sm:size-10 mx-auto rounded-full bg-blush-soft grid place-items-center text-primary">{icon}</span>
-      <h3 className="mt-2 sm:mt-3 font-serif text-[13px] sm:text-base font-semibold leading-tight">{title}</h3>
-      <p className="text-[11.5px] sm:text-sm text-ink-soft mt-1 leading-snug">{body}</p>
+    <div className="surface-card p-3.5 sm:p-5 flex sm:block items-center gap-3 sm:text-center">
+      <span className="size-10 sm:size-10 shrink-0 sm:mx-auto rounded-full bg-blush-soft grid place-items-center text-primary">{icon}</span>
+      <div className="min-w-0 sm:mt-0">
+        <h3 className="font-serif text-[15px] sm:mt-3 sm:text-base font-semibold leading-tight">{title}</h3>
+        <p className="text-[12.5px] sm:text-sm text-ink-soft mt-0.5 sm:mt-1 leading-snug">{body}</p>
+      </div>
     </div>
   );
 }
@@ -230,10 +227,9 @@ function FootnoteSection() {
           <span>BumpNotes is for personal organisation and support, not medical advice.</span>
         </p>
         <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
-          <Link to="/demo" className="text-primary font-medium">See a preview</Link>
-          <Link to="/contact" className="text-primary font-medium">Get in contact</Link>
           <Link to="/privacy" className="text-primary font-medium">Privacy</Link>
           <Link to="/terms" className="text-primary font-medium">Terms</Link>
+          <Link to="/contact" className="text-primary font-medium">Get in contact</Link>
         </div>
       </div>
     </section>
