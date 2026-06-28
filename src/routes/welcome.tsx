@@ -227,10 +227,9 @@ function FootnoteSection() {
           <span>BumpNotes is for personal organisation and support, not medical advice.</span>
         </p>
         <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
-          <Link to="/demo" className="text-primary font-medium">See a preview</Link>
-          <Link to="/contact" className="text-primary font-medium">Get in contact</Link>
           <Link to="/privacy" className="text-primary font-medium">Privacy</Link>
           <Link to="/terms" className="text-primary font-medium">Terms</Link>
+          <Link to="/contact" className="text-primary font-medium">Get in contact</Link>
         </div>
       </div>
     </section>
