@@ -7,9 +7,8 @@ export function PublicShell({ children }: { children: ReactNode }) {
     <div className="min-h-[100dvh] bg-background flex flex-col">
       <header className="lg:sticky lg:top-0 z-20 bg-white/90 backdrop-blur border-b border-border print:hidden">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
-          <Link to="/welcome" aria-label="BumpNotes home" className="flex items-center gap-2 min-w-0">
-            <LogoIcon className="size-7 shrink-0 rounded-full ring-1 ring-border bg-white" />
-            <LogoWordmark className="h-6 sm:h-7 w-auto" />
+          <Link to="/welcome" aria-label="BumpNotes home" className="flex items-center min-w-0">
+            <LogoWordmark className="h-7 sm:h-8 w-auto" />
           </Link>
           <nav className="flex items-center gap-2 text-sm shrink-0">
             <Link to="/auth" className="px-3.5 py-1.5 rounded-full bg-white border border-border text-sm font-medium hover:bg-blush-soft">Sign in</Link>
