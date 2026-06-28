@@ -28,8 +28,8 @@ export function buildDemoSummary(now: Date = new Date()): { profile: Profile; en
     return d.toISOString();
   }
   function wd(iso: string) { return gestationFromDueDate(dueDateISO, new Date(iso)); }
-  function mk<T extends Entry>(e: Omit<T, "weekDay">): T {
-    return { ...(e as T), weekDay: wd(e.createdAt) };
+  function mk(e: Omit<Entry, "weekDay">): Entry {
+    return { ...e, weekDay: wd(e.createdAt) } as Entry;
   }
 
   const entries: Entry[] = [
