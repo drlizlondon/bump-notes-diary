@@ -204,3 +204,135 @@ export const adminDashboardSummary = createServerFn({ method: "POST" })
       sessionCount: sessionCount ?? 0,
     };
   });
+
+/* ============================================================
+   Contact messages
+   ============================================================ */
+
+export const listContactMessages = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("contact_messages")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { messages: data ?? [] };
+  });
+
+export const deleteContactMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => ({ id: String(d.id ?? "") }))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    if (!data.id) throw new Error("id required");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("contact_messages").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/* ============================================================
+   Feedback submissions (bug reports / suggestions from the in-app button)
+   ============================================================ */
+
+export const listFeedbackSubmissions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("feedback_submissions")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { submissions: data ?? [] };
+  });
+
+export const deleteFeedbackSubmission = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => ({ id: String(d.id ?? "") }))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    if (!data.id) throw new Error("id required");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("feedback_submissions").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/* ============================================================
+   User accounts
+   ============================================================ */
+
+export const listUserAccounts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: profiles }, { data: usersList }, { data: roles }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("*"),
+      supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 }),
+      supabaseAdmin.from("user_roles").select("user_id, role"),
+    ]);
+    const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+    const roleMap = new Map<string, string[]>();
+    for (const r of roles ?? []) {
+      const arr = roleMap.get(r.user_id) ?? [];
+      arr.push(r.role);
+      roleMap.set(r.user_id, arr);
+    }
+    const users = (usersList?.users ?? []).map((u) => ({
+      id: u.id,
+      email: u.email ?? null,
+      created_at: u.created_at,
+      last_sign_in_at: u.last_sign_in_at ?? null,
+      provider: u.app_metadata?.provider ?? "email",
+      is_tester: profileMap.get(u.id)?.is_tester ?? false,
+      display_name: profileMap.get(u.id)?.display_name ?? null,
+      accepted_terms_at: profileMap.get(u.id)?.accepted_terms_at ?? null,
+      accepted_privacy_at: profileMap.get(u.id)?.accepted_privacy_at ?? null,
+      roles: roleMap.get(u.id) ?? [],
+    }));
+    return { users };
+  });
+
+/** Admin: permanently delete another user's account and all their BumpNotes data. */
+export const deleteUserAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string }) => ({ userId: String(d.userId ?? "") }))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    if (!data.userId) throw new Error("userId required");
+    if (data.userId === context.userId) {
+      throw new Error("Use 'Delete my account' in Settings to remove your own account.");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("bumpnotes_state").delete().eq("user_id", data.userId);
+    await supabaseAdmin.from("feedback_submissions").delete().eq("user_id", data.userId);
+    await supabaseAdmin.from("contact_messages").delete().eq("user_id", data.userId);
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
+    await supabaseAdmin.from("profiles").delete().eq("id", data.userId);
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Self-service: a signed-in user permanently deletes their own account. */
+export const deleteOwnAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const uid = context.userId;
+    await supabaseAdmin.from("bumpnotes_state").delete().eq("user_id", uid);
+    await supabaseAdmin.from("feedback_submissions").delete().eq("user_id", uid);
+    await supabaseAdmin.from("contact_messages").delete().eq("user_id", uid);
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
+    await supabaseAdmin.from("profiles").delete().eq("id", uid);
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(uid);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
