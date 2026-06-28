@@ -8,7 +8,6 @@ import { useAppState } from "@/lib/bumpnotes/store";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 import { PregnancySummaryPreview } from "@/components/bumpnotes/PregnancySummaryPreview";
 import { buildDemoSummary } from "@/lib/bumpnotes/demo-summary";
-import { SilhouetteIllustration } from "@/components/bumpnotes/SilhouetteIllustration";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -69,11 +68,11 @@ function Hero() {
           </span>
 
           <h1 className="mt-5 font-serif text-[34px] sm:text-[44px] lg:text-[56px] font-semibold leading-[1.05] tracking-tight text-balance">
-            Remember everything<br className="hidden sm:block" /> between<span className="text-primary"> appointments</span>.
+            Your pregnancy,<br className="hidden sm:block" /> clearly organised<span className="text-primary">.</span>
           </h1>
 
           <p className="mt-5 text-[15.5px] sm:text-lg text-ink-soft leading-relaxed">
-            Capture symptoms, thoughts and questions the moment they happen. Hold onto the advice you've been given. When you need it, share a clear summary with your care team — so you never have to rely on memory.
+            Record symptoms, appointments and questions privately. Generate a clear summary to share whenever you need it.
           </p>
 
           <Link
@@ -160,12 +159,7 @@ function SummaryShowcase() {
   return (
     <div className="relative mx-auto w-full max-w-[560px] lg:max-w-none">
       <div className="pointer-events-none absolute -inset-6 sm:-inset-10 bg-gradient-to-br from-blush-soft/80 via-transparent to-mint-soft/40 blur-3xl -z-10 rounded-[40px]" aria-hidden />
-      {/* Soft inclusive silhouette — sits behind and slightly to the left of the summary */}
-      <SilhouetteIllustration
-        aria-hidden
-        className="pointer-events-none absolute -left-[18%] sm:-left-[22%] lg:-left-[28%] -top-[6%] w-[78%] sm:w-[72%] lg:w-[78%] h-auto opacity-[0.85] mix-blend-multiply -z-0 select-none"
-      />
-      <div className="relative z-10 rounded-[28px] bg-white shadow-[0_30px_80px_-30px_rgba(36,27,27,0.25),0_10px_30px_-15px_rgba(246,95,124,0.25)] ring-1 ring-border overflow-hidden transition-transform duration-500 will-change-transform lg:rotate-[2deg] lg:hover:rotate-0">
+      <div className="relative rounded-[28px] bg-white shadow-[0_30px_80px_-30px_rgba(36,27,27,0.25),0_10px_30px_-15px_rgba(246,95,124,0.25)] ring-1 ring-border overflow-hidden transition-transform duration-500 will-change-transform lg:rotate-[2deg] lg:hover:rotate-0">
         <FauxBrowserChrome />
         <div
           ref={scrollerRef}

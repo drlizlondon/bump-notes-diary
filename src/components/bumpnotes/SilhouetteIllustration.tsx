@@ -1,114 +1,59 @@
 type Props = { className?: string };
 
 /**
- * Elegant continuous line-art silhouette of a pregnant figure.
- * Deliberately inclusive: no facial features beyond a suggested profile,
- * abstract hair shape, no jewellery, makeup, clothing detail or fingers.
- * Designed to sit BEHIND the Pregnancy Summary card as a calm backdrop.
+ * Soft, abstract pregnant silhouette. Deliberately non-specific:
+ * no facial features, no skin tone, no hair texture, no ethnicity markers.
  */
 export function SilhouetteIllustration({ className = "" }: Props) {
   return (
     <svg
       role="img"
-      aria-label="Soft silhouette of a pregnant figure"
-      viewBox="0 0 600 760"
+      aria-label="Abstract silhouette illustration"
+      viewBox="0 0 400 480"
       className={className}
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <linearGradient id="bn-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#F7D7D1" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#F0B7AE" stopOpacity="0.35" />
+        <linearGradient id="bn-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#FFE9E4" />
+          <stop offset="100%" stopColor="#FFF6F4" />
         </linearGradient>
-        <radialGradient id="bn-halo" cx="50%" cy="45%" r="60%">
-          <stop offset="0%" stopColor="#FCE6E1" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="#FCE6E1" stopOpacity="0" />
-        </radialGradient>
+        <linearGradient id="bn-fig" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#F2A6A0" />
+          <stop offset="100%" stopColor="#E07B74" />
+        </linearGradient>
       </defs>
 
-      {/* Soft halo */}
-      <ellipse cx="310" cy="360" rx="270" ry="320" fill="url(#bn-halo)" />
+      {/* Soft circular backdrop */}
+      <circle cx="200" cy="230" r="195" fill="url(#bn-bg)" />
 
-      {/* Body silhouette — single flowing form, soft blush fill */}
-      <path
-        d="
-          M298,70
-          C246,70 210,108 210,156
-          C210,184 222,206 240,220
-          C232,232 226,246 222,262
-          C214,290 200,308 178,330
-          C150,358 134,398 140,446
-          C146,498 184,536 232,556
-          C262,568 286,586 298,614
-          C308,640 308,676 300,712
-          L420,712
-          C420,672 424,636 432,604
-          C440,572 456,548 470,520
-          C492,476 494,422 472,378
-          C452,338 416,310 378,300
-          C374,282 372,264 374,246
-          C384,232 390,212 390,190
-          C390,152 376,118 350,96
-          C336,82 318,72 298,70
+      {/* Figure — single continuous abstract silhouette */}
+      <g fill="url(#bn-fig)">
+        {/* Head */}
+        <circle cx="205" cy="92" r="34" />
+        {/* Neck + body + bump as one flowing path */}
+        <path d="
+          M188,124
+          C186,140 184,152 182,162
+          C160,170 144,188 140,214
+          C136,240 148,268 172,288
+          C188,302 204,322 208,348
+          C212,376 206,408 198,440
+          L260,440
+          C262,408 264,376 268,348
+          C272,320 286,300 296,278
+          C310,248 308,210 286,186
+          C272,170 254,162 236,158
+          C230,148 226,138 224,124
           Z
-        "
-        fill="url(#bn-fill)"
-      />
-
-      {/* Suggested profile line — outline only, no features */}
-      <path
-        d="
-          M362,118
-          C376,134 384,156 384,180
-          C384,200 378,218 368,232
-          C376,248 380,266 378,284
-        "
-        fill="none"
-        stroke="#C97A72"
-        strokeOpacity="0.45"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-
-      {/* Abstract hair shape — soft loose form, intentionally non-specific */}
-      <path
-        d="
-          M298,68
-          C254,68 218,98 210,142
-          C206,160 212,176 222,188
-          C214,168 218,144 234,128
-          C252,110 280,102 308,104
-          C336,106 358,118 372,138
-          C366,114 346,90 318,76
-          C312,72 304,70 298,68
-          Z
-        "
-        fill="#E9A89F"
-        fillOpacity="0.55"
-      />
-
-      {/* Bump highlight — soft inner curve, no fingers */}
-      <path
-        d="
-          M180,400
-          C200,452 256,478 308,476
-          C260,488 200,470 176,432
-          C170,422 170,410 180,400
-          Z
-        "
-        fill="#D88A82"
-        fillOpacity="0.25"
-      />
-
-      {/* Shoulder line — single elegant stroke */}
-      <path
-        d="M256,228 C292,236 332,238 374,236"
-        fill="none"
-        stroke="#C97A72"
-        strokeOpacity="0.35"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
+        " />
+        {/* Subtle arm hint resting on bump */}
+        <path
+          d="M158,210 C168,224 188,236 214,238 C200,248 178,246 160,236 C150,230 150,218 158,210 Z"
+          fill="#D86E66"
+          opacity="0.55"
+        />
+      </g>
     </svg>
   );
 }
