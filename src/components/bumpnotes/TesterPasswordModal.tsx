@@ -28,9 +28,9 @@ export function TesterPasswordModal({ onClose }: { onClose: () => void }) {
         setSessionId(res.sessionId);
         setStage("welcome");
       } else if (res.reason === "inactive") {
-        setError("That code has been turned off. Please message Lizzie.");
+        setError("That code has been turned off. Get in contact with Lizzie.");
       } else {
-        setError("That code didn't work. Please check it or message Lizzie for access.");
+        setError("That code didn't work. Get in contact with Lizzie.");
       }
     } catch {
       setError("Something went wrong. Please try again in a moment.");
