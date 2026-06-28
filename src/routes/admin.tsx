@@ -256,11 +256,11 @@ function Generators({
       <div className="surface-card p-4">
         <h3 className="font-serif text-base font-semibold flex items-center gap-2"><Plus className="size-4" /> Generate batch</h3>
         <div className="mt-3 grid grid-cols-3 gap-2">
-          <Field label="Prefix"><input value={prefix} onChange={(e) => setPrefix(e.target.value.toUpperCase())} className="adm-input" /></Field>
-          <Field label="Count"><input type="number" min={1} max={50} value={count} onChange={(e) => setCount(Number(e.target.value))} className="adm-input" /></Field>
-          <Field label="Start at"><input type="number" min={1} value={startAt} onChange={(e) => setStartAt(Number(e.target.value))} className="adm-input" /></Field>
+          <Field label="Prefix"><input value={prefix} onChange={(e) => setPrefix(e.target.value.toUpperCase())} className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
+          <Field label="Count"><input type="number" min={1} max={50} value={count} onChange={(e) => setCount(Number(e.target.value))} className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
+          <Field label="Start at"><input type="number" min={1} value={startAt} onChange={(e) => setStartAt(Number(e.target.value))} className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
         </div>
-        <Field label="Batch label (optional)"><input value={batchLabel} onChange={(e) => setBatchLabel(e.target.value)} className="adm-input" /></Field>
+        <Field label="Batch label (optional)"><input value={batchLabel} onChange={(e) => setBatchLabel(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
         <button
           disabled={busy}
           onClick={async () => { setBusy(true); try { await onBatch(prefix, count, startAt, batchLabel); } finally { setBusy(false); } }}
@@ -270,9 +270,9 @@ function Generators({
 
       <div className="surface-card p-4">
         <h3 className="font-serif text-base font-semibold flex items-center gap-2"><Plus className="size-4" /> Create custom code</h3>
-        <Field label="Code"><input value={custom} onChange={(e) => setCustom(e.target.value.toUpperCase())} placeholder="SOPHIE01" className="adm-input" /></Field>
-        <Field label="Label"><input value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} className="adm-input" /></Field>
-        <Field label="Notes"><input value={customNotes} onChange={(e) => setCustomNotes(e.target.value)} className="adm-input" /></Field>
+        <Field label="Code"><input value={custom} onChange={(e) => setCustom(e.target.value.toUpperCase())} placeholder="SOPHIE01" className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
+        <Field label="Label"><input value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
+        <Field label="Notes"><input value={customNotes} onChange={(e) => setCustomNotes(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
         <button
           disabled={busy || !custom.trim()}
           onClick={async () => { setBusy(true); try { await onCustom(custom, customLabel, customNotes); setCustom(""); setCustomLabel(""); setCustomNotes(""); } finally { setBusy(false); } }}
