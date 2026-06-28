@@ -68,7 +68,7 @@ function Hero() {
           </span>
 
           <h1 className="mt-5 font-serif text-[34px] sm:text-[44px] lg:text-[56px] font-semibold leading-[1.05] tracking-tight text-balance text-ink">
-            Everything about your pregnancy.<br className="hidden sm:block" />
+            Everything about your pregnancy.<br className="hidden sm:block" />{" "}
             <span className="text-primary">Ready when you need it.</span>
           </h1>
 
