@@ -2,6 +2,7 @@ import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButto
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
 import { formatUKDateTime } from "@/lib/bumpnotes/gestation";
@@ -10,6 +11,7 @@ import { useT } from "@/lib/bumpnotes/i18n";
 import { useSyncSnapshot, signOut } from "@/lib/bumpnotes/sync";
 import { supabase } from "@/integrations/supabase/client";
 import { useTester, exitTesterMode } from "@/lib/bumpnotes/tester";
+import { deleteOwnAccount } from "@/lib/bumpnotes/admin.functions";
 
 
 export const Route = createFileRoute("/settings")({
