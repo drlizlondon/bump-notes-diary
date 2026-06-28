@@ -65,9 +65,19 @@ export function PublicShell({ children }: { children: ReactNode }) {
             <Link to="/privacy" className="hover:text-ink">Privacy</Link>
             <Link to="/terms" className="hover:text-ink">Terms</Link>
             <Link to="/contact" className="hover:text-ink">Get in contact</Link>
+            {isWelcome && (
+              <button
+                type="button"
+                onClick={() => setShowTesterModal(true)}
+                className="hover:text-primary hover:underline transition-colors"
+              >
+                Testing BumpNotes? Enter tester access code
+              </button>
+            )}
           </div>
         </div>
       </footer>
+      {showTesterModal && <TesterPasswordModal onClose={() => setShowTesterModal(false)} />}
     </div>
   );
 }
