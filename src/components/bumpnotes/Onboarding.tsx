@@ -132,7 +132,7 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
           </div>
         )}
 
-        {step > 0 && step < 4 && (
+        {step > 1 && step < 4 && (
           <button onClick={() => setStep(step - 1)} className="mt-6 text-sm text-ink-soft self-center">
             {t("common.back")}
           </button>
