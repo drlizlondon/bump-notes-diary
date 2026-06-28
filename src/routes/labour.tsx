@@ -1,3 +1,4 @@
+import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButton";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
@@ -57,6 +58,7 @@ function LabourPage() {
           )}
 
         </div>
+        <TesterFeedbackButton />
       </AppShell>
 
       {confirmOpen && (

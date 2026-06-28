@@ -1,3 +1,4 @@
+import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButton";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
@@ -207,6 +208,7 @@ function SettingsPage() {
             </div>
           </section>
         </div>
+        <TesterFeedbackButton />
       </AppShell>
     </>
   );

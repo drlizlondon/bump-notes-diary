@@ -13,6 +13,7 @@ import { useT } from "@/lib/bumpnotes/i18n";
 import { useSyncSnapshot, closeMigrationPrompt } from "@/lib/bumpnotes/sync";
 import { useTester } from "@/lib/bumpnotes/tester";
 import { gestationFromDueDate } from "@/lib/bumpnotes/gestation";
+import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButton";
 
 
 export const Route = createFileRoute("/")({
@@ -105,6 +106,7 @@ function Index() {
               <FeelingPanelBody />
             </ActionCard>
           </div>
+          <TesterFeedbackButton />
         </section>
       </AppShell>
     </>

@@ -1,3 +1,4 @@
+import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButton";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Toaster } from "sonner";
@@ -93,6 +94,7 @@ function TimelinePage() {
             );
           })}
         </div>
+        <TesterFeedbackButton />
       </AppShell>
       {editing && <EditDialog entry={editing} onClose={() => setEditing(null)} />}
     </>
