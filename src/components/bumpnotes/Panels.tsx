@@ -42,12 +42,13 @@ export function ActionCard({
 }
 
 export function Chip({
-  active, onClick, children,
-}: { active?: boolean; onClick?: () => void; children: ReactNode }) {
+  active, onClick, children, size = "md",
+}: { active?: boolean; onClick?: () => void; children: ReactNode; size?: "sm" | "md" }) {
+  const pad = size === "sm" ? "px-3 py-1.5 text-[13px]" : "px-3.5 py-2 text-sm";
   return (
     <button
       onClick={onClick}
-      className={`px-3.5 py-2 rounded-full text-sm font-medium border transition-all ${
+      className={`${pad} rounded-full font-medium border transition-all ${
         active ? "bg-primary text-primary-foreground border-primary"
                : "bg-white text-ink border-border hover:border-primary/40"
       }`}
