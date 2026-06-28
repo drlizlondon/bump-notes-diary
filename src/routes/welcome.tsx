@@ -104,15 +104,15 @@ function HeroSection() {
 
 function SummarySection() {
   return (
-    <section className="px-4 sm:px-8 pt-6 sm:pt-12 pb-8 sm:pb-16">
+    <section className="px-4 sm:px-8 pt-2 sm:pt-10 pb-8 sm:pb-16">
       <div className="max-w-[1120px] mx-auto">
-        <div className="surface-card p-4 sm:p-7 relative">
+        <div className="surface-card p-3.5 sm:p-7 relative">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="font-serif text-[20px] sm:text-[30px] font-semibold leading-tight">
+              <h2 className="font-serif text-[19px] sm:text-[30px] font-semibold leading-tight">
                 Ready to share at appointments<span className="text-primary">.</span>
               </h2>
-              <p className="mt-2 text-[13px] sm:text-base text-ink-soft leading-snug">
+              <p className="mt-1.5 text-[12.5px] sm:text-base text-ink-soft leading-snug">
                 Bring a clear, organised summary to your midwife, doctor or care team in seconds.
               </p>
             </div>
@@ -121,7 +121,7 @@ function SummarySection() {
             </span>
           </div>
 
-          <div className="mt-4 sm:mt-6">
+          <div className="mt-3 sm:mt-6">
             <SummaryPreview />
           </div>
 
