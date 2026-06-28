@@ -207,6 +207,7 @@ function SettingsPage() {
             </div>
           </section>
         </div>
+        <TesterFeedbackButton />
       </AppShell>
     </>
   );

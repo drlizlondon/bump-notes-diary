@@ -57,6 +57,7 @@ function LabourPage() {
           )}
 
         </div>
+        <TesterFeedbackButton />
       </AppShell>
 
       {confirmOpen && (

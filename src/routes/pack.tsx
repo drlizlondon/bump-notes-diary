@@ -123,6 +123,7 @@ function SummaryPage() {
             />
           )}
         </div>
+        <TesterFeedbackButton />
       </AppShell>
     </>
   );

@@ -93,6 +93,7 @@ function TimelinePage() {
             );
           })}
         </div>
+        <TesterFeedbackButton />
       </AppShell>
       {editing && <EditDialog entry={editing} onClose={() => setEditing(null)} />}
     </>
