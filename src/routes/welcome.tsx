@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { NotebookPen, ShieldCheck, Sparkles, FileText, ArrowRight } from "lucide-react";
@@ -6,8 +6,7 @@ import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { useTester } from "@/lib/bumpnotes/tester";
 import { useAppState } from "@/lib/bumpnotes/store";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
-import { LogoWordmark } from "@/components/bumpnotes/Logo";
-import { TesterPasswordModal } from "@/components/bumpnotes/TesterPasswordModal";
+import { LogoBadge } from "@/components/bumpnotes/Logo";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -30,10 +29,7 @@ function Welcome() {
   const { userId } = useSyncSnapshot();
   const { profile } = useAppState();
   const tester = useTester();
-  const [testerCheck, setTesterCheck] = useState(false);
-  const [showTesterModal, setShowTesterModal] = useState(false);
 
-  // Authenticated users skip the landing entirely
   useEffect(() => {
     if (userId) {
       if (profile?.onboarded) navigate({ to: "/", replace: true });
@@ -41,64 +37,43 @@ function Welcome() {
     }
   }, [userId, profile, navigate]);
 
-  // Existing tester / onboarded local user can keep going
   useEffect(() => {
     if (!userId && tester && profile?.onboarded) navigate({ to: "/", replace: true });
   }, [userId, tester, profile, navigate]);
 
-  function handleStart() {
-    if (testerCheck) { setShowTesterModal(true); return; }
-    navigate({ to: "/onboarding" });
-  }
-
   return (
     <>
       <Toaster position="top-center" />
-      {showTesterModal && <TesterPasswordModal onClose={() => setShowTesterModal(false)} />}
-
       <PublicShell>
-        <section className="px-5 sm:px-8 pt-10 sm:pt-14 pb-10">
+        <section className="px-5 sm:px-8 pt-6 sm:pt-10 pb-8">
           <div className="max-w-[640px] mx-auto text-center">
             <div className="flex justify-center">
-              <LogoWordmark className="h-28 sm:h-32 w-auto" />
+              <LogoBadge className="size-20 sm:size-24" />
             </div>
-            <h1 className="mt-4 font-serif text-[30px] sm:text-[42px] font-semibold leading-tight text-balance">
+            <p className="mt-4 font-serif text-xl sm:text-2xl font-semibold tracking-tight">BumpNotes</p>
+            <h1 className="mt-3 font-serif text-[26px] sm:text-[38px] font-semibold leading-[1.15] text-balance">
               A calm, private place to remember your pregnancy.
             </h1>
-            <p className="mt-4 text-base sm:text-lg text-ink-soft leading-relaxed text-balance max-w-[520px] mx-auto">
-              BumpNotes is a simple notebook to record symptoms, questions, appointments, photos and feelings —
-              and to create a clear summary to share with your care team when it matters.
+            <p className="mt-3 text-[15px] sm:text-base text-ink-soft leading-relaxed text-balance max-w-[480px] mx-auto">
+              A simple notebook for symptoms, questions, appointments, photos and feelings — and a clear summary to share with your care team.
             </p>
 
-            <div className="mt-7 flex flex-col items-center gap-3">
-              <button
-                onClick={handleStart}
-                className="w-full max-w-[320px] inline-flex items-center justify-center gap-2 py-3.5 rounded-full bg-primary text-primary-foreground text-[15px] font-semibold shadow-sm shadow-primary/20"
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <Link
+                to="/onboarding"
+                className="w-full max-w-[320px] inline-flex items-center justify-center gap-2 py-3 rounded-full bg-primary text-primary-foreground text-[15px] font-semibold shadow-sm shadow-primary/20"
               >
                 Start your pregnancy record <ArrowRight className="size-4" />
-              </button>
+              </Link>
               <p className="text-sm text-ink-soft">
                 Already have an account?{" "}
                 <Link to="/auth" className="text-primary font-semibold">Sign in</Link>
               </p>
-
-              <label className="mt-2 inline-flex items-start gap-2 text-sm text-ink-soft cursor-pointer max-w-[320px] text-left">
-                <input
-                  type="checkbox"
-                  checked={testerCheck}
-                  onChange={(e) => {
-                    setTesterCheck(e.target.checked);
-                    if (e.target.checked) setShowTesterModal(true);
-                  }}
-                  className="mt-1 size-4 accent-[var(--primary)] shrink-0"
-                />
-                <span>I've been invited to test BumpNotes and give feedback.</span>
-              </label>
             </div>
           </div>
         </section>
 
-        <section className="px-5 sm:px-8 pb-12">
+        <section className="px-5 sm:px-8 pb-10">
           <div className="max-w-[860px] mx-auto grid gap-3 sm:grid-cols-3">
             <Feature icon={<NotebookPen className="size-5" />} title="A simple notebook" body="Symptoms, questions, appointments, photos and feelings — all in one place." />
             <Feature icon={<Sparkles className="size-5" />} title="Organised by week" body="Every entry is plotted onto your pregnancy timeline automatically." />
@@ -106,7 +81,7 @@ function Welcome() {
           </div>
         </section>
 
-        <section className="px-5 sm:px-8 pb-12">
+        <section className="px-5 sm:px-8 pb-10">
           <div className="max-w-[680px] mx-auto surface-card p-5 sm:p-6 blush-bg">
             <div className="flex items-start gap-3">
               <span className="size-10 rounded-2xl bg-white grid place-items-center shrink-0"><ShieldCheck className="size-5 text-primary" /></span>
