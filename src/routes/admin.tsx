@@ -303,7 +303,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function CodesTable({ codes, onToggle }: { codes: CodeRow[]; onToggle: (id: string, next: "active" | "inactive") => Promise<void> }) {
+function CodesTable({ codes, onToggle, onDelete }: {
+  codes: CodeRow[];
+  onToggle: (id: string, next: "active" | "inactive") => Promise<void>;
+  onDelete: (id: string, code: string) => Promise<void>;
+}) {
   function exportCsv() {
     const headers = ["code","label","status","first_used_at","last_used_at","use_count","feedback_submitted_at","notes"];
     const rows = codes.map((c) => [c.code, c.label ?? "", c.status, c.first_used_at ?? "", c.last_used_at ?? "", c.use_count, c.feedback_submitted_at ?? "", c.notes ?? ""]);
@@ -351,6 +355,12 @@ function CodesTable({ codes, onToggle }: { codes: CodeRow[]; onToggle: (id: stri
                       className="size-7 grid place-items-center rounded-full border border-border bg-white"
                       aria-label="Toggle status"
                     ><Power className="size-3.5" /></button>
+                    <button
+                      onClick={() => onDelete(c.id, c.code)}
+                      className="size-7 grid place-items-center rounded-full border border-border bg-white text-coral hover:bg-coral/10"
+                      aria-label="Delete code"
+                      title="Delete code"
+                    ><Trash2 className="size-3.5" /></button>
                   </div>
                 </td>
               </tr>
@@ -365,21 +375,80 @@ function CodesTable({ codes, onToggle }: { codes: CodeRow[]; onToggle: (id: stri
   );
 }
 
-function FeedbackPanel({
-  feedback, breakdown,
-}: {
-  feedback: FeedbackRow[];
-  breakdown: { groups: Record<string, number>; q1: { counts: Record<string, number>; n: number }; q2: { counts: Record<string, number>; n: number }; q3: { counts: Record<string, number>; n: number } };
-}) {
+// --- Feedback question text (mirrors TesterFeedbackModal) ---
+
+type Segment = "pregnant_only" | "clinician_only" | "both" | "neither";
+
+const SEGMENT_LABEL: Record<Segment, string> = {
+  pregnant_only: "Pregnant / planning only",
+  clinician_only: "Clinician / professional only",
+  both: "Both pregnant & clinician",
+  neither: "Neither",
+};
+
+function segmentOf(r: FeedbackRow): Segment {
+  const p = r.pregnancy_identity_answer === "yes";
+  const c = r.professional_identity_answer === "yes";
+  if (p && c) return "both";
+  if (p) return "pregnant_only";
+  if (c) return "clinician_only";
+  return "neither";
+}
+
+type RouteKey = "yes_to_both" | "yes_to_either" | "no_to_both";
+
+const ROUTE_LABEL: Record<RouteKey, string> = {
+  yes_to_both: "Both pregnant & clinician",
+  yes_to_either: "Pregnant only OR clinician only",
+  no_to_both: "Neither",
+};
+
+function routeQuestions(route: RouteKey, pregnancyYes: boolean): [string, string, string] {
+  const q1 = route === "no_to_both"
+    ? "Did you understand what BumpNotes is for?"
+    : "Was BumpNotes easy to understand and use?";
+  const q2 = route === "yes_to_both"
+    ? "Would BumpNotes feel useful, either personally or if someone came to you with their summary?"
+    : route === "yes_to_either"
+      ? (pregnancyYes
+          ? "Would you use BumpNotes yourself, or would you have found it useful during a pregnancy journey?"
+          : "Would you find it useful if someone came to you with this summary?")
+      : "Was it easy to click around and know what to do?";
+  const q3 = route === "no_to_both"
+    ? "Can you imagine who BumpNotes would be useful for?"
+    : route === "yes_to_both"
+      ? "Would you recommend BumpNotes to someone who is pregnant, planning a pregnancy, or supporting someone through pregnancy?"
+      : "Would you recommend BumpNotes to someone who is pregnant or planning a pregnancy?";
+  return [q1, q2, q3];
+}
+
+function FeedbackPanel({ feedback }: { feedback: FeedbackRow[] }) {
   function exportCsv() {
-    const headers = ["created_at","code","label","route","pregnancy","professional","q1","q2","q3","improvement"];
+    const headers = ["created_at","code","label","segment","route","pregnancy","professional","q1","q2","q3","improvement"];
     const rows = feedback.map((r) => [
       r.created_at, r.tester_access_codes?.code ?? "", r.tester_access_codes?.label ?? "",
+      SEGMENT_LABEL[segmentOf(r)],
       r.feedback_route, r.pregnancy_identity_answer, r.professional_identity_answer,
       r.q1_answer ?? "", r.q2_answer ?? "", r.q3_answer ?? "", r.improvement_text ?? "",
     ]);
     download("tester-feedback.csv", toCsv([headers, ...rows]));
   }
+
+  const segmentCounts = useMemo(() => {
+    const c: Record<Segment, number> = { pregnant_only: 0, clinician_only: 0, both: 0, neither: 0 };
+    for (const r of feedback) c[segmentOf(r)] += 1;
+    return c;
+  }, [feedback]);
+
+  // Group responses by feedback_route, then within yes_to_either also split by pregnant-only / clinician-only.
+  const byRoute = useMemo(() => {
+    const groups: Record<RouteKey, FeedbackRow[]> = { yes_to_both: [], yes_to_either: [], no_to_both: [] };
+    for (const r of feedback) {
+      const key = (r.feedback_route as RouteKey) ?? "no_to_both";
+      if (groups[key]) groups[key].push(r);
+    }
+    return groups;
+  }, [feedback]);
 
   return (
     <div className="surface-card p-4">
@@ -390,26 +459,34 @@ function FeedbackPanel({
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mt-3">
-        <Tile label="Yes to both" value={breakdown.groups.yes_to_both ?? 0} />
-        <Tile label="Yes to either" value={breakdown.groups.yes_to_either ?? 0} />
-        <Tile label="No to both" value={breakdown.groups.no_to_both ?? 0} />
+      <p className="text-[11px] uppercase tracking-[0.15em] text-ink-soft font-semibold mt-4">Identity segments</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-2">
+        <Tile label="Pregnant / planning only" value={segmentCounts.pregnant_only} />
+        <Tile label="Clinician only" value={segmentCounts.clinician_only} />
+        <Tile label="Both" value={segmentCounts.both} />
+        <Tile label="Neither" value={segmentCounts.neither} />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3 mt-4">
-        <BreakdownCard title="Question 1" data={breakdown.q1} />
-        <BreakdownCard title="Question 2" data={breakdown.q2} />
-        <BreakdownCard title="Question 3" data={breakdown.q3} />
+      <p className="text-[11px] uppercase tracking-[0.15em] text-ink-soft font-semibold mt-6">Identity questions asked</p>
+      <ul className="mt-2 text-sm text-ink-soft space-y-1.5 list-disc pl-5">
+        <li>Have you ever been pregnant, are you currently pregnant, or are you planning a pregnancy? <span className="text-ink-soft/70">(Yes / No)</span></li>
+        <li>Are you a clinician or professional who works with pregnant people, such as a GP, midwife, doula, or other support role? <span className="text-ink-soft/70">(Yes / No)</span></li>
+      </ul>
+
+      <div className="mt-6 space-y-5">
+        {(Object.keys(byRoute) as RouteKey[]).map((route) => (
+          <RouteBreakdown key={route} route={route} responses={byRoute[route]} />
+        ))}
       </div>
 
-      <div className="mt-5">
+      <div className="mt-6">
         <h4 className="font-serif text-sm font-semibold mb-2">Written improvements</h4>
         <ul className="space-y-2">
           {feedback.filter((f) => (f.improvement_text ?? "").trim()).map((f) => (
             <li key={f.id} className="rounded-xl border border-border bg-white p-3 text-sm">
               <p className="text-ink whitespace-pre-wrap">{f.improvement_text}</p>
               <p className="text-[11px] text-ink-soft mt-1 font-mono">
-                {f.tester_access_codes?.code ?? "—"} · {f.feedback_route} · {fmt(f.created_at)}
+                {f.tester_access_codes?.code ?? "—"} · {SEGMENT_LABEL[segmentOf(f)]} · {fmt(f.created_at)}
               </p>
             </li>
           ))}
@@ -422,11 +499,60 @@ function FeedbackPanel({
   );
 }
 
+function RouteBreakdown({ route, responses }: { route: RouteKey; responses: FeedbackRow[] }) {
+  // For yes_to_either, Q2 wording differs depending on pregnancyYes, so split into two sub-groups for Q2 only.
+  const pregYes = responses.filter((r) => r.pregnancy_identity_answer === "yes");
+  const profYes = responses.filter((r) => r.professional_identity_answer === "yes");
+
+  const [q1Text] = routeQuestions(route, true);
+  const q3Text = routeQuestions(route, true)[2];
+
+  function tally(rows: FeedbackRow[], key: "q1_answer" | "q2_answer" | "q3_answer") {
+    const counts: Record<string, number> = {};
+    let n = 0;
+    for (const r of rows) {
+      const v = r[key];
+      if (!v) continue;
+      counts[v] = (counts[v] ?? 0) + 1;
+      n += 1;
+    }
+    return { counts, n };
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-white p-4">
+      <div className="flex items-baseline justify-between gap-2 flex-wrap">
+        <h4 className="font-serif text-base font-semibold">{ROUTE_LABEL[route]}</h4>
+        <span className="text-[11px] text-ink-soft">{responses.length} response{responses.length === 1 ? "" : "s"}</span>
+      </div>
+
+      <BreakdownCard title={`Q1. ${q1Text}`} data={tally(responses, "q1_answer")} />
+
+      {route === "yes_to_either" ? (
+        <>
+          <BreakdownCard
+            title={`Q2 (pregnant / planning only). ${routeQuestions(route, true)[1]}`}
+            data={tally(pregYes, "q2_answer")}
+          />
+          <BreakdownCard
+            title={`Q2 (clinician only). ${routeQuestions(route, false)[1]}`}
+            data={tally(profYes.filter((r) => r.pregnancy_identity_answer === "no"), "q2_answer")}
+          />
+        </>
+      ) : (
+        <BreakdownCard title={`Q2. ${routeQuestions(route, true)[1]}`} data={tally(responses, "q2_answer")} />
+      )}
+
+      <BreakdownCard title={`Q3. ${q3Text}`} data={tally(responses, "q3_answer")} />
+    </div>
+  );
+}
+
 function BreakdownCard({ title, data }: { title: string; data: { counts: Record<string, number>; n: number } }) {
   const keys = Object.keys(data.counts);
   return (
-    <div className="rounded-xl border border-border bg-white p-3">
-      <p className="text-[11px] uppercase tracking-[0.15em] text-ink-soft font-semibold">{title}</p>
+    <div className="mt-3 rounded-xl border border-border bg-blush-soft/40 p-3">
+      <p className="text-[13px] font-semibold text-ink leading-snug">{title}</p>
       {data.n === 0 ? (
         <p className="text-sm text-ink-soft mt-2">No answers yet</p>
       ) : (
