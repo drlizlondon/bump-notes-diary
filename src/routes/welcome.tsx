@@ -129,17 +129,8 @@ function SummarySection() {
             <SummaryPreview />
           </div>
 
-          <div className="mt-3 sm:mt-5 grid grid-cols-[auto_1fr] items-center gap-2 sm:gap-3">
-            <div className="text-right">
-              <p className="font-[Caveat] text-primary text-[15px] sm:text-lg leading-tight">
-                Your appointment<br />summary
-              </p>
-              <svg className="ml-auto -mt-1" width="48" height="22" viewBox="0 0 60 24" fill="none" aria-hidden>
-                <path d="M2 4 C 18 18, 38 22, 56 16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="text-primary" fill="none"/>
-                <path d="M50 13 L 56 16 L 52 21" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-primary" fill="none"/>
-              </svg>
-            </div>
-            <div className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-3 rounded-xl sm:rounded-2xl bg-blush-soft text-primary text-sm sm:text-base font-semibold">
+          <div className="mt-4 sm:mt-5 flex justify-center sm:justify-end">
+            <div className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-blush-soft text-primary text-sm sm:text-base font-semibold">
               <Share2 className="size-4" /> Share summary
             </div>
           </div>
