@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 
 export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(1);
   const [userName, setUserName] = useState("");
   const [babyNickname, setBabyNickname] = useState("");
   const [babyBlank, setBabyBlank] = useState(false);
