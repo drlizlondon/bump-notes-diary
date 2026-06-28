@@ -18,6 +18,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PackRouteImport } from './routes/pack'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LabourRouteImport } from './routes/labour'
+import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as DetailsRouteImport } from './routes/details'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -70,6 +71,11 @@ const LabourRoute = LabourRouteImport.update({
   path: '/labour',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FeaturesRoute = FeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DetailsRoute = DetailsRouteImport.update({
   id: '/details',
   path: '/details',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
   '/details': typeof DetailsRoute
+  '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
   '/onboarding': typeof OnboardingRoute
   '/pack': typeof PackRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
   '/details': typeof DetailsRoute
+  '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
   '/onboarding': typeof OnboardingRoute
   '/pack': typeof PackRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
   '/details': typeof DetailsRoute
+  '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
   '/onboarding': typeof OnboardingRoute
   '/pack': typeof PackRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/demo'
     | '/details'
+    | '/features'
     | '/labour'
     | '/onboarding'
     | '/pack'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/demo'
     | '/details'
+    | '/features'
     | '/labour'
     | '/onboarding'
     | '/pack'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/demo'
     | '/details'
+    | '/features'
     | '/labour'
     | '/onboarding'
     | '/pack'
@@ -214,6 +226,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DemoRoute: typeof DemoRoute
   DetailsRoute: typeof DetailsRoute
+  FeaturesRoute: typeof FeaturesRoute
   LabourRoute: typeof LabourRoute
   OnboardingRoute: typeof OnboardingRoute
   PackRoute: typeof PackRoute
@@ -290,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LabourRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/features': {
+      id: '/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof FeaturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/details': {
       id: '/details'
       path: '/details'
@@ -342,6 +362,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DemoRoute: DemoRoute,
   DetailsRoute: DetailsRoute,
+  FeaturesRoute: FeaturesRoute,
   LabourRoute: LabourRoute,
   OnboardingRoute: OnboardingRoute,
   PackRoute: PackRoute,
@@ -355,13 +376,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
