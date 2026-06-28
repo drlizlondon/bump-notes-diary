@@ -7,6 +7,9 @@ import { TesterPasswordModal } from "./TesterPasswordModal";
 
 export function PublicShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showTesterModal, setShowTesterModal] = useState(false);
+  const location = useLocation();
+  const isWelcome = location.pathname === "/welcome";
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
       <header className="lg:sticky lg:top-0 z-20 bg-white/85 backdrop-blur border-b border-border print:hidden">
