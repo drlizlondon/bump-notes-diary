@@ -157,29 +157,30 @@ export function SymptomPanelBody() {
   useEffect(() => () => { if (noteTimer.current) clearTimeout(noteTimer.current); }, []);
 
   return (
-    <div className="space-y-4 pt-4">
-      <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold">{t("sym.prompt")}</p>
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-3 pt-3">
+      <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">{t("sym.prompt")}</p>
+      <div className="flex flex-wrap gap-1.5">
         {SYMPTOMS.map((s) => (
-          <Chip key={s.key} active={selected === s.key} onClick={() => record(s.key)}>
+          <Chip key={s.key} size="sm" active={selected === s.key} onClick={() => record(s.key)}>
             {t(s.tKey)}
           </Chip>
         ))}
       </div>
 
       {selected && entryId && (
-        <div className="space-y-4 pt-2 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="space-y-3 pt-3 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
           {showUndo && (
             <UndoStrip label={`${t(def?.tKey || "sym.other")} recorded`} onUndo={undo} />
           )}
 
           {qtyOptions.length > 0 && (
             <div>
-              <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2">{t("sym.quantifier")}</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold mb-1.5">{t("sym.quantifier")}</p>
+              <div className="flex flex-wrap gap-1.5">
                 {qtyOptions.map((q) => (
                   <Chip
                     key={q.key}
+                    size="sm"
                     active={quantifier === q.key}
                     onClick={() => {
                       const next = quantifier === q.key ? null : q.key;
@@ -195,13 +196,13 @@ export function SymptomPanelBody() {
           )}
           {PAIN_LIKE.has(selected) && (
             <div>
-              <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2">{t("sym.severity")}</p>
+              <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold mb-1.5">{t("sym.severity")}</p>
               <div className="grid grid-cols-10 gap-1">
                 {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                   <button
                     key={n}
                     onClick={() => { setSeverity(n); patch({ severity: n } as Partial<Entry>); }}
-                    className={`h-9 rounded-lg text-xs font-semibold border ${severity === n ? "bg-primary text-primary-foreground border-primary" : "bg-white border-border"}`}
+                    className={`h-8 rounded-lg text-xs font-semibold border ${severity === n ? "bg-primary text-primary-foreground border-primary" : "bg-white border-border"}`}
                   >
                     {n}
                   </button>
