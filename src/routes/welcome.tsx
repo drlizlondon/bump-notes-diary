@@ -59,10 +59,11 @@ function Welcome() {
 
 function Hero() {
   return (
-    <section className="px-5 sm:px-8 pt-8 sm:pt-16 lg:pt-20 pb-12 sm:pb-20">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[45fr_55fr] gap-10 lg:gap-14 items-center">
+    <section className="px-5 sm:px-8 pt-4 sm:pt-8 lg:pt-10 pb-12 sm:pb-20">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[45fr_55fr] gap-8 lg:gap-14 items-center">
         {/* Copy column */}
-        <div className="text-left max-w-[560px] mx-auto lg:mx-0 w-full">
+        <div className="text-left max-w-[560px] mx-auto lg:mx-0 w-full lg:py-6">
+
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blush-soft border border-border text-[12px] font-medium text-ink">
             <Lock className="size-3.5 text-primary" /> Private by default
           </span>

@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
-import { LogoWordmark } from "./Logo";
+import { LogoBadge } from "./Logo";
+
 
 export function PublicShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -9,16 +10,18 @@ export function PublicShell({ children }: { children: ReactNode }) {
     <div className="min-h-[100dvh] bg-background flex flex-col">
       <header className="lg:sticky lg:top-0 z-20 bg-white/85 backdrop-blur border-b border-border print:hidden">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
-          <Link to="/welcome" aria-label="BumpNotes home" className="flex items-center min-w-0">
-            <LogoWordmark className="h-7 sm:h-8 w-auto" />
+          <Link to="/welcome" aria-label="BumpNotes home" className="flex items-center gap-2 min-w-0">
+            <LogoBadge className="size-8 sm:size-9" />
+            <span className="font-serif text-[17px] sm:text-lg font-semibold tracking-tight text-ink">BumpNotes</span>
           </Link>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1 text-sm shrink-0">
-            <a href="/welcome#features" className="px-3 py-1.5 text-ink-soft hover:text-ink">Features</a>
+            <Link to="/welcome" hash="features" className="px-3 py-1.5 text-ink-soft hover:text-ink">Features</Link>
             <Link to="/privacy" className="px-3 py-1.5 text-ink-soft hover:text-ink">Privacy</Link>
             <Link to="/auth" className="ml-1 px-3.5 py-1.5 rounded-full bg-white border border-border font-medium hover:bg-blush-soft">Sign in</Link>
           </nav>
+
 
           {/* Mobile nav */}
           <div className="flex md:hidden items-center gap-1.5 shrink-0">
@@ -38,9 +41,10 @@ export function PublicShell({ children }: { children: ReactNode }) {
         {menuOpen && (
           <div className="md:hidden border-t border-border bg-white">
             <div className="max-w-[1200px] mx-auto px-4 py-2 flex flex-col">
-              <a href="/welcome#features" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Features</a>
+              <Link to="/welcome" hash="features" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Features</Link>
               <Link to="/privacy" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Privacy</Link>
               <Link to="/contact" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Get in contact</Link>
+
             </div>
           </div>
         )}

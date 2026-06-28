@@ -4,13 +4,13 @@ import { CalendarIcon } from "lucide-react";
 import type { Profile } from "@/lib/bumpnotes/types";
 import { gestationFromDueDate, formatGestation } from "@/lib/bumpnotes/gestation";
 import { useT } from "@/lib/bumpnotes/i18n";
-import { LogoWordmark } from "./Logo";
+
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(1);
   const [userName, setUserName] = useState("");
   const [babyNickname, setBabyNickname] = useState("");
   const [babyBlank, setBabyBlank] = useState(false);
@@ -27,24 +27,8 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
   return (
     <div className="app-shell flex flex-col bg-background">
       <div className="flex-1 flex flex-col px-6 pt-10 pb-10">
-        {step === 0 && (
-          <div className="flex-1 flex flex-col items-center text-center justify-center gap-6">
-            <LogoWordmark className="h-32 w-auto" />
-            <div>
-              <h1 className="font-serif text-4xl font-semibold">{t("onb.welcome.title")}</h1>
-              <p className="mt-3 text-ink-soft text-base leading-relaxed text-balance">
-                {t("onb.welcome.subtitle")}
-              </p>
-            </div>
 
-            <button
-              onClick={() => setStep(1)}
-              className="mt-2 w-full max-w-[320px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold"
-            >
-              {t("onb.welcome.cta")}
-            </button>
-          </div>
-        )}
+
 
         {step === 1 && (
           <Step
@@ -148,7 +132,7 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
           </div>
         )}
 
-        {step > 0 && step < 4 && (
+        {step > 1 && step < 4 && (
           <button onClick={() => setStep(step - 1)} className="mt-6 text-sm text-ink-soft self-center">
             {t("common.back")}
           </button>
