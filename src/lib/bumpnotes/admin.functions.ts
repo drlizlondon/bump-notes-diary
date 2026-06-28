@@ -141,6 +141,40 @@ export const setAccessCodeStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Permanently delete an access code (and any tester sessions / feedback that reference it via cascade). */
+export const deleteAccessCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => ({ id: String(d.id ?? "") }))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    if (!data.id) throw new Error("id required");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Remove dependent rows first in case FK is not ON DELETE CASCADE.
+    await supabaseAdmin.from("feedback_responses").delete().eq("access_code_id", data.id);
+    await supabaseAdmin.from("tester_sessions").delete().eq("access_code_id", data.id);
+    const { error } = await supabaseAdmin
+      .from("tester_access_codes")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Bulk delete unused codes (no first_used_at). Useful housekeeping. */
+export const deleteUnusedAccessCodes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("tester_access_codes")
+      .delete()
+      .is("first_used_at", null)
+      .select("id");
+    if (error) throw new Error(error.message);
+    return { deleted: data?.length ?? 0 };
+  });
+
 export const listFeedbackResponses = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
