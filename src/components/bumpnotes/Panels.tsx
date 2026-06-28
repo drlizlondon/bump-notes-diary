@@ -26,28 +26,29 @@ export function ActionCard({
   const tn = tonemap[tone];
   return (
     <div className={`surface-card overflow-hidden transition-all ${open ? "ring-1 " + tn.ring : ""}`}>
-      <button onClick={onToggle} className="w-full flex items-center gap-4 px-4 py-4 text-left">
-        <span className={`size-11 shrink-0 rounded-2xl grid place-items-center ${tn.bg}`}>
+      <button onClick={onToggle} className="w-full flex items-center gap-3 px-3.5 py-3 sm:px-4 sm:py-3.5 text-left">
+        <span className={`size-10 shrink-0 rounded-2xl grid place-items-center ${tn.bg}`}>
           <span className="text-ink">{icon}</span>
         </span>
         <span className="flex-1 min-w-0">
-          <span className="block font-semibold text-[15px] leading-tight text-ink">{label}</span>
-          {helper && <span className="block text-[12.5px] text-ink-soft mt-0.5 truncate">{helper}</span>}
+          <span className="block font-semibold text-[14.5px] leading-tight text-ink">{label}</span>
+          {helper && <span className="block text-[12px] text-ink-soft mt-0.5 truncate">{helper}</span>}
         </span>
         <ChevronDown className={`size-5 text-ink-soft transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="px-4 pb-5 pt-1 border-t border-border">{children}</div>}
+      {open && <div className="px-3.5 sm:px-4 pb-4 pt-1 border-t border-border">{children}</div>}
     </div>
   );
 }
 
 export function Chip({
-  active, onClick, children,
-}: { active?: boolean; onClick?: () => void; children: ReactNode }) {
+  active, onClick, children, size = "md",
+}: { active?: boolean; onClick?: () => void; children: ReactNode; size?: "sm" | "md" }) {
+  const pad = size === "sm" ? "px-3 py-1.5 text-[13px]" : "px-3.5 py-2 text-sm";
   return (
     <button
       onClick={onClick}
-      className={`px-3.5 py-2 rounded-full text-sm font-medium border transition-all ${
+      className={`${pad} rounded-full font-medium border transition-all ${
         active ? "bg-primary text-primary-foreground border-primary"
                : "bg-white text-ink border-border hover:border-primary/40"
       }`}
@@ -156,29 +157,30 @@ export function SymptomPanelBody() {
   useEffect(() => () => { if (noteTimer.current) clearTimeout(noteTimer.current); }, []);
 
   return (
-    <div className="space-y-4 pt-4">
-      <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold">{t("sym.prompt")}</p>
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-3 pt-3">
+      <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">{t("sym.prompt")}</p>
+      <div className="flex flex-wrap gap-1.5">
         {SYMPTOMS.map((s) => (
-          <Chip key={s.key} active={selected === s.key} onClick={() => record(s.key)}>
+          <Chip key={s.key} size="sm" active={selected === s.key} onClick={() => record(s.key)}>
             {t(s.tKey)}
           </Chip>
         ))}
       </div>
 
       {selected && entryId && (
-        <div className="space-y-4 pt-2 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="space-y-3 pt-3 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
           {showUndo && (
             <UndoStrip label={`${t(def?.tKey || "sym.other")} recorded`} onUndo={undo} />
           )}
 
           {qtyOptions.length > 0 && (
             <div>
-              <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2">{t("sym.quantifier")}</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold mb-1.5">{t("sym.quantifier")}</p>
+              <div className="flex flex-wrap gap-1.5">
                 {qtyOptions.map((q) => (
                   <Chip
                     key={q.key}
+                    size="sm"
                     active={quantifier === q.key}
                     onClick={() => {
                       const next = quantifier === q.key ? null : q.key;
@@ -194,13 +196,13 @@ export function SymptomPanelBody() {
           )}
           {PAIN_LIKE.has(selected) && (
             <div>
-              <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2">{t("sym.severity")}</p>
+              <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold mb-1.5">{t("sym.severity")}</p>
               <div className="grid grid-cols-10 gap-1">
                 {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                   <button
                     key={n}
                     onClick={() => { setSeverity(n); patch({ severity: n } as Partial<Entry>); }}
-                    className={`h-9 rounded-lg text-xs font-semibold border ${severity === n ? "bg-primary text-primary-foreground border-primary" : "bg-white border-border"}`}
+                    className={`h-8 rounded-lg text-xs font-semibold border ${severity === n ? "bg-primary text-primary-foreground border-primary" : "bg-white border-border"}`}
                   >
                     {n}
                   </button>

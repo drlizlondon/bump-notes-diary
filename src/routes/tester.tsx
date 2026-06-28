@@ -1,19 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
-import { NotebookPen, ShieldCheck, Sparkles, FileText, ArrowRight } from "lucide-react";
+import { FlaskConical, NotebookPen, Sparkles, FileText, ArrowRight } from "lucide-react";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { useTester } from "@/lib/bumpnotes/tester";
 import { useAppState } from "@/lib/bumpnotes/store";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 import { LogoBadge } from "@/components/bumpnotes/Logo";
+import { TesterPasswordModal } from "@/components/bumpnotes/TesterPasswordModal";
 
-export const Route = createFileRoute("/welcome")({
+export const Route = createFileRoute("/tester")({
   head: () => ({
     meta: [
-      { title: "BumpNotes — your private pregnancy record" },
-      { name: "description", content: "A calm, private notebook for your pregnancy. Capture symptoms, questions, appointments, photos and labour, then create a clear summary for your care team." },
+      { title: "BumpNotes — Tester Mode" },
+      { name: "description", content: "Tester Mode for invited BumpNotes testers. Explore the full experience with fake data — no account needed." },
       { name: "theme-color", content: "#ffffff" },
+      { name: "robots", content: "noindex,nofollow" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -21,22 +23,17 @@ export const Route = createFileRoute("/welcome")({
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" },
     ],
   }),
-  component: Welcome,
+  component: Tester,
 });
 
-function Welcome() {
+function Tester() {
   const navigate = useNavigate();
   const { userId } = useSyncSnapshot();
   const { profile } = useAppState();
   const tester = useTester();
+  const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    if (userId) {
-      if (profile?.onboarded) navigate({ to: "/", replace: true });
-      else navigate({ to: "/onboarding", replace: true });
-    }
-  }, [userId, profile, navigate]);
-
+  // If they already have a tester session and have onboarded, go to the app.
   useEffect(() => {
     if (!userId && tester && profile?.onboarded) navigate({ to: "/", replace: true });
   }, [userId, tester, profile, navigate]);
@@ -44,30 +41,33 @@ function Welcome() {
   return (
     <>
       <Toaster position="top-center" />
+      {showModal && <TesterPasswordModal onClose={() => setShowModal(false)} />}
+
       <PublicShell>
         <section className="px-5 sm:px-8 pt-6 sm:pt-10 pb-8">
           <div className="max-w-[640px] mx-auto text-center">
             <div className="flex justify-center">
               <LogoBadge className="size-20 sm:size-24" />
             </div>
-            <p className="mt-4 font-serif text-xl sm:text-2xl font-semibold tracking-tight">BumpNotes</p>
+            <span className="mt-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-butter-soft border border-butter/50 text-[11px] uppercase tracking-[0.2em] font-semibold text-ink">
+              <FlaskConical className="size-3.5" /> Tester Mode
+            </span>
             <h1 className="mt-3 font-serif text-[26px] sm:text-[38px] font-semibold leading-[1.15] text-balance">
-              A calm, private place to remember your pregnancy.
+              Help us shape BumpNotes.
             </h1>
             <p className="mt-3 text-[15px] sm:text-base text-ink-soft leading-relaxed text-balance max-w-[480px] mx-auto">
-              A simple notebook for symptoms, questions, appointments, photos and feelings — and a clear summary to share with your care team.
+              You've been invited to try BumpNotes. Use fake data only — no account needed. Tap around, then tell us what works and what doesn't.
             </p>
 
             <div className="mt-6 flex flex-col items-center gap-3">
-              <Link
-                to="/onboarding"
+              <button
+                onClick={() => setShowModal(true)}
                 className="w-full max-w-[320px] inline-flex items-center justify-center gap-2 py-3 rounded-full bg-primary text-primary-foreground text-[15px] font-semibold shadow-sm shadow-primary/20"
               >
-                Start your pregnancy record <ArrowRight className="size-4" />
-              </Link>
-              <p className="text-sm text-ink-soft">
-                Already have an account?{" "}
-                <Link to="/auth" className="text-primary font-semibold">Sign in</Link>
+                Start testing <ArrowRight className="size-4" />
+              </button>
+              <p className="text-xs text-ink-soft max-w-[320px]">
+                You'll need the access code Lizzie shared with you.
               </p>
             </div>
           </div>
@@ -75,34 +75,17 @@ function Welcome() {
 
         <section className="px-5 sm:px-8 pb-10">
           <div className="max-w-[860px] mx-auto grid gap-3 sm:grid-cols-3">
-            <Feature icon={<NotebookPen className="size-5" />} title="A simple notebook" body="Symptoms, questions, appointments, photos and feelings — all in one place." />
-            <Feature icon={<Sparkles className="size-5" />} title="Organised by week" body="Every entry is plotted onto your pregnancy timeline automatically." />
-            <Feature icon={<FileText className="size-5" />} title="A clear summary" body="Download a clean A4 pregnancy summary to save or share with your care team." />
-          </div>
-        </section>
-
-        <section className="px-5 sm:px-8 pb-10">
-          <div className="max-w-[680px] mx-auto surface-card p-5 sm:p-6 blush-bg">
-            <div className="flex items-start gap-3">
-              <span className="size-10 rounded-2xl bg-white grid place-items-center shrink-0"><ShieldCheck className="size-5 text-primary" /></span>
-              <div className="min-w-0">
-                <h2 className="font-serif text-lg sm:text-xl font-semibold">Your record stays yours</h2>
-                <p className="text-sm text-ink-soft mt-1.5 leading-relaxed">
-                  BumpNotes is designed for privacy. Your notes belong to you. We don't sell or share what you write,
-                  and you can download or delete your data at any time.
-                  BumpNotes is a personal record — it does not give medical advice, diagnose, or triage.
-                </p>
-              </div>
-            </div>
+            <Feature icon={<NotebookPen className="size-5" />} title="Try the real flow" body="You'll go through the same onboarding and recording experience as a real user." />
+            <Feature icon={<Sparkles className="size-5" />} title="Fake data only" body="Please don't enter real pregnancy details. This is a shared testing sandbox." />
+            <Feature icon={<FileText className="size-5" />} title="Tell us anything" body="Use the small feedback button in the corner whenever something feels off." />
           </div>
         </section>
 
         <section className="px-5 sm:px-8 pb-16">
           <div className="max-w-[680px] mx-auto flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
-            <Link to="/demo" className="text-primary font-medium">See a preview</Link>
+            <Link to="/welcome" className="text-primary font-medium">Public site</Link>
             <Link to="/contact" className="text-primary font-medium">Get in contact</Link>
             <Link to="/privacy" className="text-primary font-medium">Privacy</Link>
-            <Link to="/terms" className="text-primary font-medium">Terms</Link>
           </div>
         </section>
       </PublicShell>

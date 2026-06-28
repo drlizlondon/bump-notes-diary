@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FlaskConical, X } from "lucide-react";
+import { FlaskConical, X, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
@@ -9,25 +9,29 @@ import { enterTesterMode } from "@/lib/bumpnotes/tester";
 export function TesterPasswordModal({ onClose }: { onClose: () => void }) {
   const verify = useServerFn(verifyTesterPassword);
   const navigate = useNavigate();
-  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [reveal, setReveal] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [stage, setStage] = useState<"password" | "welcome">("password");
+  const [error, setError] = useState<string | null>(null);
+  const [stage, setStage] = useState<"code" | "welcome">("code");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!password.trim() || busy) return;
+    const trimmed = code.trim();
+    if (!trimmed || busy) return;
     setBusy(true);
+    setError(null);
     try {
-      const res = await verify({ data: { password } });
+      const res = await verify({ data: { password: trimmed } });
       if (res.ok) {
         setStage("welcome");
       } else if (res.reason === "disabled") {
-        toast.error("Tester mode is not available right now.");
+        setError("Tester mode isn't available right now. Please message Lizzie.");
       } else {
-        toast.error("That password didn't work. Please try again.");
+        setError("That code didn't work. Please check it or message Lizzie for access.");
       }
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      setError("Something went wrong. Please try again in a moment.");
     } finally {
       setBusy(false);
     }
@@ -51,45 +55,67 @@ export function TesterPasswordModal({ onClose }: { onClose: () => void }) {
       >
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2 text-primary">
-            <FlaskConical className="size-5" />
-            <span className="text-xs uppercase tracking-widest font-semibold">Tester access</span>
+            <FlaskConical className="size-4" />
+            <span className="text-[11px] uppercase tracking-[0.2em] font-semibold">Tester Mode</span>
           </div>
           <button onClick={onClose} className="-mr-1 -mt-1 size-8 grid place-items-center text-ink-soft" aria-label="Close">
             <X className="size-4" />
           </button>
         </div>
 
-        {stage === "password" ? (
+        {stage === "code" ? (
           <form onSubmit={submit}>
-            <h3 className="font-serif text-xl font-semibold">Enter your tester password</h3>
+            <h3 className="font-serif text-lg sm:text-xl font-semibold">Enter your access code</h3>
             <p className="mt-2 text-sm text-ink-soft leading-relaxed">
-              Tester access is invitation only. Enter the password we shared with you to enter the sandbox.
+              Tester access is invitation only. Pop in the code we shared with you.
             </p>
-            <input
-              type="password"
-              autoFocus
-              autoComplete="off"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Tester password"
-              className="mt-4 w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
-            />
+
+            <label className="mt-4 block">
+              <span className="sr-only">Access code</span>
+              <div className="relative">
+                <input
+                  type={reveal ? "text" : "password"}
+                  autoFocus
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  inputMode="text"
+                  value={code}
+                  onChange={(e) => { setCode(e.target.value); if (error) setError(null); }}
+                  placeholder="Access code"
+                  className="w-full pl-4 pr-11 py-3 rounded-xl bg-white border border-border text-sm tracking-wide focus:outline-none focus:border-primary/60"
+                />
+                <button
+                  type="button"
+                  onClick={() => setReveal((r) => !r)}
+                  aria-label={reveal ? "Hide access code" : "Show access code"}
+                  className="absolute inset-y-0 right-0 px-3 grid place-items-center text-ink-soft"
+                >
+                  {reveal ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+            </label>
+
+            {error && (
+              <p className="mt-3 text-sm text-coral leading-relaxed" role="alert">{error}</p>
+            )}
+
             <button
               type="submit"
-              disabled={busy || !password.trim()}
+              disabled={busy || !code.trim()}
               className="mt-4 w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50"
             >
-              {busy ? "Checking…" : "Enter tester mode"}
+              {busy ? "Checking…" : "Enter Tester Mode"}
             </button>
           </form>
         ) : (
           <div>
-            <h3 className="font-serif text-xl font-semibold">You're in. Thank you for testing 💛</h3>
+            <h3 className="font-serif text-lg sm:text-xl font-semibold">You're in. Thank you for testing 💛</h3>
             <div className="mt-3 text-sm text-ink-soft leading-relaxed space-y-3">
               <p><strong className="text-ink">Please use fake data only.</strong> Don't enter real pregnancy information — this is a sandbox shared for testing.</p>
               <p>Explore the app, tap around, and tell us about anything that feels confusing, broken or missing.</p>
               <p>There's a small feedback button in the corner of every screen.</p>
-              <p>Thank you so much for helping shape BumpNotes.</p>
             </div>
             <button
               onClick={enter}
