@@ -94,77 +94,69 @@ function Hero() {
 }
 
 /**
- * Floating, slightly angled preview of the real Pregnancy Summary component,
- * populated with demo data. Auto-scrolls slowly through the content and gently
- * returns to the top. Pauses on hover/touch.
+ * Floating, slightly angled preview of the real Pregnancy Summary component
+ * populated with demo data. Plays a single subtle scroll reveal, then stops.
  */
 function SummaryShowcase() {
   const [demo, setDemo] = useState<ReturnType<typeof buildDemoSummary> | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const pausedRef = useRef(false);
+  const stoppedRef = useRef(false);
 
-  // Build demo data client-side to avoid SSR/hydration drift (uses `new Date()`).
   useEffect(() => {
     setDemo(buildDemoSummary());
   }, []);
 
-  // Gentle auto-scroll loop: ~15s down, brief hold, ease back to start.
+  // Single, gentle reveal scroll — runs once, then stays put.
   useEffect(() => {
     if (!demo) return;
     const el = scrollerRef.current;
     if (!el) return;
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
     let raf = 0;
-    let start = performance.now();
-    const DURATION = 15000;
-    const HOLD = 1500;
-    const RETURN = 1200;
+    const DELAY = 1200;
+    const DURATION = 2600;
+    let startTs: number | null = null;
+    let cancelled = false;
+
+    function stop() {
+      stoppedRef.current = true;
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      el?.removeEventListener("wheel", stop);
+      el?.removeEventListener("touchstart", stop);
+      el?.removeEventListener("pointerdown", stop);
+    }
+    el.addEventListener("wheel", stop, { passive: true });
+    el.addEventListener("touchstart", stop, { passive: true });
+    el.addEventListener("pointerdown", stop, { passive: true });
 
     function tick(now: number) {
-      if (!el) return;
-      if (pausedRef.current) {
-        start = now - (start ? 0 : 0); // freeze: rebase start so progress doesn't jump
-        raf = requestAnimationFrame(tick);
-        return;
-      }
+      if (cancelled || !el) return;
+      if (startTs === null) startTs = now;
+      const elapsed = now - startTs;
+      if (elapsed < DELAY) { raf = requestAnimationFrame(tick); return; }
       const max = Math.max(0, el.scrollHeight - el.clientHeight);
-      if (max <= 0) { raf = requestAnimationFrame(tick); return; }
-      const elapsed = (now - start) % (DURATION + HOLD + RETURN);
-      let target: number;
-      if (elapsed < DURATION) {
-        target = (elapsed / DURATION) * max;
-      } else if (elapsed < DURATION + HOLD) {
-        target = max;
-      } else {
-        const p = (elapsed - DURATION - HOLD) / RETURN;
-        const eased = 1 - Math.pow(1 - p, 3);
-        target = max * (1 - eased);
-      }
-      el.scrollTop = target;
-      raf = requestAnimationFrame(tick);
+      if (max <= 0) return;
+      const reveal = Math.min(max, 220); // small reveal, not a full scroll
+      const p = Math.min(1, (elapsed - DELAY) / DURATION);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.scrollTop = reveal * eased;
+      if (p < 1) raf = requestAnimationFrame(tick);
     }
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelled = true; cancelAnimationFrame(raf); };
   }, [demo]);
-
-  function pause() { pausedRef.current = true; }
-  function resume() { pausedRef.current = false; }
 
   return (
     <div className="relative mx-auto w-full max-w-[560px] lg:max-w-none">
-      {/* Soft ambient glow */}
       <div className="pointer-events-none absolute -inset-6 sm:-inset-10 bg-gradient-to-br from-blush-soft/80 via-transparent to-mint-soft/40 blur-3xl -z-10 rounded-[40px]" aria-hidden />
-      <div
-        className="rounded-[28px] bg-white shadow-[0_30px_80px_-30px_rgba(36,27,27,0.25),0_10px_30px_-15px_rgba(246,95,124,0.25)] ring-1 ring-border overflow-hidden transition-transform duration-500 will-change-transform lg:rotate-[2deg] lg:hover:rotate-0"
-        onMouseEnter={pause}
-        onMouseLeave={resume}
-        onTouchStart={pause}
-        onTouchEnd={resume}
-      >
+      <div className="relative rounded-[28px] bg-white shadow-[0_30px_80px_-30px_rgba(36,27,27,0.25),0_10px_30px_-15px_rgba(246,95,124,0.25)] ring-1 ring-border overflow-hidden transition-transform duration-500 will-change-transform lg:rotate-[2deg] lg:hover:rotate-0">
         <FauxBrowserChrome />
         <div
           ref={scrollerRef}
           className="overflow-hidden h-[420px] sm:h-[520px] lg:h-[620px] px-3 sm:px-4 pb-4"
-          aria-label="Live preview of a BumpNotes Pregnancy Summary"
+          aria-label="Preview of a BumpNotes Pregnancy Summary"
         >
           {demo ? (
             <PregnancySummaryPreview
@@ -176,10 +168,13 @@ function SummaryShowcase() {
             <SummarySkeleton />
           )}
         </div>
+        {/* Soft fade hinting at more content below */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent" aria-hidden />
       </div>
     </div>
   );
 }
+
 
 function FauxBrowserChrome() {
   return (
