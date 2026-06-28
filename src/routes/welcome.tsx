@@ -114,7 +114,7 @@ function SummaryShowcase() {
 
     let raf = 0;
     const DELAY = 1200;
-    const DURATION = 2600;
+    const DURATION = 5200; // down then back up
     let startTs: number | null = null;
     let cancelled = false;
 
@@ -137,9 +137,20 @@ function SummaryShowcase() {
       if (elapsed < DELAY) { raf = requestAnimationFrame(tick); return; }
       const max = Math.max(0, el.scrollHeight - el.clientHeight);
       if (max <= 0) return;
-      const reveal = Math.min(max, 220); // small reveal, not a full scroll
+      const reveal = Math.min(max, 220);
       const p = Math.min(1, (elapsed - DELAY) / DURATION);
-      const eased = 1 - Math.pow(1 - p, 3);
+      let eased: number;
+      if (p < 0.5) {
+        // first half: scroll down (0 -> 1)
+        const local = p / 0.5;
+        eased = 1 - Math.pow(1 - local, 3);
+      } else {
+        // second half: scroll back up (1 -> 0)
+        const local = (p - 0.5) / 0.5;
+        eased = 1 - local; // linear back for snapier return, or ease
+        // Actually keep ease-in-out for smooth return
+        eased = Math.pow(1 - local, 3);
+      }
       el.scrollTop = reveal * eased;
       if (p < 1) raf = requestAnimationFrame(tick);
     }
