@@ -68,7 +68,7 @@ function DesktopSidebar() {
     { to: "/labour", label: t("nav.labour"), Icon: Heart },
     { to: "/details", label: t("nav.baby"), Icon: Baby },
     { to: "/settings", label: t("nav.settings"), Icon: SettingsIcon },
-  ] as const;
+  ];
   return (
     <aside className="sticky top-8 self-start surface-card p-3">
       <div className="px-3 py-3 flex items-center gap-2.5">
