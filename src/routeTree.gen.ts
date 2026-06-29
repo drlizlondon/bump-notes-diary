@@ -13,6 +13,7 @@ import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as TesterRouteImport } from './routes/tester'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PackRouteImport } from './routes/pack'
@@ -44,6 +45,11 @@ const TesterRoute = TesterRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/pack': typeof PackRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
   '/tester': typeof TesterRoute
   '/timeline': typeof TimelineRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/pack': typeof PackRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
   '/tester': typeof TesterRoute
   '/timeline': typeof TimelineRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/pack': typeof PackRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
   '/tester': typeof TesterRoute
   '/timeline': typeof TimelineRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/pack'
     | '/privacy'
     | '/settings'
+    | '/signin'
     | '/terms'
     | '/tester'
     | '/timeline'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/pack'
     | '/privacy'
     | '/settings'
+    | '/signin'
     | '/terms'
     | '/tester'
     | '/timeline'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/pack'
     | '/privacy'
     | '/settings'
+    | '/signin'
     | '/terms'
     | '/tester'
     | '/timeline'
@@ -232,6 +244,7 @@ export interface RootRouteChildren {
   PackRoute: typeof PackRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
+  SigninRoute: typeof SigninRoute
   TermsRoute: typeof TermsRoute
   TesterRoute: typeof TesterRoute
   TimelineRoute: typeof TimelineRoute
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -368,6 +388,7 @@ const rootRouteChildren: RootRouteChildren = {
   PackRoute: PackRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
+  SigninRoute: SigninRoute,
   TermsRoute: TermsRoute,
   TesterRoute: TesterRoute,
   TimelineRoute: TimelineRoute,

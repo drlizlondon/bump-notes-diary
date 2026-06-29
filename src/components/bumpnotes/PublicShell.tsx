@@ -24,13 +24,13 @@ export function PublicShell({ children }: { children: ReactNode }) {
             <Link to="/features" className="px-3 py-1.5 text-ink-soft hover:text-ink">Features</Link>
             <Link to="/demo" className="px-3 py-1.5 text-ink-soft hover:text-ink">Preview</Link>
             <Link to="/privacy" className="px-3 py-1.5 text-ink-soft hover:text-ink">Privacy</Link>
-            <Link to="/auth" className="ml-1 px-3.5 py-1.5 rounded-full bg-white border border-border font-medium hover:bg-blush-soft">Sign in</Link>
+            <Link to="/signin" className="ml-1 px-3.5 py-1.5 rounded-full bg-white border border-border font-medium hover:bg-blush-soft">Sign in</Link>
           </nav>
 
 
           {/* Mobile nav */}
           <div className="flex md:hidden items-center gap-1.5 shrink-0">
-            <Link to="/auth" className="px-3 py-1.5 rounded-full bg-white border border-border text-sm font-medium">Sign in</Link>
+            <Link to="/signin" className="px-3 py-1.5 rounded-full bg-white border border-border text-sm font-medium">Sign in</Link>
             <button
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
