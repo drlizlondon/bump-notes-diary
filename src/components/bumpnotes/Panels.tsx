@@ -36,7 +36,7 @@ export function ActionCard({
         </span>
         <ChevronDown className={`size-5 text-ink-soft transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="px-3.5 sm:px-4 pb-4 pt-1 border-t border-border">{children}</div>}
+      {open && <div className="px-3.5 sm:px-4 pb-3 pt-1 sm:pb-4 border-t border-border">{children}</div>}
     </div>
   );
 }
@@ -44,7 +44,7 @@ export function ActionCard({
 export function Chip({
   active, onClick, children, size = "md",
 }: { active?: boolean; onClick?: () => void; children: ReactNode; size?: "sm" | "md" }) {
-  const pad = size === "sm" ? "px-3 py-1.5 text-[13px]" : "px-3.5 py-2 text-sm";
+  const pad = size === "sm" ? "px-2.5 py-1 text-[12.5px]" : "px-3 py-1.5 text-[13.5px]";
   return (
     <button
       onClick={onClick}
@@ -62,9 +62,9 @@ function loggedToast(label: string) {
   toast.success(label, { icon: <Check className="size-4 text-mint" />, duration: 2200 });
 }
 
-const inputClass = "w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60";
-const primaryBtn = "w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50";
-const secondaryBtn = "flex-1 py-3 rounded-full bg-white border border-border text-sm font-medium";
+const inputClass = "w-full px-3.5 py-2.5 sm:py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60";
+const primaryBtn = "w-full py-2.5 sm:py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50";
+const secondaryBtn = "flex-1 py-2.5 sm:py-3 rounded-full bg-white border border-border text-sm font-medium";
 
 /* -------------------------------- SYMPTOM -------------------------------- */
 
@@ -157,7 +157,7 @@ export function SymptomPanelBody() {
   useEffect(() => () => { if (noteTimer.current) clearTimeout(noteTimer.current); }, []);
 
   return (
-    <div className="space-y-3 pt-3">
+    <div className="space-y-2.5 pt-3">
       <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">{t("sym.prompt")}</p>
       <div className="flex flex-wrap gap-1.5">
         {SYMPTOMS.map((s) => (
@@ -168,7 +168,7 @@ export function SymptomPanelBody() {
       </div>
 
       {selected && entryId && (
-        <div className="space-y-3 pt-3 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="space-y-2.5 pt-3 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
           {showUndo && (
             <UndoStrip label={`${t(def?.tKey || "sym.other")} recorded`} onUndo={undo} />
           )}
@@ -249,7 +249,7 @@ export function QuestionPanelBody() {
     setText(""); setContext("");
   }
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-2.5 pt-3">
       <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t("q.placeholder")} rows={2} className={inputClass + " resize-none"} />
       <textarea value={context} onChange={(e) => setContext(e.target.value)} placeholder={t("q.context")} rows={2} className={inputClass + " resize-none"} />
       <button onClick={() => save(text, context)} disabled={!text.trim()} className={primaryBtn}>{t("q.save")}</button>
@@ -317,7 +317,7 @@ export function PeopleCarePanelBody() {
   }
 
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-2.5 pt-3">
       <label className="block">
         <span className="text-xs uppercase tracking-widest text-ink-soft font-semibold">{t("p.dt")}</span>
         <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className={inputClass + " mt-1"} />
@@ -332,7 +332,7 @@ export function PeopleCarePanelBody() {
       {dataUrl ? (
         <img src={dataUrl} alt="" className="w-full rounded-xl border border-border" />
       ) : (
-        <label className="block w-full py-4 rounded-xl bg-white border border-dashed border-border text-center text-sm text-ink-soft cursor-pointer">
+        <label className="block w-full py-3 rounded-xl bg-white border border-dashed border-border text-center text-sm text-ink-soft cursor-pointer">
           {t("p.attach")}
           <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
         </label>
@@ -398,7 +398,7 @@ export function MeasurementPanelBody() {
   const preset = MEASUREMENT_KINDS.find((m) => m.key === kind);
 
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-2.5 pt-3">
       <div className="flex flex-wrap gap-2">
         {MEASUREMENT_KINDS.map((m) => (
           <Chip key={m.key} active={kind === m.key} onClick={() => { setKind(m.key); reset(); }}>{t(m.tKey)}</Chip>
@@ -460,14 +460,14 @@ export function PhotoPanelBody() {
   }
 
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-2.5 pt-3">
       <div className="flex flex-wrap gap-2">
         {PHOTO_TAGS.map((p) => <Chip key={p.key} active={tag === p.key} onClick={() => setTag(p.key)}>{t(p.tKey)}</Chip>)}
       </div>
       {dataUrl ? (
         <img src={dataUrl} alt="" className="w-full aspect-square object-cover rounded-xl border border-border" />
       ) : (
-        <label className="block w-full aspect-[4/3] rounded-xl bg-white border border-dashed border-border grid place-items-center text-sm text-ink-soft cursor-pointer">
+        <label className="block w-full aspect-[16/10] rounded-xl bg-white border border-dashed border-border grid place-items-center text-sm text-ink-soft cursor-pointer">
           {t("ph.choose")}
           <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
         </label>
@@ -499,7 +499,7 @@ export function FeelingPanelBody() {
     setSelected(null); setNote("");
   }
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-2.5 pt-3">
       <p className="text-xs text-ink-soft">{t("f.note")}</p>
       <div className="flex flex-wrap gap-2">
         {FEELINGS.map((f) => <Chip key={f.key} active={selected === f.key} onClick={() => setSelected(f.key)}>{t(f.tKey)}</Chip>)}
@@ -522,8 +522,8 @@ export function NotePanelBody() {
     setText("");
   }
   return (
-    <div className="space-y-3 pt-4">
-      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t("n.placeholder")} rows={4} className={inputClass + " resize-none"} />
+    <div className="space-y-2.5 pt-3">
+      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t("n.placeholder")} rows={3} className={inputClass + " resize-none"} />
       <button onClick={save} disabled={!text.trim()} className={primaryBtn}>{t("n.save")}</button>
     </div>
   );

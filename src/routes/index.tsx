@@ -10,7 +10,7 @@ import {
   MeasurementPanelBody, PhotoPanelBody, FeelingPanelBody, NotePanelBody,
 } from "@/components/bumpnotes/Panels";
 import { useT } from "@/lib/bumpnotes/i18n";
-import { useSyncSnapshot, closeMigrationPrompt } from "@/lib/bumpnotes/sync";
+import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { useTester } from "@/lib/bumpnotes/tester";
 import { gestationFromDueDate } from "@/lib/bumpnotes/gestation";
 import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButton";
@@ -38,7 +38,7 @@ function Index() {
   const { profile } = useAppState();
   const [open, setOpen] = useState<PanelKey | null>(null);
   const t = useT();
-  const { migrationPromptOpen, userId } = useSyncSnapshot();
+  const { userId } = useSyncSnapshot();
   const tester = useTester();
   const navigate = useNavigate();
 
@@ -55,18 +55,6 @@ function Index() {
   return (
     <>
       <Toaster position="top-center" />
-      {migrationPromptOpen && (
-        <div className="fixed inset-0 z-50 bg-ink/40 flex items-end sm:items-center justify-center px-4 py-6">
-          <div className="surface-card p-5 w-full max-w-[440px] shadow-xl"
-            style={{ paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}>
-            <h3 className="font-serif text-lg font-semibold">{t("sync.migrate.title")}</h3>
-            <p className="text-sm text-ink-soft mt-2 leading-relaxed">{t("sync.migrate.body")}</p>
-            <button onClick={closeMigrationPrompt} className="mt-4 w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-              {t("sync.migrate.ok")}
-            </button>
-          </div>
-        </div>
-      )}
       <AppShell>
         <HomeHeader profile={profile} />
 
