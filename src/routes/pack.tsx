@@ -73,7 +73,32 @@ function SummaryPage() {
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }, [liveEntries, activeWeeks, included, excluded]);
 
-  if (!profile) return null;
+  if (!profile) {
+    return (
+      <>
+        <Toaster position="top-center" />
+        <AppShell>
+          <PageHeader title={t("sum.title")} subtitle={t("sum.subtitle")} />
+          <div className="px-4 lg:px-0 pb-10">
+            <div className="surface-card blush-bg p-6 text-center">
+              <p className="font-serif text-lg font-semibold">Create your account to make your first summary</p>
+              <p className="text-sm text-ink-soft mt-2 leading-relaxed">
+                Once you've added a few entries to your pregnancy record, you can build a Pregnancy Summary to share with your care team.
+              </p>
+              <div className="mt-4 flex flex-col sm:flex-row gap-2.5 justify-center">
+                <a href="/onboarding" className="inline-flex justify-center px-5 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                  Start your pregnancy record
+                </a>
+                <a href="/demo" className="inline-flex justify-center px-5 py-3 rounded-full bg-white border border-border text-sm font-medium">
+                  See a preview
+                </a>
+              </div>
+            </div>
+          </div>
+        </AppShell>
+      </>
+    );
+  }
 
   return (
     <>
