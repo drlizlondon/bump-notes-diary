@@ -116,15 +116,6 @@ function Demo() {
   );
 }
 
-function DemoModeBanner() {
-  return (
-    <div className="sticky top-0 z-30 w-full bg-ink text-white text-center text-[12px] sm:text-[13px] py-1.5 px-3 font-medium tracking-wide">
-      <span className="opacity-90">Demo mode</span>
-      <span className="opacity-60 mx-2">•</span>
-      <span className="opacity-80">Changes won’t be saved</span>
-    </div>
-  );
-}
 
 function ThisWeekCard() {
   const { entries, profile } = useAppState();
