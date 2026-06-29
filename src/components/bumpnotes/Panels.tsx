@@ -157,7 +157,7 @@ export function SymptomPanelBody() {
   useEffect(() => () => { if (noteTimer.current) clearTimeout(noteTimer.current); }, []);
 
   return (
-    <div className="space-y-3 pt-3">
+    <div className="space-y-2.5 pt-3">
       <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">{t("sym.prompt")}</p>
       <div className="flex flex-wrap gap-1.5">
         {SYMPTOMS.map((s) => (
@@ -168,7 +168,7 @@ export function SymptomPanelBody() {
       </div>
 
       {selected && entryId && (
-        <div className="space-y-3 pt-3 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="space-y-2.5 pt-3 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
           {showUndo && (
             <UndoStrip label={`${t(def?.tKey || "sym.other")} recorded`} onUndo={undo} />
           )}
@@ -249,7 +249,7 @@ export function QuestionPanelBody() {
     setText(""); setContext("");
   }
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-2.5 pt-3">
       <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t("q.placeholder")} rows={2} className={inputClass + " resize-none"} />
       <textarea value={context} onChange={(e) => setContext(e.target.value)} placeholder={t("q.context")} rows={2} className={inputClass + " resize-none"} />
       <button onClick={() => save(text, context)} disabled={!text.trim()} className={primaryBtn}>{t("q.save")}</button>
@@ -317,7 +317,7 @@ export function PeopleCarePanelBody() {
   }
 
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-2.5 pt-3">
       <label className="block">
         <span className="text-xs uppercase tracking-widest text-ink-soft font-semibold">{t("p.dt")}</span>
         <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className={inputClass + " mt-1"} />
@@ -398,7 +398,7 @@ export function MeasurementPanelBody() {
   const preset = MEASUREMENT_KINDS.find((m) => m.key === kind);
 
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-2.5 pt-3">
       <div className="flex flex-wrap gap-2">
         {MEASUREMENT_KINDS.map((m) => (
           <Chip key={m.key} active={kind === m.key} onClick={() => { setKind(m.key); reset(); }}>{t(m.tKey)}</Chip>
@@ -460,7 +460,7 @@ export function PhotoPanelBody() {
   }
 
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-2.5 pt-3">
       <div className="flex flex-wrap gap-2">
         {PHOTO_TAGS.map((p) => <Chip key={p.key} active={tag === p.key} onClick={() => setTag(p.key)}>{t(p.tKey)}</Chip>)}
       </div>
@@ -499,7 +499,7 @@ export function FeelingPanelBody() {
     setSelected(null); setNote("");
   }
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-2.5 pt-3">
       <p className="text-xs text-ink-soft">{t("f.note")}</p>
       <div className="flex flex-wrap gap-2">
         {FEELINGS.map((f) => <Chip key={f.key} active={selected === f.key} onClick={() => setSelected(f.key)}>{t(f.tKey)}</Chip>)}
@@ -522,7 +522,7 @@ export function NotePanelBody() {
     setText("");
   }
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-2.5 pt-3">
       <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t("n.placeholder")} rows={4} className={inputClass + " resize-none"} />
       <button onClick={save} disabled={!text.trim()} className={primaryBtn}>{t("n.save")}</button>
     </div>
