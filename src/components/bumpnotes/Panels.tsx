@@ -62,9 +62,9 @@ function loggedToast(label: string) {
   toast.success(label, { icon: <Check className="size-4 text-mint" />, duration: 2200 });
 }
 
-const inputClass = "w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60";
-const primaryBtn = "w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50";
-const secondaryBtn = "flex-1 py-3 rounded-full bg-white border border-border text-sm font-medium";
+const inputClass = "w-full px-3.5 py-2.5 sm:py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60";
+const primaryBtn = "w-full py-2.5 sm:py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50";
+const secondaryBtn = "flex-1 py-2.5 sm:py-3 rounded-full bg-white border border-border text-sm font-medium";
 
 /* -------------------------------- SYMPTOM -------------------------------- */
 
