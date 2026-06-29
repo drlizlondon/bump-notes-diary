@@ -39,15 +39,15 @@ function DemoBanner() {
   }
   return (
     <div className="sticky top-0 z-30 w-full bg-[#E9DEF7] text-[#3F2C68] border-b border-[#D9C6F0] print:hidden">
-      <div className="max-w-[1200px] mx-auto px-3 py-1.5 flex items-center gap-2 text-[12px] sm:text-[13px]">
-        <Sparkles className="size-3.5 shrink-0" />
-        <span className="font-semibold">Demo mode</span>
-        <span className="opacity-70 hidden sm:inline">·</span>
-        <span className="opacity-80 truncate">Have a look around — changes won't be saved.</span>
+      <div className="max-w-[1200px] mx-auto px-2.5 py-1 flex items-center gap-1.5 text-[10px] sm:text-[12px] leading-tight">
+        <Sparkles className="size-3 shrink-0" />
+        <span className="font-semibold whitespace-nowrap">Demo mode</span>
+        <span className="opacity-70">·</span>
+        <span className="opacity-80 min-w-0 flex-1">Have a look around — changes won't be saved.</span>
         <button
           onClick={exit}
           aria-label="Exit demo"
-          className="ml-auto inline-flex items-center gap-1 rounded-full bg-white/70 hover:bg-white px-2.5 py-1 text-[11px] font-semibold border border-[#D9C6F0]"
+          className="inline-flex items-center gap-1 rounded-full bg-white/70 hover:bg-white px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold border border-[#D9C6F0] shrink-0"
         >
           <X className="size-3" /> Exit
         </button>
