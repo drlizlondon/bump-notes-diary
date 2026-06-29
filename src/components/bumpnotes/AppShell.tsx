@@ -61,13 +61,13 @@ function DesktopSidebar() {
   const demo = useDemoMode();
   const t = useT();
   const homeTo = demo ? "/demo" : "/";
-  const navItems: { to: string; label: string; Icon: typeof Home; matchExact?: boolean }[] = [
+  const navItems = [
     { to: homeTo, label: t("nav.home"), Icon: Home, matchExact: true },
-    { to: "/timeline", label: t("nav.timeline"), Icon: ClipboardList },
-    { to: "/pack", label: t("nav.summary"), Icon: FileText },
-    { to: "/labour", label: t("nav.labour"), Icon: Heart },
-    { to: "/details", label: t("nav.baby"), Icon: Baby },
-    { to: "/settings", label: t("nav.settings"), Icon: SettingsIcon },
+    { to: "/timeline" as const, label: t("nav.timeline"), Icon: ClipboardList, matchExact: false },
+    { to: "/pack" as const, label: t("nav.summary"), Icon: FileText, matchExact: false },
+    { to: "/labour" as const, label: t("nav.labour"), Icon: Heart, matchExact: false },
+    { to: "/details" as const, label: t("nav.baby"), Icon: Baby, matchExact: false },
+    { to: "/settings" as const, label: t("nav.settings"), Icon: SettingsIcon, matchExact: false },
   ];
   return (
     <aside className="sticky top-8 self-start surface-card p-3">
