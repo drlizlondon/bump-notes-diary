@@ -75,6 +75,10 @@ export function useAppState(): AppState {
   return useSyncExternalStore(subscribeStore, () => state, () => initial);
 }
 
+export function useDemoMode(): boolean {
+  return useSyncExternalStore(subscribeStore, () => demoMode, () => false);
+}
+
 export const store = {
   getState: () => state,
   subscribe: subscribeStore,
