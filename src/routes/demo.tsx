@@ -36,11 +36,12 @@ function Demo() {
   const [open, setOpen] = useState<PanelKey | null>(null);
   const t = useT();
 
-  // Enter demo mode on mount; exit on unmount so the rest of the app is
-  // completely unaffected and nothing is persisted.
+  // Enter demo mode on mount. Demo state persists across in-app navigation
+  // via sessionStorage in the store; the user exits via the banner X button.
   useEffect(() => {
-    store.enterDemoMode(buildDemoDashboardState());
-    return () => { store.exitDemoMode(); };
+    if (!store.isDemoMode()) {
+      store.enterDemoMode(buildDemoDashboardState());
+    }
   }, []);
 
   if (!profile?.onboarded) {
