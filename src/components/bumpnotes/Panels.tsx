@@ -332,7 +332,7 @@ export function PeopleCarePanelBody() {
       {dataUrl ? (
         <img src={dataUrl} alt="" className="w-full rounded-xl border border-border" />
       ) : (
-        <label className="block w-full py-4 rounded-xl bg-white border border-dashed border-border text-center text-sm text-ink-soft cursor-pointer">
+        <label className="block w-full py-3 rounded-xl bg-white border border-dashed border-border text-center text-sm text-ink-soft cursor-pointer">
           {t("p.attach")}
           <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
         </label>
@@ -467,7 +467,7 @@ export function PhotoPanelBody() {
       {dataUrl ? (
         <img src={dataUrl} alt="" className="w-full aspect-square object-cover rounded-xl border border-border" />
       ) : (
-        <label className="block w-full aspect-[4/3] rounded-xl bg-white border border-dashed border-border grid place-items-center text-sm text-ink-soft cursor-pointer">
+        <label className="block w-full aspect-[16/10] rounded-xl bg-white border border-dashed border-border grid place-items-center text-sm text-ink-soft cursor-pointer">
           {t("ph.choose")}
           <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
         </label>
