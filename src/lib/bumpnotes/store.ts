@@ -112,6 +112,26 @@ export const store = {
     });
   },
   clearAll() { setState(initial); },
+
+  isDemoMode() { return demoMode; },
+  enterDemoMode(demoState: AppState) {
+    if (demoMode) {
+      // already in demo — just replace data
+      state = demoState; emit(); return;
+    }
+    demoBackup = state;
+    demoMode = true;
+    state = demoState;
+    emit();
+  },
+  exitDemoMode() {
+    if (!demoMode) return;
+    demoMode = false;
+    state = demoBackup ?? initial;
+    demoBackup = null;
+    emit();
+  },
+
   exportAll() { return JSON.stringify(state, null, 2); },
 
   // Labour
