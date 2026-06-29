@@ -82,6 +82,13 @@ function Hero() {
           >
             Start your pregnancy record <ArrowRight className="size-4" />
           </Link>
+
+          <Link
+            to="/demo"
+            className="mt-4 block text-center lg:text-left text-base font-medium text-ink underline underline-offset-4 hover:text-primary transition-colors"
+          >
+            See a preview
+          </Link>
         </div>
 
         {/* Product preview column — becomes the hero visual */}
