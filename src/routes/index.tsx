@@ -38,7 +38,7 @@ function Index() {
   const { profile } = useAppState();
   const [open, setOpen] = useState<PanelKey | null>(null);
   const t = useT();
-  const { migrationPromptOpen, userId } = useSyncSnapshot();
+  const { userId } = useSyncSnapshot();
   const tester = useTester();
   const navigate = useNavigate();
 
