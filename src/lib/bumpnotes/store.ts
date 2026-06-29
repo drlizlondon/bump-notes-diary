@@ -4,6 +4,7 @@ import { gestationFromDueDate } from "./gestation";
 import { t } from "./i18n";
 
 const KEY = "bumpnotes:v1";
+const DEMO_KEY = "bumpnotes:demo:v1";
 
 function defaultBag(): BagItem[] {
   const labels = [
@@ -22,14 +23,21 @@ const initial: AppState = { profile: null, entries: [] };
 let state: AppState = initial;
 const listeners = new Set<() => void>();
 
-// Demo mode: when active, persistence to localStorage is suspended so demo
-// edits stay in memory only and reset on refresh / leaving the demo.
+// Demo mode: when active, persistence flows to sessionStorage (not localStorage)
+// so demo data survives in-app navigation but never touches the real account
+// state and disappears when the tab closes or the user exits demo mode.
 let demoMode = false;
 let demoBackup: AppState | null = null;
 
 function load(): AppState {
   if (typeof window === "undefined") return initial;
   try {
+    const demoRaw = window.sessionStorage.getItem(DEMO_KEY);
+    if (demoRaw) {
+      demoMode = true;
+      const parsed = JSON.parse(demoRaw) as AppState;
+      return { profile: parsed.profile ?? null, entries: parsed.entries ?? [], labourPlan: parsed.labourPlan };
+    }
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return initial;
     const parsed = JSON.parse(raw) as AppState;
@@ -45,8 +53,13 @@ function load(): AppState {
 
 function persist() {
   if (typeof window === "undefined") return;
-  if (demoMode) return; // never write demo data to localStorage
-  try { window.localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ }
+  try {
+    if (demoMode) {
+      window.sessionStorage.setItem(DEMO_KEY, JSON.stringify(state));
+    } else {
+      window.localStorage.setItem(KEY, JSON.stringify(state));
+    }
+  } catch { /* ignore */ }
 }
 
 function emit() { listeners.forEach((l) => l()); }
@@ -60,6 +73,10 @@ export function subscribe(cb: () => void) { return subscribeStore(cb); }
 
 export function useAppState(): AppState {
   return useSyncExternalStore(subscribeStore, () => state, () => initial);
+}
+
+export function useDemoMode(): boolean {
+  return useSyncExternalStore(subscribeStore, () => demoMode, () => false);
 }
 
 export const store = {
@@ -116,18 +133,19 @@ export const store = {
   isDemoMode() { return demoMode; },
   enterDemoMode(demoState: AppState) {
     if (demoMode) {
-      // already in demo — just replace data
-      state = demoState; emit(); return;
+      state = demoState; persist(); emit(); return;
     }
     demoBackup = state;
     demoMode = true;
     state = demoState;
+    persist();
     emit();
   },
   exitDemoMode() {
     if (!demoMode) return;
     demoMode = false;
-    state = demoBackup ?? initial;
+    try { if (typeof window !== "undefined") window.sessionStorage.removeItem(DEMO_KEY); } catch { /* ignore */ }
+    state = demoBackup ?? load();
     demoBackup = null;
     emit();
   },

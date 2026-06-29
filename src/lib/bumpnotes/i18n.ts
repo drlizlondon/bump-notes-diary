@@ -215,7 +215,7 @@ const en: Dict = {
   // Summary
   "sum.title": "Pregnancy Summary",
   "sum.subtitle": "Generate a clear, printable document from your record.",
-  "sum.intro": "Your Pregnancy Record is everything you've saved in BumpNotes. Your Pregnancy Summary is the formatted document you can share with your care team. Choose what to include below.",
+  "sum.intro": "Your Pregnancy Record is everything you've saved in BumpNotes. Your Pregnancy Summary is the formatted document you can share with your care team. Choose what to include.",
   "sum.stepWeeks": "Choose weeks",
   "sum.stepReview": "Review",
   "sum.stepCustomise": "Customise",

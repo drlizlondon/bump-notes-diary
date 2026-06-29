@@ -1,18 +1,21 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Home, ClipboardList, FileText, Heart, Baby, Settings as SettingsIcon } from "lucide-react";
 import { useT } from "@/lib/bumpnotes/i18n";
+import { useDemoMode } from "@/lib/bumpnotes/store";
 
 export function BottomNav() {
   const location = useLocation();
+  const demo = useDemoMode();
   const t = useT();
+  const homeTo = demo ? "/demo" : "/";
   const items = [
-    { to: "/", label: t("nav.home"), Icon: Home },
-    { to: "/timeline", label: t("nav.timeline"), Icon: ClipboardList },
-    { to: "/pack", label: t("nav.summary"), Icon: FileText },
-    { to: "/labour", label: t("nav.labour"), Icon: Heart },
-    { to: "/details", label: t("nav.baby"), Icon: Baby },
-    { to: "/settings", label: t("nav.settings"), Icon: SettingsIcon },
-  ] as const;
+    { to: homeTo, label: t("nav.home"), Icon: Home, matchExact: true },
+    { to: "/timeline" as const, label: t("nav.timeline"), Icon: ClipboardList, matchExact: false },
+    { to: "/pack" as const, label: t("nav.summary"), Icon: FileText, matchExact: false },
+    { to: "/labour" as const, label: t("nav.labour"), Icon: Heart, matchExact: false },
+    { to: "/details" as const, label: t("nav.baby"), Icon: Baby, matchExact: false },
+    { to: "/settings" as const, label: t("nav.settings"), Icon: SettingsIcon, matchExact: false },
+  ];
   return (
     <nav
       aria-label="Primary"
@@ -20,8 +23,8 @@ export function BottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <ul className="flex items-stretch justify-between px-1 pt-2 pb-3">
-        {items.map(({ to, label, Icon }) => {
-          const active = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+        {items.map(({ to, label, Icon, matchExact }) => {
+          const active = matchExact ? location.pathname === to : location.pathname.startsWith(to);
           return (
             <li key={to} className="flex-1">
               <Link to={to}

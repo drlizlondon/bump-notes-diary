@@ -36,11 +36,12 @@ function Demo() {
   const [open, setOpen] = useState<PanelKey | null>(null);
   const t = useT();
 
-  // Enter demo mode on mount; exit on unmount so the rest of the app is
-  // completely unaffected and nothing is persisted.
+  // Enter demo mode on mount. Demo state persists across in-app navigation
+  // via sessionStorage in the store; the user exits via the banner X button.
   useEffect(() => {
-    store.enterDemoMode(buildDemoDashboardState());
-    return () => { store.exitDemoMode(); };
+    if (!store.isDemoMode()) {
+      store.enterDemoMode(buildDemoDashboardState());
+    }
   }, []);
 
   if (!profile?.onboarded) {
@@ -56,7 +57,6 @@ function Demo() {
   return (
     <>
       <Toaster position="top-center" />
-      <DemoModeBanner />
       <AppShell>
         <HomeHeader profile={profile} />
 
@@ -116,15 +116,6 @@ function Demo() {
   );
 }
 
-function DemoModeBanner() {
-  return (
-    <div className="sticky top-0 z-30 w-full bg-ink text-white text-center text-[12px] sm:text-[13px] py-1.5 px-3 font-medium tracking-wide">
-      <span className="opacity-90">Demo mode</span>
-      <span className="opacity-60 mx-2">•</span>
-      <span className="opacity-80">Changes won’t be saved</span>
-    </div>
-  );
-}
 
 function ThisWeekCard() {
   const { entries, profile } = useAppState();

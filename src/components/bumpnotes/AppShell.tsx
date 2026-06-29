@@ -1,16 +1,18 @@
 import type { ReactNode } from "react";
-import { Link, useLocation } from "@tanstack/react-router";
-import { Home, ClipboardList, FileText, Heart, Baby, Settings as SettingsIcon } from "lucide-react";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Home, ClipboardList, FileText, Heart, Baby, Settings as SettingsIcon, X, Sparkles } from "lucide-react";
 import { BottomNav } from "./BottomNav";
 import { FeedbackButton } from "./FeedbackButton";
 import { TesterBanner } from "./TesterBanner";
 import { LogoIcon } from "./Logo";
 import { useT } from "@/lib/bumpnotes/i18n";
+import { store, useDemoMode } from "@/lib/bumpnotes/store";
 
 export function AppShell({ children, hideNav = false, right }: { children: ReactNode; hideNav?: boolean; right?: ReactNode }) {
   return (
     <>
       <TesterBanner />
+      <DemoBanner />
       <div className="app-shell flex flex-col lg:hidden">
         <div className="flex-1 flex flex-col">{children}</div>
         {!hideNav && <BottomNav />}
@@ -27,17 +29,46 @@ export function AppShell({ children, hideNav = false, right }: { children: React
   );
 }
 
+function DemoBanner() {
+  const demo = useDemoMode();
+  const navigate = useNavigate();
+  if (!demo) return null;
+  function exit() {
+    store.exitDemoMode();
+    navigate({ to: "/welcome" });
+  }
+  return (
+    <div className="sticky top-0 z-30 w-full bg-[#E9DEF7] text-[#3F2C68] border-b border-[#D9C6F0] print:hidden">
+      <div className="max-w-[1200px] mx-auto px-3 py-1.5 flex items-center gap-2 text-[12px] sm:text-[13px]">
+        <Sparkles className="size-3.5 shrink-0" />
+        <span className="font-semibold">Demo mode</span>
+        <span className="opacity-70 hidden sm:inline">·</span>
+        <span className="opacity-80 truncate">Have a look around — changes won't be saved.</span>
+        <button
+          onClick={exit}
+          aria-label="Exit demo"
+          className="ml-auto inline-flex items-center gap-1 rounded-full bg-white/70 hover:bg-white px-2.5 py-1 text-[11px] font-semibold border border-[#D9C6F0]"
+        >
+          <X className="size-3" /> Exit
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function DesktopSidebar() {
   const location = useLocation();
+  const demo = useDemoMode();
   const t = useT();
+  const homeTo = demo ? "/demo" : "/";
   const navItems = [
-    { to: "/", label: t("nav.home"), Icon: Home },
-    { to: "/timeline", label: t("nav.timeline"), Icon: ClipboardList },
-    { to: "/pack", label: t("nav.summary"), Icon: FileText },
-    { to: "/labour", label: t("nav.labour"), Icon: Heart },
-    { to: "/details", label: t("nav.baby"), Icon: Baby },
-    { to: "/settings", label: t("nav.settings"), Icon: SettingsIcon },
-  ] as const;
+    { to: homeTo, label: t("nav.home"), Icon: Home, matchExact: true },
+    { to: "/timeline" as const, label: t("nav.timeline"), Icon: ClipboardList, matchExact: false },
+    { to: "/pack" as const, label: t("nav.summary"), Icon: FileText, matchExact: false },
+    { to: "/labour" as const, label: t("nav.labour"), Icon: Heart, matchExact: false },
+    { to: "/details" as const, label: t("nav.baby"), Icon: Baby, matchExact: false },
+    { to: "/settings" as const, label: t("nav.settings"), Icon: SettingsIcon, matchExact: false },
+  ];
   return (
     <aside className="sticky top-8 self-start surface-card p-3">
       <div className="px-3 py-3 flex items-center gap-2.5">
@@ -45,8 +76,8 @@ function DesktopSidebar() {
         <p className="font-serif text-lg font-semibold leading-none">BumpNotes</p>
       </div>
       <ul className="space-y-1 mt-2">
-        {navItems.map(({ to, label, Icon }) => {
-          const active = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+        {navItems.map(({ to, label, Icon, matchExact }) => {
+          const active = matchExact ? location.pathname === to : location.pathname.startsWith(to);
           return (
             <li key={to}>
               <Link to={to}
