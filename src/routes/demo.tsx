@@ -57,7 +57,6 @@ function Demo() {
   return (
     <>
       <Toaster position="top-center" />
-      <DemoModeBanner />
       <AppShell>
         <HomeHeader profile={profile} />
 
