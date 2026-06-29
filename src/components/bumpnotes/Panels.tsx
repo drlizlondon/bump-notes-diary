@@ -44,7 +44,7 @@ export function ActionCard({
 export function Chip({
   active, onClick, children, size = "md",
 }: { active?: boolean; onClick?: () => void; children: ReactNode; size?: "sm" | "md" }) {
-  const pad = size === "sm" ? "px-3 py-1.5 text-[13px]" : "px-3.5 py-2 text-sm";
+  const pad = size === "sm" ? "px-2.5 py-1 text-[12.5px]" : "px-3 py-1.5 text-[13.5px]";
   return (
     <button
       onClick={onClick}
