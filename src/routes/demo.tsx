@@ -1,106 +1,187 @@
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PublicShell } from "@/components/bumpnotes/PublicShell";
-import { Activity, HelpCircle, Users, Gauge, Camera, NotebookPen, Heart, FileText } from "lucide-react";
+import { Toaster } from "sonner";
+import { Activity, HelpCircle, Users, Gauge, Camera, NotebookPen, Heart, Sparkles, ArrowLeft } from "lucide-react";
+import { store, useAppState } from "@/lib/bumpnotes/store";
+import { AppShell } from "@/components/bumpnotes/AppShell";
+import { HomeHeader } from "@/components/bumpnotes/HomeHeader";
+import {
+  ActionCard, SymptomPanelBody, QuestionPanelBody, PeopleCarePanelBody,
+  MeasurementPanelBody, PhotoPanelBody, FeelingPanelBody, NotePanelBody,
+} from "@/components/bumpnotes/Panels";
+import { useT } from "@/lib/bumpnotes/i18n";
+import { gestationFromDueDate } from "@/lib/bumpnotes/gestation";
+import { buildDemoDashboardState } from "@/lib/bumpnotes/demo-dashboard";
 
 export const Route = createFileRoute("/demo")({
-  head: () => ({ meta: [{ title: "Preview — BumpNotes" }] }),
+  head: () => ({
+    meta: [
+      { title: "Preview — BumpNotes" },
+      { name: "description", content: "Try BumpNotes with a demo dashboard. Add and edit example entries to see how easy it is to capture your pregnancy notes." },
+      { name: "theme-color", content: "#ffffff" },
+    ],
+    links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" },
+    ],
+  }),
   component: Demo,
 });
 
+type PanelKey = "symptom" | "question" | "people" | "measurement" | "photo" | "note" | "feeling";
+
 function Demo() {
-  return (
-    <PublicShell>
-      <section className="px-5 sm:px-8 pt-10 pb-6 max-w-[820px] mx-auto">
-        <p className="text-xs uppercase tracking-widest text-primary font-semibold">Preview</p>
-        <h1 className="font-serif text-3xl sm:text-4xl font-semibold mt-2">A look inside BumpNotes</h1>
-        <p className="text-ink-soft mt-3 leading-relaxed max-w-[600px]">
-          A quick tour of the dashboard, the timeline, and the pregnancy summary you can download. No account needed to look around.
-        </p>
-      </section>
+  const { profile } = useAppState();
+  const [open, setOpen] = useState<PanelKey | null>(null);
+  const t = useT();
 
-      <section className="px-5 sm:px-8 pb-10 max-w-[820px] mx-auto">
-        <div className="surface-card p-5 blush-bg">
-          <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">Niamh &amp; Pearl</p>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-serif text-5xl font-semibold text-primary leading-none">22</span>
-            <span className="font-serif italic text-base text-ink-soft">weeks</span>
-            <span className="font-serif text-3xl font-semibold text-primary leading-none ml-2">+3</span>
-            <span className="font-serif italic text-base text-ink-soft">days</span>
+  // Enter demo mode on mount; exit on unmount so the rest of the app is
+  // completely unaffected and nothing is persisted.
+  useEffect(() => {
+    store.enterDemoMode(buildDemoDashboardState());
+    return () => { store.exitDemoMode(); };
+  }, []);
+
+  if (!profile?.onboarded) {
+    return (
+      <div className="min-h-[100dvh] grid place-items-center p-8">
+        <p className="text-sm text-ink-soft">Loading demo…</p>
+      </div>
+    );
+  }
+
+  function toggle(k: PanelKey) { setOpen((p) => (p === k ? null : k)); }
+
+  return (
+    <>
+      <Toaster position="top-center" />
+      <DemoModeBanner />
+      <AppShell>
+        <HomeHeader profile={profile} />
+
+        <ThisWeekCard />
+
+        <section className="px-4 md:px-0 pb-28 lg:pb-10 mt-5">
+          <h2 className="font-serif text-lg md:text-2xl font-semibold mt-1 mb-0.5 px-1">{t("home.capture.title")}</h2>
+          <p className="text-[13px] text-ink-soft mb-3 px-1">{t("home.capture.subtitle")}</p>
+          <div className="space-y-2">
+            <ActionCard label={t("cap.symptoms")} helper={t("cap.symptoms.helper")} tone="coral"
+              icon={<Activity className="size-5" />} open={open === "symptom"} onToggle={() => toggle("symptom")}>
+              <SymptomPanelBody />
+            </ActionCard>
+            <ActionCard label={t("cap.question")} helper={t("cap.question.helper")} tone="mint"
+              icon={<HelpCircle className="size-5" />} open={open === "question"} onToggle={() => toggle("question")}>
+              <QuestionPanelBody />
+            </ActionCard>
+            <ActionCard label={t("cap.people")} helper={t("cap.people.helper")} tone="butter"
+              icon={<Users className="size-5" />} open={open === "people"} onToggle={() => toggle("people")}>
+              <PeopleCarePanelBody />
+            </ActionCard>
+            <ActionCard label={t("cap.measurements")} helper={t("cap.measurements.helper")} tone="lavender"
+              icon={<Gauge className="size-5" />} open={open === "measurement"} onToggle={() => toggle("measurement")}>
+              <MeasurementPanelBody />
+            </ActionCard>
+            <ActionCard label={t("cap.photo")} helper={t("cap.photo.helper")} tone="blush"
+              icon={<Camera className="size-5" />} open={open === "photo"} onToggle={() => toggle("photo")}>
+              <PhotoPanelBody />
+            </ActionCard>
+            <ActionCard label={t("cap.note")} helper={t("cap.note.helper")} tone="mint"
+              icon={<NotebookPen className="size-5" />} open={open === "note"} onToggle={() => toggle("note")}>
+              <NotePanelBody />
+            </ActionCard>
+            <ActionCard label={t("cap.feelings")} helper={t("cap.feelings.helper")} tone="lavender"
+              icon={<Heart className="size-5" />} open={open === "feeling"} onToggle={() => toggle("feeling")}>
+              <FeelingPanelBody />
+            </ActionCard>
           </div>
-          <p className="text-xs text-ink-soft mt-3">Due 14 March 2026</p>
-        </div>
 
-        <h2 className="font-serif text-xl font-semibold mt-8 mb-2">Capture in seconds</h2>
-        <p className="text-sm text-ink-soft mb-3">Tap a card to record something. BumpNotes plots it onto your week automatically.</p>
-        <div className="grid sm:grid-cols-2 gap-2.5">
-          <DemoCard icon={<Activity className="size-5" />} tone="bg-coral-soft" label="Symptoms" sub="Headache, swelling, movements" />
-          <DemoCard icon={<HelpCircle className="size-5" />} tone="bg-mint-soft" label="Save a Question" sub="For your next appointment" />
-          <DemoCard icon={<Users className="size-5" />} tone="bg-butter-soft" label="People & Care" sub="Who you saw, what was discussed" />
-          <DemoCard icon={<Gauge className="size-5" />} tone="bg-lavender-soft" label="Measurements" sub="BP, weight, movements" />
-          <DemoCard icon={<Camera className="size-5" />} tone="bg-blush-soft" label="Photos" sub="Bump, scans, documents" />
-          <DemoCard icon={<NotebookPen className="size-5" />} tone="bg-mint-soft" label="Notes" sub="Anything you want to remember" />
-          <DemoCard icon={<Heart className="size-5" />} tone="bg-lavender-soft" label="Feelings" sub="Mood and wellbeing" />
-          <DemoCard icon={<Heart className="size-5" />} tone="bg-coral-soft" label="Labour & Birth" sub="Plan, hospital bag, contractions" />
-        </div>
-      </section>
-
-      <section className="px-5 sm:px-8 pb-10 max-w-[820px] mx-auto">
-        <h2 className="font-serif text-xl font-semibold mb-2">A clean weekly timeline</h2>
-        <p className="text-sm text-ink-soft mb-3">Everything you record is automatically organised by pregnancy week.</p>
-        <div className="surface-card p-5 space-y-3">
-          <TimelineRow week="22 + 3" title="Headache (mild)" detail="Eased after rest" />
-          <TimelineRow week="22 + 1" title="Midwife appointment" detail="Discussed iron levels. Plan: repeat bloods at 28w." />
-          <TimelineRow week="21 + 5" title="Blood pressure" detail="118 / 76 mmHg" />
-          <TimelineRow week="21 + 2" title="Question saved" detail="Ask about glucose tolerance test booking" />
-        </div>
-      </section>
-
-      <section className="px-5 sm:px-8 pb-14 max-w-[820px] mx-auto">
-        <h2 className="font-serif text-xl font-semibold mb-2">Download a clean pregnancy summary</h2>
-        <p className="text-sm text-ink-soft mb-3">An A4 PDF organised by week and category. Easy for clinicians to read at a glance.</p>
-        <div className="surface-card p-5 sm:p-6 ring-1 ring-border">
-          <div className="flex items-center gap-2 text-primary mb-3"><FileText className="size-5" /><span className="font-semibold text-sm">BumpNotes Pregnancy Summary</span></div>
-          <dl className="grid grid-cols-2 gap-y-1 text-xs">
-            <dt className="text-ink-soft">Name</dt><dd className="font-medium">Niamh O'Connor</dd>
-            <dt className="text-ink-soft">Baby</dt><dd className="font-medium">Pearl</dd>
-            <dt className="text-ink-soft">Due</dt><dd className="font-medium">14 March 2026</dd>
-            <dt className="text-ink-soft">Gestation</dt><dd className="font-medium">22 weeks + 3 days</dd>
-          </dl>
-          <hr className="my-4 border-border" />
-          <p className="text-xs font-semibold text-primary uppercase tracking-widest">Week 22 + 3</p>
-          <p className="text-sm mt-1">• 03/11/2025 09:14 — Headache (mild) · Eased after rest</p>
-          <p className="text-xs text-ink-soft mt-2">Measurements this week</p>
-          <p className="text-xs text-ink-soft">• Blood pressure — 2 readings (range 118/76 to 122/79 mmHg)</p>
-        </div>
-        <div className="mt-6 flex flex-col sm:flex-row gap-3">
-          <Link to="/onboarding" className="flex-1 text-center py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">Start your record</Link>
-          <Link to="/auth" className="flex-1 text-center py-3 rounded-full bg-white border border-border text-sm font-medium">Sign in</Link>
-        </div>
-      </section>
-    </PublicShell>
+          <div className="mt-8 surface-card p-5 blush-bg text-center">
+            <p className="font-serif text-lg font-semibold">Like what you see?</p>
+            <p className="text-sm text-ink-soft mt-1.5 leading-relaxed">
+              Create your own pregnancy record in under a minute.
+            </p>
+            <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
+              <Link to="/onboarding" className="flex-1 text-center py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                Start your pregnancy record
+              </Link>
+              <Link to="/welcome" className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 rounded-full bg-white border border-border text-sm font-medium">
+                <ArrowLeft className="size-4" /> Back to homepage
+              </Link>
+            </div>
+          </div>
+        </section>
+      </AppShell>
+    </>
   );
 }
 
-function DemoCard({ icon, tone, label, sub }: { icon: React.ReactNode; tone: string; label: string; sub: string }) {
+function DemoModeBanner() {
   return (
-    <div className="surface-card flex items-center gap-3 px-4 py-3.5">
-      <span className={`size-10 shrink-0 rounded-2xl grid place-items-center ${tone}`}>{icon}</span>
-      <div className="min-w-0">
-        <p className="font-semibold text-sm">{label}</p>
-        <p className="text-xs text-ink-soft truncate">{sub}</p>
-      </div>
+    <div className="sticky top-0 z-30 w-full bg-ink text-white text-center text-[12px] sm:text-[13px] py-1.5 px-3 font-medium tracking-wide">
+      <span className="opacity-90">Demo mode</span>
+      <span className="opacity-60 mx-2">•</span>
+      <span className="opacity-80">Changes won’t be saved</span>
     </div>
   );
 }
 
-function TimelineRow({ week, title, detail }: { week: string; title: string; detail: string }) {
+function ThisWeekCard() {
+  const { entries, profile } = useAppState();
+  const { weeks: currentWeek } = useMemo(
+    () => (profile ? gestationFromDueDate(profile.dueDateISO) : { weeks: 0, days: 0 }),
+    [profile],
+  );
+
+  const stats = useMemo(() => {
+    const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recent = entries.filter((e) => !e.deletedAt && new Date(e.createdAt).getTime() >= since);
+    const total = recent.length;
+    const counts: Record<string, number> = {};
+    for (const e of recent) counts[e.type] = (counts[e.type] ?? 0) + 1;
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    return { total, top };
+  }, [entries]);
+
+  const labelMap: Record<string, string> = {
+    symptom: "symptoms",
+    question: "questions",
+    person: "appointments",
+    measurement: "measurements",
+    photo: "photos",
+    note: "notes",
+    feeling: "feelings",
+  };
+
   return (
-    <div className="flex items-start gap-3">
-      <span className="font-mono text-[10px] uppercase tracking-widest text-primary font-semibold w-14 shrink-0 pt-0.5">{week}</span>
-      <div className="min-w-0">
-        <p className="text-sm font-semibold">{title}</p>
-        <p className="text-xs text-ink-soft">{detail}</p>
+    <section className="px-4 md:px-0 mt-4">
+      <div className="surface-card p-4 sm:p-5">
+        <div className="flex items-center gap-2 text-primary">
+          <Sparkles className="size-4" />
+          <p className="text-[11px] uppercase tracking-[0.2em] font-semibold">This week</p>
+        </div>
+        {stats.total === 0 ? (
+          <p className="mt-2 text-sm text-ink-soft leading-relaxed">
+            Nothing recorded yet this week. Tap anything below to start — we'll save it automatically.
+          </p>
+        ) : (
+          <>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="font-serif text-3xl font-semibold text-ink leading-none">{stats.total}</span>
+              <span className="text-sm text-ink-soft">{stats.total === 1 ? "entry" : "entries"} added in week {currentWeek}</span>
+            </div>
+            {stats.top.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {stats.top.map(([k, n]) => (
+                  <span key={k} className="px-2.5 py-1 rounded-full bg-blush-soft text-xs text-ink">
+                    {n} {labelMap[k] ?? k}
+                  </span>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
-    </div>
+    </section>
   );
 }

@@ -22,6 +22,11 @@ const initial: AppState = { profile: null, entries: [] };
 let state: AppState = initial;
 const listeners = new Set<() => void>();
 
+// Demo mode: when active, persistence to localStorage is suspended so demo
+// edits stay in memory only and reset on refresh / leaving the demo.
+let demoMode = false;
+let demoBackup: AppState | null = null;
+
 function load(): AppState {
   if (typeof window === "undefined") return initial;
   try {
@@ -40,6 +45,7 @@ function load(): AppState {
 
 function persist() {
   if (typeof window === "undefined") return;
+  if (demoMode) return; // never write demo data to localStorage
   try { window.localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ }
 }
 
@@ -106,6 +112,26 @@ export const store = {
     });
   },
   clearAll() { setState(initial); },
+
+  isDemoMode() { return demoMode; },
+  enterDemoMode(demoState: AppState) {
+    if (demoMode) {
+      // already in demo — just replace data
+      state = demoState; emit(); return;
+    }
+    demoBackup = state;
+    demoMode = true;
+    state = demoState;
+    emit();
+  },
+  exitDemoMode() {
+    if (!demoMode) return;
+    demoMode = false;
+    state = demoBackup ?? initial;
+    demoBackup = null;
+    emit();
+  },
+
   exportAll() { return JSON.stringify(state, null, 2); },
 
   // Labour
