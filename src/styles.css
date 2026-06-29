@@ -153,6 +153,8 @@
   html, body, #app {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   body {
@@ -163,6 +165,10 @@
       radial-gradient(1100px 600px at 100% 0%, #fff1f1 0%, transparent 55%),
       radial-gradient(900px 600px at 0% 100%, #fff7ef 0%, transparent 55%),
       #ffffff;
+  }
+
+  input, textarea, select {
+    max-width: 100%;
   }
 
   h1, h2, h3, h4 {
