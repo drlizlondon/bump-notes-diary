@@ -61,7 +61,7 @@ function DesktopSidebar() {
   const demo = useDemoMode();
   const t = useT();
   const homeTo = demo ? "/demo" : "/";
-  const navItems = [
+  const navItems: { to: string; label: string; Icon: typeof Home; matchExact?: boolean }[] = [
     { to: homeTo, label: t("nav.home"), Icon: Home, matchExact: true },
     { to: "/timeline", label: t("nav.timeline"), Icon: ClipboardList },
     { to: "/pack", label: t("nav.summary"), Icon: FileText },
