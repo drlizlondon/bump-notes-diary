@@ -36,7 +36,7 @@ export function ActionCard({
         </span>
         <ChevronDown className={`size-5 text-ink-soft transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="px-3.5 sm:px-4 pb-4 pt-1 border-t border-border">{children}</div>}
+      {open && <div className="px-3.5 sm:px-4 pb-3 pt-1 sm:pb-4 border-t border-border">{children}</div>}
     </div>
   );
 }
