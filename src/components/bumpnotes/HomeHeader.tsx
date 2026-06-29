@@ -11,12 +11,12 @@ export function HomeHeader({ profile }: { profile: Profile }) {
   const babyName = profile.babyNickname?.trim() || t("baby.fallback");
   return (
     <header className="px-4 lg:px-0 pt-4 lg:pt-2 pb-1">
-      <div className="surface-card p-4 sm:p-5 lg:p-6 blush-bg">
-        <div className="flex items-start justify-between gap-3">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-ink-soft font-semibold break-words min-w-0">
+      <div className="surface-card p-4 sm:p-5 lg:p-6 blush-bg w-full max-w-full overflow-hidden">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-[11px] uppercase tracking-[0.15em] text-ink-soft font-semibold break-words min-w-0 flex-1">
             {profile.userName} &amp; {babyName}
           </p>
-          {userId && <SyncBadge status={status} />}
+          {userId && <div className="shrink-0"><SyncBadge status={status} /></div>}
         </div>
         <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className="font-serif text-[42px] sm:text-5xl font-semibold text-primary leading-none">{g.weeks}</span>

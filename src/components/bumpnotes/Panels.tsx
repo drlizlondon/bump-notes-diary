@@ -410,15 +410,15 @@ export function MeasurementPanelBody() {
       )}
 
       {kind === "blood_pressure" ? (
-        <div className="grid grid-cols-3 gap-2">
-          <input inputMode="numeric" value={systolic} onChange={(e) => setSystolic(e.target.value)} placeholder={t("m.systolic")} className={inputClass} />
-          <input inputMode="numeric" value={diastolic} onChange={(e) => setDiastolic(e.target.value)} placeholder={t("m.diastolic")} className={inputClass} />
-          <input inputMode="numeric" value={pulse} onChange={(e) => setPulse(e.target.value)} placeholder={t("m.pulse")} className={inputClass} />
+        <div className="grid grid-cols-3 gap-2 w-full">
+          <input inputMode="numeric" value={systolic} onChange={(e) => setSystolic(e.target.value)} placeholder={t("m.systolic")} className={inputClass + " min-w-0"} />
+          <input inputMode="numeric" value={diastolic} onChange={(e) => setDiastolic(e.target.value)} placeholder={t("m.diastolic")} className={inputClass + " min-w-0"} />
+          <input inputMode="numeric" value={pulse} onChange={(e) => setPulse(e.target.value)} placeholder={t("m.pulse")} className={inputClass + " min-w-0"} />
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2">
-          <input inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} placeholder={t("m.value")} className={inputClass} />
-          <input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder={preset?.unit || t("m.unit")} className={inputClass} />
+        <div className="grid grid-cols-2 gap-2 w-full">
+          <input inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} placeholder={t("m.value")} className={inputClass + " min-w-0"} />
+          <input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder={preset?.unit || t("m.unit")} className={inputClass + " min-w-0"} />
         </div>
       )}
 

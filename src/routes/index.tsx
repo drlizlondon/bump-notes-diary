@@ -62,7 +62,7 @@ function Index() {
 
         <section className="px-4 md:px-0 pb-28 lg:pb-10 mt-5">
           <h2 className="font-serif text-lg md:text-2xl font-semibold mt-1 mb-0.5 px-1">{t("home.capture.title")}</h2>
-          <p className="text-[13px] text-ink-soft mb-3 px-1">{t("home.capture.subtitle")}</p>
+          <p className="text-[13px] text-ink-soft mb-3 px-1 break-words">{t("home.capture.subtitle")}</p>
           <div className="space-y-2">
             <ActionCard label={t("cap.symptoms")} helper={t("cap.symptoms.helper")} tone="coral"
               icon={<Activity className="size-5" />} open={open === "symptom"} onToggle={() => toggle("symptom")}>
@@ -145,20 +145,20 @@ function ThisWeekCard() {
 
   return (
     <section className="px-4 md:px-0 mt-4">
-      <div className="surface-card p-4 sm:p-5">
+      <Link to="/timeline" className="surface-card p-4 sm:p-5 block w-full text-left hover:ring-1 hover:ring-primary/20 transition">
         <div className="flex items-center gap-2 text-primary">
           <Sparkles className="size-4" />
           <p className="text-[11px] uppercase tracking-[0.2em] font-semibold">This week</p>
         </div>
         {stats.total === 0 ? (
-          <p className="mt-2 text-sm text-ink-soft leading-relaxed">
+          <p className="mt-2 text-sm text-ink-soft leading-relaxed break-words">
             Nothing recorded yet this week. Tap anything below to start — we'll save it automatically.
           </p>
         ) : (
           <>
-            <div className="mt-2 flex items-baseline gap-2">
+            <div className="mt-2 flex items-baseline flex-wrap gap-2">
               <span className="font-serif text-3xl font-semibold text-ink leading-none">{stats.total}</span>
-              <span className="text-sm text-ink-soft">{stats.total === 1 ? "entry" : "entries"} added in week {currentWeek}</span>
+              <span className="text-sm text-ink-soft break-words min-w-0">{stats.total === 1 ? "entry" : "entries"} added in week {currentWeek}</span>
             </div>
             {stats.top.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1.5">
@@ -169,10 +169,10 @@ function ThisWeekCard() {
                 ))}
               </div>
             )}
-            <Link to="/timeline" className="mt-3 inline-block text-xs font-semibold text-primary">View timeline →</Link>
+            <span className="mt-3 inline-block text-xs font-semibold text-primary">View timeline →</span>
           </>
         )}
-      </div>
+      </Link>
     </section>
   );
 }
