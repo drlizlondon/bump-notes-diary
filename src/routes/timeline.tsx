@@ -2,7 +2,7 @@ import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButto
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Toaster } from "sonner";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Search, X } from "lucide-react";
 import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
 import { formatUKDate, formatUKTime } from "@/lib/bumpnotes/gestation";
@@ -15,13 +15,56 @@ export const Route = createFileRoute("/timeline")({
   component: TimelinePage,
 });
 
+type FilterKey = "all" | "symptom" | "question" | "measurement" | "note" | "photo" | "appointment" | "baby" | "labour";
+
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "symptom", label: "Symptoms" },
+  { key: "question", label: "Questions" },
+  { key: "measurement", label: "Measurements" },
+  { key: "note", label: "Notes" },
+  { key: "photo", label: "Photos" },
+  { key: "appointment", label: "Appointments" },
+  { key: "baby", label: "Baby" },
+  { key: "labour", label: "Labour" },
+];
+
+function matchesFilter(e: Entry, f: FilterKey): boolean {
+  if (f === "all") return true;
+  if (f === "appointment") return e.type === "person" || e.type === "appointment";
+  if (f === "labour") return e.type === "labour" || e.type === "labour_event" || e.type === "contraction";
+  if (f === "baby") return e.type === "feeling";
+  return e.type === f;
+}
+
+function entryText(e: Entry): string {
+  const s = summariseEntry(e);
+  const bits: string[] = [s.headline, s.detail ?? "", e.type];
+  // Pull common text-ish fields without TS noise
+  const any = e as unknown as Record<string, unknown>;
+  for (const k of ["text", "note", "context", "discussed", "advised", "advice", "followUp", "name", "role", "whoSeen", "symptom", "quantifier", "location", "tag", "feeling", "concern", "event", "customLabel", "unit"]) {
+    const v = any[k];
+    if (typeof v === "string") bits.push(v);
+    if (typeof v === "number") bits.push(String(v));
+  }
+  return bits.join(" ").toLowerCase();
+}
+
 function TimelinePage() {
   const { entries } = useAppState();
   const [editing, setEditing] = useState<Entry | null>(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<FilterKey>("all");
   const t = useT();
 
   const grouped = useMemo(() => {
-    const live = entries.filter((e) => !e.deletedAt);
+    const q = query.trim().toLowerCase();
+    const live = entries.filter((e) => {
+      if (e.deletedAt) return false;
+      if (!matchesFilter(e, filter)) return false;
+      if (q && !entryText(e).includes(q)) return false;
+      return true;
+    });
     const map = new Map<string, Entry[]>();
     for (const e of live) {
       const k = weekDayKey(e);
@@ -34,17 +77,63 @@ function TimelinePage() {
       const [bw, bd] = b.split("+").map(Number);
       return bw - aw || bd - ad;
     });
-  }, [entries]);
+  }, [entries, query, filter]);
 
   return (
     <>
       <Toaster position="top-center" />
       <AppShell>
         <PageHeader title={t("tl.title")} subtitle={t("tl.subtitle")} />
-        <div className="px-4 lg:px-0 pb-10 space-y-8">
+
+        <div className="sticky top-0 z-20 bg-white/85 backdrop-blur-md px-4 lg:px-0 pt-2 pb-3 border-b border-border">
+          <label className="relative block">
+            <Search className="size-4 text-ink-soft absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search your pregnancy record"
+              className="w-full pl-9 pr-9 py-2.5 rounded-full bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
+            />
+            {query && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 size-6 grid place-items-center rounded-full text-ink-soft hover:text-ink"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </label>
+          <div className="-mx-4 lg:mx-0 mt-2 overflow-x-auto no-scrollbar">
+            <div className="flex gap-1.5 px-4 lg:px-0 w-max">
+              {FILTERS.map((f) => {
+                const active = filter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setFilter(f.key)}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-[12.5px] font-medium border transition ${
+                      active ? "bg-primary text-primary-foreground border-primary" : "bg-white text-ink border-border hover:border-primary/40"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4 lg:px-0 pt-5 pb-10 space-y-8">
           {grouped.length === 0 && (
-            <div className="surface-card blush-bg p-6 text-center text-sm text-ink-soft">
-              {t("tl.empty")}
+            <div className="surface-card blush-bg p-6 text-center">
+              <p className="text-sm font-semibold text-ink">{query || filter !== "all" ? "No entries found" : t("tl.empty")}</p>
+              {(query || filter !== "all") && (
+                <p className="text-xs text-ink-soft mt-1">Try a different search or filter.</p>
+              )}
             </div>
           )}
           {grouped.map(([key, list]) => {
@@ -65,10 +154,10 @@ function TimelinePage() {
                       <li key={e.id} className="surface-card p-4">
                         <div className="flex justify-between items-start gap-2">
                           <div className="min-w-0 flex-1">
-                            <p className="text-[10px] font-mono uppercase tracking-widest text-ink-soft">
+                            <p className="text-[10px] font-mono uppercase tracking-widest text-ink-soft break-words">
                               {formatUKDate(e.createdAt)} · {formatUKTime(e.createdAt)}
                             </p>
-                            <p className="font-semibold mt-1">{s.headline}</p>
+                            <p className="font-semibold mt-1 break-words">{s.headline}</p>
                             {s.detail && <p className="text-sm text-ink-soft mt-1 break-words">{s.detail}</p>}
                             {e.type === "photo" && (
                               <img src={e.dataUrl} alt={e.tag} className="mt-3 w-full rounded-xl border border-border" />
