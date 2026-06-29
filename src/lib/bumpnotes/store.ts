@@ -129,18 +129,19 @@ export const store = {
   isDemoMode() { return demoMode; },
   enterDemoMode(demoState: AppState) {
     if (demoMode) {
-      // already in demo — just replace data
-      state = demoState; emit(); return;
+      state = demoState; persist(); emit(); return;
     }
     demoBackup = state;
     demoMode = true;
     state = demoState;
+    persist();
     emit();
   },
   exitDemoMode() {
     if (!demoMode) return;
     demoMode = false;
-    state = demoBackup ?? initial;
+    try { if (typeof window !== "undefined") window.sessionStorage.removeItem(DEMO_KEY); } catch { /* ignore */ }
+    state = demoBackup ?? load();
     demoBackup = null;
     emit();
   },
