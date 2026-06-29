@@ -523,7 +523,7 @@ export function NotePanelBody() {
   }
   return (
     <div className="space-y-2.5 pt-3">
-      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t("n.placeholder")} rows={4} className={inputClass + " resize-none"} />
+      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t("n.placeholder")} rows={3} className={inputClass + " resize-none"} />}
       <button onClick={save} disabled={!text.trim()} className={primaryBtn}>{t("n.save")}</button>
     </div>
   );
