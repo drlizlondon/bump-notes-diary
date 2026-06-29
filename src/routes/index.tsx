@@ -62,7 +62,7 @@ function Index() {
 
         <section className="px-4 md:px-0 pb-28 lg:pb-10 mt-5">
           <h2 className="font-serif text-lg md:text-2xl font-semibold mt-1 mb-0.5 px-1">{t("home.capture.title")}</h2>
-          <p className="text-[13px] text-ink-soft mb-3 px-1">{t("home.capture.subtitle")}</p>
+          <p className="text-[13px] text-ink-soft mb-3 px-1 break-words">{t("home.capture.subtitle")}</p>
           <div className="space-y-2">
             <ActionCard label={t("cap.symptoms")} helper={t("cap.symptoms.helper")} tone="coral"
               icon={<Activity className="size-5" />} open={open === "symptom"} onToggle={() => toggle("symptom")}>
