@@ -51,6 +51,8 @@ function Welcome() {
       <Toaster position="top-center" />
       <PublicShell>
         <Hero />
+        <EmpowermentSection />
+        <ReassuranceCards />
       </PublicShell>
     </>
   );
