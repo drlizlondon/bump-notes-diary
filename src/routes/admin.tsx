@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { Shield, Plus, Copy, Power, Download, RefreshCcw, MessageSquareHeart, Trash2, Mail, Bug, Users } from "lucide-react";
+import { Shield, Plus, Copy, Power, Download, RefreshCcw, MessageSquareHeart, Trash2, Mail, Bug, Users, UserPlus, Activity, Clock } from "lucide-react";
+import { PasswordInput } from "@/components/bumpnotes/PasswordInput";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import {
@@ -43,15 +44,28 @@ function AdminRoute() {
   const navigate = useNavigate();
   const { userId } = useSyncSnapshot();
   const checkAdminFn = useServerFn(checkAdmin);
-  const [state, setState] = useState<"loading" | "needs-auth" | "needs-claim" | "ready">("loading");
+  const [state, setState] = useState<"loading" | "needs-auth" | "needs-claim" | "ready" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    setErrorMessage(null);
     if (!userId) { setState("needs-auth"); return; }
     let cancelled = false;
     checkAdminFn({ data: undefined } as never).then((r) => {
       if (cancelled) return;
       setState(r.isAdmin ? "ready" : "needs-claim");
-    }).catch(() => !cancelled && setState("needs-claim"));
+    }).catch((err) => {
+      if (cancelled) return;
+      const msg = err instanceof Error ? err.message : String(err);
+      // Distinguish infrastructure errors (env vars / DB) from "not admin yet"
+      const isInfra = /SUPABASE|env|environment|fetch|network|500|connect/i.test(msg);
+      if (isInfra) {
+        setErrorMessage(msg);
+        setState("error");
+      } else {
+        setState("needs-claim");
+      }
+    });
     return () => { cancelled = true; };
   }, [userId, checkAdminFn]);
 
@@ -64,19 +78,46 @@ function AdminRoute() {
             <Shield className="size-4" />
             <span className="text-[11px] uppercase tracking-[0.2em] font-semibold">Admin</span>
           </div>
-          <h1 className="font-serif text-2xl sm:text-3xl font-semibold mt-1">Tester access &amp; feedback</h1>
+          <h1 className="font-serif text-2xl sm:text-3xl font-semibold mt-1">BumpNotes admin</h1>
+          <p className="text-sm text-ink-soft mt-1">Manage tester access, feedback and user accounts.</p>
 
           {state === "loading" && <p className="mt-6 text-sm text-ink-soft">Checking access…</p>}
 
           {state === "needs-auth" && (
-            <div className="mt-6 surface-card p-5">
-              <p className="text-sm text-ink-soft">Please sign in to continue.</p>
-              <button onClick={() => navigate({ to: "/auth" })} className="mt-3 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold">Sign in</button>
+            <div className="mt-6 surface-card p-5 max-w-[440px]">
+              <h2 className="font-serif text-lg font-semibold">Admin sign in required</h2>
+              <p className="text-sm text-ink-soft mt-1 leading-relaxed">
+                Sign in with your admin account to access the dashboard. This is separate from the regular pregnancy record sign-up flow.
+              </p>
+              <button
+                onClick={() => navigate({ to: "/signin", search: { redirect: "/admin", admin: "1" } })}
+                className="mt-4 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+              >
+                Go to admin sign in
+              </button>
             </div>
           )}
 
           {state === "needs-claim" && (
-            <ClaimAdmin onClaimed={() => setState("ready")} />
+            <NotAdminOrClaim onClaimed={() => setState("ready")} />
+          )}
+
+          {state === "error" && (
+            <div className="mt-6 surface-card p-5 max-w-[560px]">
+              <h2 className="font-serif text-lg font-semibold text-coral">Admin dashboard unavailable</h2>
+              <p className="text-sm text-ink-soft mt-2 leading-relaxed">
+                We couldn't reach the admin services. Please try again in a moment. If this keeps happening, contact the BumpNotes team.
+              </p>
+              {import.meta.env.DEV && errorMessage && (
+                <pre className="mt-3 text-[11px] bg-blush-soft/60 rounded-lg p-2 overflow-auto whitespace-pre-wrap">{errorMessage}</pre>
+              )}
+              <button
+                onClick={() => { setState("loading"); setTimeout(() => location.reload(), 50); }}
+                className="mt-4 px-4 py-2 rounded-full bg-white border border-border text-sm font-semibold"
+              >
+                Try again
+              </button>
+            </div>
           )}
 
           {state === "ready" && <AdminDashboard />}
@@ -86,39 +127,51 @@ function AdminRoute() {
   );
 }
 
-function ClaimAdmin({ onClaimed }: { onClaimed: () => void }) {
+function NotAdminOrClaim({ onClaimed }: { onClaimed: () => void }) {
   const claim = useServerFn(claimAdminWithSecret);
+  const [showClaim, setShowClaim] = useState(false);
   const [secret, setSecret] = useState("");
   const [busy, setBusy] = useState(false);
   return (
-    <div className="mt-6 surface-card p-5 max-w-[440px]">
-      <h2 className="font-serif text-lg font-semibold">Become an admin</h2>
+    <div className="mt-6 surface-card p-5 max-w-[480px]">
+      <h2 className="font-serif text-lg font-semibold">You do not have admin access</h2>
       <p className="text-sm text-ink-soft mt-1 leading-relaxed">
-        Enter the admin bootstrap secret to grant your signed-in account admin access.
+        Your account is signed in but isn't an admin. If you're a BumpNotes team member, you can claim admin access with the bootstrap secret.
       </p>
-      <form onSubmit={async (e) => {
-        e.preventDefault();
-        if (!secret.trim() || busy) return;
-        setBusy(true);
-        try {
-          await claim({ data: { secret } });
-          toast.success("You're now an admin.");
-          onClaimed();
-        } catch (err) {
-          toast.error(err instanceof Error ? err.message : "That didn't work");
-        } finally { setBusy(false); }
-      }}>
-        <input
-          type="password"
-          value={secret}
-          onChange={(e) => setSecret(e.target.value)}
-          placeholder="Admin secret"
-          className="mt-3 w-full px-4 py-2.5 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
-        />
-        <button disabled={busy} className="mt-3 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
-          {busy ? "Checking…" : "Grant admin access"}
+      {!showClaim ? (
+        <button
+          onClick={() => setShowClaim(true)}
+          className="mt-4 px-4 py-2 rounded-full bg-white border border-border text-sm font-semibold"
+        >
+          I have the admin secret
         </button>
-      </form>
+      ) : (
+        <form
+          className="mt-4 space-y-3"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!secret.trim() || busy) return;
+            setBusy(true);
+            try {
+              await claim({ data: { secret } });
+              toast.success("You're now an admin.");
+              onClaimed();
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "That didn't work");
+            } finally { setBusy(false); }
+          }}
+        >
+          <PasswordInput
+            value={secret}
+            onChange={(e) => setSecret(e.target.value)}
+            placeholder="Admin bootstrap secret"
+            autoComplete="off"
+          />
+          <button disabled={busy} className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
+            {busy ? "Checking…" : "Grant admin access"}
+          </button>
+        </form>
+      )}
     </div>
   );
 }
@@ -168,6 +221,8 @@ function AdminDashboard() {
 
   return (
     <div className="mt-6 space-y-8">
+      <AccountsAnalytics />
+
       <div className="flex flex-wrap items-center gap-2">
         <button onClick={refresh} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium bg-white">
           <RefreshCcw className="size-3.5" /> Refresh
@@ -190,15 +245,19 @@ function AdminDashboard() {
         <span className="text-xs text-ink-soft">{loading ? "Loading…" : `${sessionCount} tester sessions recorded`}</span>
       </div>
 
-      {/* Overview tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-        <Tile label="Total codes" value={summary.total} />
-        <Tile label="Active" value={summary.active} />
-        <Tile label="Used" value={summary.used} />
-        <Tile label="Unused" value={summary.unused} />
-        <Tile label="Feedback" value={summary.fbDone} />
-        <Tile label="Completion" value={`${summary.completion}%`} />
+      {/* Tester code overview tiles */}
+      <div>
+        <h2 className="font-serif text-lg font-semibold mb-2">Tester codes</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <Tile label="Total codes" value={summary.total} />
+          <Tile label="Active" value={summary.active} />
+          <Tile label="Used" value={summary.used} />
+          <Tile label="Unused" value={summary.unused} />
+          <Tile label="Feedback" value={summary.fbDone} />
+          <Tile label="Completion" value={`${summary.completion}%`} />
+        </div>
       </div>
+
 
       <Generators
         onBatch={async (prefix, count, startAt, label) => {
@@ -293,6 +352,88 @@ function ContactMessagesPanel() {
     </section>
   );
 }
+
+function AccountsAnalytics() {
+  const fetchAll = useServerFn(listUserAccounts);
+  const [items, setItems] = useState<Array<{ id: string; email: string | null; created_at: string; last_sign_in_at: string | null }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetchAll({ data: undefined } as never);
+        if (!cancelled) setItems((r.users as never) ?? []);
+      } catch (e) {
+        if (!cancelled) toast.error(e instanceof Error ? e.message : "Couldn't load accounts");
+      } finally { if (!cancelled) setLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [fetchAll]);
+
+  const stats = useMemo(() => {
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    const total = items.length;
+    const last7 = items.filter((u) => now - new Date(u.created_at).getTime() < 7 * day).length;
+    const last30 = items.filter((u) => now - new Date(u.created_at).getTime() < 30 * day).length;
+    const signedInLast7 = items.filter((u) => u.last_sign_in_at && now - new Date(u.last_sign_in_at).getTime() < 7 * day).length;
+    const lastSignIn = items.reduce<Date | null>((acc, u) => {
+      if (!u.last_sign_in_at) return acc;
+      const d = new Date(u.last_sign_in_at);
+      return !acc || d > acc ? d : acc;
+    }, null);
+    const firstSignup = items.reduce<Date | null>((acc, u) => {
+      const d = new Date(u.created_at);
+      return !acc || d < acc ? d : acc;
+    }, null);
+    const daysSinceFirst = firstSignup ? Math.max(0, Math.floor((now - firstSignup.getTime()) / day)) : 0;
+    const recent = [...items]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5);
+    return { total, last7, last30, signedInLast7, lastSignIn, daysSinceFirst, recent };
+  }, [items]);
+
+  return (
+    <section>
+      <h2 className="font-serif text-lg font-semibold mb-2 flex items-center gap-2">
+        <Activity className="size-4 text-primary" /> Account analytics
+      </h2>
+      {loading ? (
+        <p className="text-sm text-ink-soft">Loading…</p>
+      ) : items.length === 0 ? (
+        <div className="surface-card p-5 text-center">
+          <p className="text-sm text-ink-soft">No accounts yet. When users sign up, they'll appear here.</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <Tile label="Total accounts" value={stats.total} />
+            <Tile label="New · 7 days" value={stats.last7} />
+            <Tile label="New · 30 days" value={stats.last30} />
+            <Tile label="Active · 7 days" value={stats.signedInLast7} />
+            <Tile label="Days since 1st signup" value={stats.daysSinceFirst} />
+            <Tile label="Last sign-in" value={stats.lastSignIn ? fmt(stats.lastSignIn.toISOString()) : "—"} />
+          </div>
+          <div className="surface-card mt-3 p-4">
+            <h3 className="font-serif text-sm font-semibold flex items-center gap-2"><UserPlus className="size-4 text-primary" /> Recent sign-ups</h3>
+            <ul className="mt-2 divide-y divide-border">
+              {stats.recent.map((u) => (
+                <li key={u.id} className="py-2 flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate">{u.email ?? u.id}</span>
+                  <span className="text-[12px] text-ink-soft whitespace-nowrap flex items-center gap-1">
+                    <Clock className="size-3" /> {fmt(u.created_at)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 
 function FeedbackSubmissionsPanel() {
   const fetchAll = useServerFn(listFeedbackSubmissions);

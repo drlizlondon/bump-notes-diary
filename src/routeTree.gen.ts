@@ -15,6 +15,7 @@ import { Route as TesterRouteImport } from './routes/tester'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PackRouteImport } from './routes/pack'
 import { Route as OurStoryRouteImport } from './routes/our-story'
@@ -56,6 +57,11 @@ const SigninRoute = SigninRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/our-story': typeof OurStoryRoute
   '/pack': typeof PackRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/our-story': typeof OurStoryRoute
   '/pack': typeof PackRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/our-story': typeof OurStoryRoute
   '/pack': typeof PackRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/our-story'
     | '/pack'
     | '/privacy'
+    | '/reset-password'
     | '/settings'
     | '/signin'
     | '/terms'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/our-story'
     | '/pack'
     | '/privacy'
+    | '/reset-password'
     | '/settings'
     | '/signin'
     | '/terms'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/our-story'
     | '/pack'
     | '/privacy'
+    | '/reset-password'
     | '/settings'
     | '/signin'
     | '/terms'
@@ -256,6 +268,7 @@ export interface RootRouteChildren {
   OurStoryRoute: typeof OurStoryRoute
   PackRoute: typeof PackRoute
   PrivacyRoute: typeof PrivacyRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   SigninRoute: typeof SigninRoute
   TermsRoute: typeof TermsRoute
@@ -306,6 +319,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -408,6 +428,7 @@ const rootRouteChildren: RootRouteChildren = {
   OurStoryRoute: OurStoryRoute,
   PackRoute: PackRoute,
   PrivacyRoute: PrivacyRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   SigninRoute: SigninRoute,
   TermsRoute: TermsRoute,
