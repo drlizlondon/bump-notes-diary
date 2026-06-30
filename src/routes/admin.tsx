@@ -44,15 +44,28 @@ function AdminRoute() {
   const navigate = useNavigate();
   const { userId } = useSyncSnapshot();
   const checkAdminFn = useServerFn(checkAdmin);
-  const [state, setState] = useState<"loading" | "needs-auth" | "needs-claim" | "ready">("loading");
+  const [state, setState] = useState<"loading" | "needs-auth" | "needs-claim" | "ready" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    setErrorMessage(null);
     if (!userId) { setState("needs-auth"); return; }
     let cancelled = false;
     checkAdminFn({ data: undefined } as never).then((r) => {
       if (cancelled) return;
       setState(r.isAdmin ? "ready" : "needs-claim");
-    }).catch(() => !cancelled && setState("needs-claim"));
+    }).catch((err) => {
+      if (cancelled) return;
+      const msg = err instanceof Error ? err.message : String(err);
+      // Distinguish infrastructure errors (env vars / DB) from "not admin yet"
+      const isInfra = /SUPABASE|env|environment|fetch|network|500|connect/i.test(msg);
+      if (isInfra) {
+        setErrorMessage(msg);
+        setState("error");
+      } else {
+        setState("needs-claim");
+      }
+    });
     return () => { cancelled = true; };
   }, [userId, checkAdminFn]);
 
@@ -65,19 +78,46 @@ function AdminRoute() {
             <Shield className="size-4" />
             <span className="text-[11px] uppercase tracking-[0.2em] font-semibold">Admin</span>
           </div>
-          <h1 className="font-serif text-2xl sm:text-3xl font-semibold mt-1">Tester access &amp; feedback</h1>
+          <h1 className="font-serif text-2xl sm:text-3xl font-semibold mt-1">BumpNotes admin</h1>
+          <p className="text-sm text-ink-soft mt-1">Manage tester access, feedback and user accounts.</p>
 
           {state === "loading" && <p className="mt-6 text-sm text-ink-soft">Checking access…</p>}
 
           {state === "needs-auth" && (
-            <div className="mt-6 surface-card p-5">
-              <p className="text-sm text-ink-soft">Please sign in to continue.</p>
-              <button onClick={() => navigate({ to: "/auth" })} className="mt-3 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold">Sign in</button>
+            <div className="mt-6 surface-card p-5 max-w-[440px]">
+              <h2 className="font-serif text-lg font-semibold">Admin sign in required</h2>
+              <p className="text-sm text-ink-soft mt-1 leading-relaxed">
+                Sign in with your admin account to access the dashboard. This is separate from the regular pregnancy record sign-up flow.
+              </p>
+              <button
+                onClick={() => navigate({ to: "/signin", search: { redirect: "/admin", admin: "1" } })}
+                className="mt-4 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+              >
+                Go to admin sign in
+              </button>
             </div>
           )}
 
           {state === "needs-claim" && (
-            <ClaimAdmin onClaimed={() => setState("ready")} />
+            <NotAdminOrClaim onClaimed={() => setState("ready")} />
+          )}
+
+          {state === "error" && (
+            <div className="mt-6 surface-card p-5 max-w-[560px]">
+              <h2 className="font-serif text-lg font-semibold text-coral">Admin dashboard unavailable</h2>
+              <p className="text-sm text-ink-soft mt-2 leading-relaxed">
+                We couldn't reach the admin services. Please try again in a moment. If this keeps happening, contact the BumpNotes team.
+              </p>
+              {import.meta.env.DEV && errorMessage && (
+                <pre className="mt-3 text-[11px] bg-blush-soft/60 rounded-lg p-2 overflow-auto whitespace-pre-wrap">{errorMessage}</pre>
+              )}
+              <button
+                onClick={() => { setState("loading"); setTimeout(() => location.reload(), 50); }}
+                className="mt-4 px-4 py-2 rounded-full bg-white border border-border text-sm font-semibold"
+              >
+                Try again
+              </button>
+            </div>
           )}
 
           {state === "ready" && <AdminDashboard />}
@@ -87,39 +127,51 @@ function AdminRoute() {
   );
 }
 
-function ClaimAdmin({ onClaimed }: { onClaimed: () => void }) {
+function NotAdminOrClaim({ onClaimed }: { onClaimed: () => void }) {
   const claim = useServerFn(claimAdminWithSecret);
+  const [showClaim, setShowClaim] = useState(false);
   const [secret, setSecret] = useState("");
   const [busy, setBusy] = useState(false);
   return (
-    <div className="mt-6 surface-card p-5 max-w-[440px]">
-      <h2 className="font-serif text-lg font-semibold">Become an admin</h2>
+    <div className="mt-6 surface-card p-5 max-w-[480px]">
+      <h2 className="font-serif text-lg font-semibold">You do not have admin access</h2>
       <p className="text-sm text-ink-soft mt-1 leading-relaxed">
-        Enter the admin bootstrap secret to grant your signed-in account admin access.
+        Your account is signed in but isn't an admin. If you're a BumpNotes team member, you can claim admin access with the bootstrap secret.
       </p>
-      <form onSubmit={async (e) => {
-        e.preventDefault();
-        if (!secret.trim() || busy) return;
-        setBusy(true);
-        try {
-          await claim({ data: { secret } });
-          toast.success("You're now an admin.");
-          onClaimed();
-        } catch (err) {
-          toast.error(err instanceof Error ? err.message : "That didn't work");
-        } finally { setBusy(false); }
-      }}>
-        <input
-          type="password"
-          value={secret}
-          onChange={(e) => setSecret(e.target.value)}
-          placeholder="Admin secret"
-          className="mt-3 w-full px-4 py-2.5 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
-        />
-        <button disabled={busy} className="mt-3 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
-          {busy ? "Checking…" : "Grant admin access"}
+      {!showClaim ? (
+        <button
+          onClick={() => setShowClaim(true)}
+          className="mt-4 px-4 py-2 rounded-full bg-white border border-border text-sm font-semibold"
+        >
+          I have the admin secret
         </button>
-      </form>
+      ) : (
+        <form
+          className="mt-4 space-y-3"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!secret.trim() || busy) return;
+            setBusy(true);
+            try {
+              await claim({ data: { secret } });
+              toast.success("You're now an admin.");
+              onClaimed();
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "That didn't work");
+            } finally { setBusy(false); }
+          }}
+        >
+          <PasswordInput
+            value={secret}
+            onChange={(e) => setSecret(e.target.value)}
+            placeholder="Admin bootstrap secret"
+            autoComplete="off"
+          />
+          <button disabled={busy} className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
+            {busy ? "Checking…" : "Grant admin access"}
+          </button>
+        </form>
+      )}
     </div>
   );
 }
