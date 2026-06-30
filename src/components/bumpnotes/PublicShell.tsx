@@ -48,10 +48,10 @@ export function PublicShell({ children }: { children: ReactNode }) {
           <div className="md:hidden border-t border-border bg-white">
             <div className="max-w-[1200px] mx-auto px-4 py-2 flex flex-col">
               <Link to="/features" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Features</Link>
+              <Link to="/our-story" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Our Story</Link>
               <Link to="/demo" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Preview</Link>
               <Link to="/privacy" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Privacy</Link>
               <Link to="/contact" onClick={() => setMenuOpen(false)} className="py-2.5 text-sm text-ink">Get in contact</Link>
-
             </div>
           </div>
         )}
