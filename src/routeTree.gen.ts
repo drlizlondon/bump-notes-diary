@@ -17,6 +17,7 @@ import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PackRouteImport } from './routes/pack'
+import { Route as OurStoryRouteImport } from './routes/our-story'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LabourRouteImport } from './routes/labour'
 import { Route as FeaturesRouteImport } from './routes/features'
@@ -65,6 +66,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const PackRoute = PackRouteImport.update({
   id: '/pack',
   path: '/pack',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OurStoryRoute = OurStoryRouteImport.update({
+  id: '/our-story',
+  path: '/our-story',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
   '/onboarding': typeof OnboardingRoute
+  '/our-story': typeof OurStoryRoute
   '/pack': typeof PackRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
   '/onboarding': typeof OnboardingRoute
+  '/our-story': typeof OurStoryRoute
   '/pack': typeof PackRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
   '/onboarding': typeof OnboardingRoute
+  '/our-story': typeof OurStoryRoute
   '/pack': typeof PackRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/features'
     | '/labour'
     | '/onboarding'
+    | '/our-story'
     | '/pack'
     | '/privacy'
     | '/settings'
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
     | '/features'
     | '/labour'
     | '/onboarding'
+    | '/our-story'
     | '/pack'
     | '/privacy'
     | '/settings'
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '/features'
     | '/labour'
     | '/onboarding'
+    | '/our-story'
     | '/pack'
     | '/privacy'
     | '/settings'
@@ -241,6 +253,7 @@ export interface RootRouteChildren {
   FeaturesRoute: typeof FeaturesRoute
   LabourRoute: typeof LabourRoute
   OnboardingRoute: typeof OnboardingRoute
+  OurStoryRoute: typeof OurStoryRoute
   PackRoute: typeof PackRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
@@ -307,6 +320,13 @@ declare module '@tanstack/react-router' {
       path: '/pack'
       fullPath: '/pack'
       preLoaderRoute: typeof PackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/our-story': {
+      id: '/our-story'
+      path: '/our-story'
+      fullPath: '/our-story'
+      preLoaderRoute: typeof OurStoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -385,6 +405,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeaturesRoute: FeaturesRoute,
   LabourRoute: LabourRoute,
   OnboardingRoute: OnboardingRoute,
+  OurStoryRoute: OurStoryRoute,
   PackRoute: PackRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
