@@ -353,6 +353,88 @@ function ContactMessagesPanel() {
   );
 }
 
+function AccountsAnalytics() {
+  const fetchAll = useServerFn(listUserAccounts);
+  const [items, setItems] = useState<Array<{ id: string; email: string | null; created_at: string; last_sign_in_at: string | null }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetchAll({ data: undefined } as never);
+        if (!cancelled) setItems((r.users as never) ?? []);
+      } catch (e) {
+        if (!cancelled) toast.error(e instanceof Error ? e.message : "Couldn't load accounts");
+      } finally { if (!cancelled) setLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [fetchAll]);
+
+  const stats = useMemo(() => {
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    const total = items.length;
+    const last7 = items.filter((u) => now - new Date(u.created_at).getTime() < 7 * day).length;
+    const last30 = items.filter((u) => now - new Date(u.created_at).getTime() < 30 * day).length;
+    const signedInLast7 = items.filter((u) => u.last_sign_in_at && now - new Date(u.last_sign_in_at).getTime() < 7 * day).length;
+    const lastSignIn = items.reduce<Date | null>((acc, u) => {
+      if (!u.last_sign_in_at) return acc;
+      const d = new Date(u.last_sign_in_at);
+      return !acc || d > acc ? d : acc;
+    }, null);
+    const firstSignup = items.reduce<Date | null>((acc, u) => {
+      const d = new Date(u.created_at);
+      return !acc || d < acc ? d : acc;
+    }, null);
+    const daysSinceFirst = firstSignup ? Math.max(0, Math.floor((now - firstSignup.getTime()) / day)) : 0;
+    const recent = [...items]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5);
+    return { total, last7, last30, signedInLast7, lastSignIn, daysSinceFirst, recent };
+  }, [items]);
+
+  return (
+    <section>
+      <h2 className="font-serif text-lg font-semibold mb-2 flex items-center gap-2">
+        <Activity className="size-4 text-primary" /> Account analytics
+      </h2>
+      {loading ? (
+        <p className="text-sm text-ink-soft">Loading…</p>
+      ) : items.length === 0 ? (
+        <div className="surface-card p-5 text-center">
+          <p className="text-sm text-ink-soft">No accounts yet. When users sign up, they'll appear here.</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <Tile label="Total accounts" value={stats.total} />
+            <Tile label="New · 7 days" value={stats.last7} />
+            <Tile label="New · 30 days" value={stats.last30} />
+            <Tile label="Active · 7 days" value={stats.signedInLast7} />
+            <Tile label="Days since 1st signup" value={stats.daysSinceFirst} />
+            <Tile label="Last sign-in" value={stats.lastSignIn ? fmt(stats.lastSignIn.toISOString()) : "—"} />
+          </div>
+          <div className="surface-card mt-3 p-4">
+            <h3 className="font-serif text-sm font-semibold flex items-center gap-2"><UserPlus className="size-4 text-primary" /> Recent sign-ups</h3>
+            <ul className="mt-2 divide-y divide-border">
+              {stats.recent.map((u) => (
+                <li key={u.id} className="py-2 flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate">{u.email ?? u.id}</span>
+                  <span className="text-[12px] text-ink-soft whitespace-nowrap flex items-center gap-1">
+                    <Clock className="size-3" /> {fmt(u.created_at)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+
 function FeedbackSubmissionsPanel() {
   const fetchAll = useServerFn(listFeedbackSubmissions);
   const removeOne = useServerFn(deleteFeedbackSubmission);
