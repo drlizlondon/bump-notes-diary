@@ -73,7 +73,7 @@ function Hero() {
           </h1>
 
           <p className="mt-5 text-[15.5px] sm:text-lg text-ink-soft leading-[1.7] max-w-[520px]">
-            Capture symptoms, thoughts, questions and advice as they happen. Keep everything about your pregnancy together in one private place, then create a clear summary of what you want to share whenever you need it.
+            Record what matters to you throughout your pregnancy. Create clear summaries whenever you need them, helping you communicate clearly and confidently with your maternity team.
           </p>
 
           <Link
@@ -94,6 +94,46 @@ function Hero() {
         {/* Product preview column — becomes the hero visual */}
         <div className="w-full">
           <SummaryShowcase />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EmpowermentSection() {
+  return (
+    <section className="px-5 sm:px-8 pb-10 sm:pb-14">
+      <div className="max-w-[640px] mx-auto text-center">
+        <h2 className="font-serif text-[24px] sm:text-[30px] font-semibold leading-[1.15] tracking-tight text-ink text-balance">
+          Every woman deserves to feel confident speaking about her pregnancy.
+        </h2>
+        <p className="mt-4 text-[15px] sm:text-base text-ink-soft leading-relaxed">
+          BumpNotes helps you keep your experiences together, so when the conversation matters, you're ready.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function ReassuranceCards() {
+  return (
+    <section className="px-5 sm:px-8 pb-16 sm:pb-20">
+      <div className="max-w-[1120px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+        <div className="rounded-2xl bg-white border border-border p-6 sm:p-8">
+          <h3 className="font-serif text-lg sm:text-xl font-semibold leading-tight text-ink">
+            When everything is going well...
+          </h3>
+          <p className="mt-2.5 text-sm sm:text-[15px] text-ink-soft leading-relaxed">
+            BumpNotes helps you keep your pregnancy organised.
+          </p>
+        </div>
+        <div className="rounded-2xl bg-white border border-border p-6 sm:p-8">
+          <h3 className="font-serif text-lg sm:text-xl font-semibold leading-tight text-ink">
+            If things become more complicated...
+          </h3>
+          <p className="mt-2.5 text-sm sm:text-[15px] text-ink-soft leading-relaxed">
+            BumpNotes helps you keep a clear record of your experiences, so when the conversation matters, you're ready.
+          </p>
         </div>
       </div>
     </section>
