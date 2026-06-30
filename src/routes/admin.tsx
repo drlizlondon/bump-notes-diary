@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { Shield, Plus, Copy, Power, Download, RefreshCcw, MessageSquareHeart, Trash2, Mail, Bug, Users } from "lucide-react";
+import { Shield, Plus, Copy, Power, Download, RefreshCcw, MessageSquareHeart, Trash2, Mail, Bug, Users, UserPlus, Activity, Clock } from "lucide-react";
+import { PasswordInput } from "@/components/bumpnotes/PasswordInput";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import {
