@@ -117,11 +117,10 @@ function AuthPage() {
                 onChange={(e) => setEmail(e.target.value)} placeholder="Email"
                 className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
               />
-              <input
-                type="password" autoComplete="new-password" required minLength={6}
+              <PasswordInput
+                autoComplete="new-password" required minLength={6}
                 value={password} onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password (min 6 characters)"
-                className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
               />
 
               <div className="space-y-2">
