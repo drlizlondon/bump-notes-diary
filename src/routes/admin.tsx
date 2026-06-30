@@ -221,6 +221,8 @@ function AdminDashboard() {
 
   return (
     <div className="mt-6 space-y-8">
+      <AccountsAnalytics />
+
       <div className="flex flex-wrap items-center gap-2">
         <button onClick={refresh} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium bg-white">
           <RefreshCcw className="size-3.5" /> Refresh
@@ -243,15 +245,19 @@ function AdminDashboard() {
         <span className="text-xs text-ink-soft">{loading ? "Loading…" : `${sessionCount} tester sessions recorded`}</span>
       </div>
 
-      {/* Overview tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-        <Tile label="Total codes" value={summary.total} />
-        <Tile label="Active" value={summary.active} />
-        <Tile label="Used" value={summary.used} />
-        <Tile label="Unused" value={summary.unused} />
-        <Tile label="Feedback" value={summary.fbDone} />
-        <Tile label="Completion" value={`${summary.completion}%`} />
+      {/* Tester code overview tiles */}
+      <div>
+        <h2 className="font-serif text-lg font-semibold mb-2">Tester codes</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <Tile label="Total codes" value={summary.total} />
+          <Tile label="Active" value={summary.active} />
+          <Tile label="Used" value={summary.used} />
+          <Tile label="Unused" value={summary.unused} />
+          <Tile label="Feedback" value={summary.fbDone} />
+          <Tile label="Completion" value={`${summary.completion}%`} />
+        </div>
       </div>
+
 
       <Generators
         onBatch={async (prefix, count, startAt, label) => {
