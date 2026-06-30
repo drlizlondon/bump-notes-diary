@@ -22,6 +22,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1 text-sm shrink-0">
             <Link to="/features" className="px-3 py-1.5 text-ink-soft hover:text-ink">Features</Link>
+            <Link to="/our-story" className="px-3 py-1.5 text-ink-soft hover:text-ink">Our Story</Link>
             <Link to="/demo" className="px-3 py-1.5 text-ink-soft hover:text-ink">Preview</Link>
             <Link to="/privacy" className="px-3 py-1.5 text-ink-soft hover:text-ink">Privacy</Link>
             <Link to="/signin" className="ml-1 px-3.5 py-1.5 rounded-full bg-white border border-border font-medium hover:bg-blush-soft">Sign in</Link>
