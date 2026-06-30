@@ -6,6 +6,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { useAppState } from "@/lib/bumpnotes/store";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { LogoWordmark } from "@/components/bumpnotes/Logo";
+import { PasswordInput } from "@/components/bumpnotes/PasswordInput";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Create your account · BumpNotes" }] }),
