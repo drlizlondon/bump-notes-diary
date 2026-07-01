@@ -167,10 +167,17 @@ export const store = {
   },
   startLabourRecording() {
     const current = state.labourPlan ?? { bag: defaultBag() };
-    setState({ ...state, labourPlan: { ...current, recordingStartISO: new Date().toISOString() } });
+    const startISO = new Date().toISOString();
+    const episodes = [...(current.episodes ?? []), { id: crypto.randomUUID(), startISO }];
+    setState({ ...state, labourPlan: { ...current, recordingStartISO: startISO, episodes } });
   },
-  endLabourRecording() {
+  endLabourRecording(opts?: { outcome?: "baby" | "settled" | "other"; outcomeNote?: string }) {
     if (!state.labourPlan) return;
-    setState({ ...state, labourPlan: { ...state.labourPlan, recordingStartISO: undefined } });
+    const endISO = new Date().toISOString();
+    const episodes = (state.labourPlan.episodes ?? []).map((ep) =>
+      ep.endISO ? ep : { ...ep, endISO, outcome: opts?.outcome, outcomeNote: opts?.outcomeNote },
+    );
+    setState({ ...state, labourPlan: { ...state.labourPlan, recordingStartISO: undefined, episodes } });
   },
+
 };
