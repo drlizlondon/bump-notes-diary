@@ -409,7 +409,7 @@ function buildText(profile: Profile, entries: Entry[], groupMeasurements: boolea
     lines.push("");
   }
 
-  lines.push(tFn("sum.foot"));
+  lines.push(tFn("sum.foot").replace("{name}", profile.userName));
   return lines.join("\n");
 }
 
