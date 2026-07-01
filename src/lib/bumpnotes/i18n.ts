@@ -581,7 +581,7 @@ const tr: Dict = {
   "sum.field.due": "Tahmini tarih",
   "sum.field.today": "Bugün",
   "sum.field.generated": "Oluşturuldu",
-  "sum.foot": "Bu, kullanıcının hamileliğini hatırlamasına ve bakım ekibiyle konuşmasına yardımcı olmak için oluşturduğu kişisel bir kayıttır. Tıbbi tavsiye, teşhis veya triyaj sağlamaz.",
+  "sum.foot": "Bu, {name} tarafından hamileliğini hatırlamak ve konuşmak için oluşturulmuş kişisel bir kayıttır.",
   "sum.labour.title": "Doğum",
   "sum.labour.started": "Doğum kaydı başlatıldı",
   "sum.labour.events": "Doğum olayları",
