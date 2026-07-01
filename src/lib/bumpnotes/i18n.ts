@@ -87,8 +87,8 @@ const en: Dict = {
   "home.week": "Week",
 
   // Capture card labels
-  "cap.symptoms": "Symptoms",
-  "cap.symptoms.helper": "Headache, swelling, bleeding, pain, movements",
+  "cap.symptoms": "Symptoms & signs",
+  "cap.symptoms.helper": "Headache, swelling, bleeding, pain, movements, rash",
   "cap.question": "Save a Question",
   "cap.question.helper": "Questions for your next appointment",
   "cap.people": "People & Care",
