@@ -156,6 +156,14 @@ export interface Profile {
 
 export interface BagItem { id: string; label: string; packed: boolean; }
 
+export interface LabourEpisode {
+  id: string;
+  startISO: string;
+  endISO?: string;
+  outcome?: "baby" | "settled" | "other";
+  outcomeNote?: string;
+}
+
 export interface LabourPlan {
   preferences?: string;
   painRelief?: string;
@@ -168,7 +176,9 @@ export interface LabourPlan {
   infoChildcare?: string;
   infoNotes?: string;
   recordingStartISO?: string; // present when actively recording labour
+  episodes?: LabourEpisode[]; // completed and in-progress labour episodes
 }
+
 
 export interface AppState {
   profile: Profile | null;
