@@ -220,6 +220,7 @@ const QUICK_EVENTS = [
 function LabourMode({ plan, entries }: { plan: LabourPlan; entries: Entry[] }) {
   const t = useT();
   const start = plan.recordingStartISO!;
+  const [outcomeOpen, setOutcomeOpen] = useState(false);
   const labourEntries = useMemo(
     () => entries
       .filter((e) => !e.deletedAt && (e.type === "contraction" || e.type === "labour_event"))
@@ -230,14 +231,14 @@ function LabourMode({ plan, entries }: { plan: LabourPlan; entries: Entry[] }) {
 
   return (
     <div className="space-y-5">
-      <div className="surface-card p-4 blush-bg flex items-center justify-between">
-        <div>
-          <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">{t("lab.title")}</p>
-          <p className="font-mono text-sm mt-0.5">{t("sum.labour.started")}: {formatUKDateTime(start)}</p>
+      <div className="surface-card p-4 blush-bg flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">{t("lab.episode.title")}</p>
+          <p className="font-mono text-sm mt-0.5 break-words">{t("sum.labour.started")}: {formatUKDateTime(start)}</p>
         </div>
         <button
-          onClick={() => { store.endLabourRecording(); toast.success(t("lab.endedRecording")); }}
-          className="px-4 py-2 rounded-full bg-white border border-border text-xs font-semibold"
+          onClick={() => setOutcomeOpen(true)}
+          className="px-4 py-2 rounded-full bg-white border border-border text-xs font-semibold shrink-0"
         >
           {t("lab.endRecording")}
         </button>
@@ -268,9 +269,74 @@ function LabourMode({ plan, entries }: { plan: LabourPlan; entries: Entry[] }) {
           </ul>
         )}
       </section>
+
+      {outcomeOpen && (
+        <OutcomeModal
+          onCancel={() => setOutcomeOpen(false)}
+          onSave={(outcome, outcomeNote) => {
+            store.endLabourRecording(outcome ? { outcome, outcomeNote } : undefined);
+            toast.success(t("lab.endedRecording"));
+            setOutcomeOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
+
+function OutcomeModal({ onCancel, onSave }: {
+  onCancel: () => void;
+  onSave: (outcome?: "baby" | "settled" | "other", note?: string) => void;
+}) {
+  const t = useT();
+  const [outcome, setOutcome] = useState<"baby" | "settled" | "other" | null>(null);
+  const [note, setNote] = useState("");
+  const options: { key: "baby" | "settled" | "other"; label: string }[] = [
+    { key: "baby", label: t("lab.outcome.baby") },
+    { key: "settled", label: t("lab.outcome.settled") },
+    { key: "other", label: t("lab.outcome.other") },
+  ];
+  return (
+    <div className="fixed inset-0 z-50 bg-ink/40 grid place-items-end md:place-items-center px-4 py-6">
+      <div className="surface-card p-5 w-full max-w-[440px] shadow-xl">
+        <h3 className="font-serif text-lg font-semibold">{t("lab.outcome.title")}</h3>
+        <div className="mt-3 space-y-2">
+          {options.map((o) => (
+            <button
+              key={o.key}
+              type="button"
+              onClick={() => setOutcome(o.key)}
+              className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium ${
+                outcome === o.key ? "border-primary bg-primary/10 text-primary" : "border-border bg-white"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        {outcome === "other" && (
+          <textarea
+            value={note} onChange={(e) => setNote(e.target.value)} rows={3}
+            placeholder={t("lab.outcome.otherPlaceholder")}
+            className="mt-3 w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60 resize-none"
+          />
+        )}
+        <div className="flex gap-2 mt-4">
+          <button onClick={onCancel} className="flex-1 py-3 rounded-full bg-white border border-border text-sm font-medium">
+            {t("common.cancel")}
+          </button>
+          <button
+            onClick={() => onSave(outcome ?? undefined, outcome === "other" ? (note || undefined) : undefined)}
+            className="flex-1 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+          >
+            {outcome ? t("lab.outcome.save") : t("lab.outcome.skip")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function ContractionRecorder() {
   const t = useT();
