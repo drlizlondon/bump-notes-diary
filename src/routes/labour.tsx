@@ -150,7 +150,7 @@ function HospitalBagSection({ plan }: { plan: LabourPlan }) {
               type="checkbox" checked={item.packed} onChange={() => toggle(item.id)}
               className="size-5 accent-[var(--primary)]"
             />
-            <span className={`flex-1 text-sm ${item.packed ? "line-through text-ink-soft" : ""}`}>{item.label}</span>
+            <span className={`flex-1 text-sm ${item.packed ? "text-ink-soft" : "text-ink"}`}>{item.label}</span>
             <button onClick={() => remove(item.id)} aria-label="Remove" className="text-ink-soft hover:text-destructive">
               <X className="size-4" />
             </button>
