@@ -165,7 +165,7 @@ export function downloadSummaryPdf(opts: PdfOptions) {
   // Footer disclaimer
   y += 4;
   rule();
-  text(tFn("sum.foot"), { size: 8, color: [120, 120, 130] });
+  text(tFn("sum.foot").replace("{name}", opts.profile.userName), { size: 8, color: [120, 120, 130] });
 
   footer(doc);
 

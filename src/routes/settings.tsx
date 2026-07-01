@@ -28,7 +28,7 @@ function SettingsPage() {
   
   const tester = useTester();
   const navigate = useNavigate();
-  const { status, email, userId } = useSyncSnapshot();
+  const { email, userId } = useSyncSnapshot();
   const deleteOwnAccountFn = useServerFn(deleteOwnAccount);
 
 
@@ -96,12 +96,12 @@ function SettingsPage() {
                     <p className="text-xs text-ink-soft">{t("set.signedInAs")}</p>
                     <p className="text-sm font-medium break-all">{email ?? "—"}</p>
                   </div>
-                  <SyncBadge status={status} />
                   <button
                     onClick={async () => { await signOut(); toast.success(t("auth.signedOut")); navigate({ to: "/welcome" }); }}
                     className="w-full py-2.5 rounded-full bg-white border border-border text-sm font-medium"
                   >{t("auth.signOut")}</button>
                 </>
+
               ) : (
                 <>
                   <p className="text-sm text-ink-soft">{t("set.notSignedIn")}</p>

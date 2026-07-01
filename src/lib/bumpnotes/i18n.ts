@@ -50,8 +50,9 @@ const en: Dict = {
   "nav.timeline": "Timeline",
   "nav.summary": "Pregnancy Summary",
   "nav.labour": "Labour",
-  "nav.baby": "Baby",
+  "nav.baby": "About Me",
   "nav.settings": "Settings",
+  "nav.menu": "Menu",
   "brand.tagline": "",
 
   // Onboarding
@@ -75,7 +76,7 @@ const en: Dict = {
 
   // Home
   "home.capture.title": "What happened?",
-  "home.capture.subtitle": "Tap any card to record it. We'll save it automatically.",
+  "home.capture.subtitle": "Tap any card to record it.",
   "home.privacy": "Your record stays private to you.",
   "home.labour.title": "Labour & Birth",
   "home.labour.subtitle": "Prepare your birth plan, hospital bag and labour notes.",
@@ -86,8 +87,8 @@ const en: Dict = {
   "home.week": "Week",
 
   // Capture card labels
-  "cap.symptoms": "Symptoms",
-  "cap.symptoms.helper": "Headache, swelling, bleeding, pain, movements",
+  "cap.symptoms": "Symptoms & signs",
+  "cap.symptoms.helper": "Headache, swelling, bleeding, pain, movements, rash",
   "cap.question": "Save a Question",
   "cap.question.helper": "Questions for your next appointment",
   "cap.people": "People & Care",
@@ -117,7 +118,8 @@ const en: Dict = {
   "sym.pelvic": "Pelvic pain",
   "sym.back": "Back pain",
   "sym.bleeding": "Vaginal bleeding",
-  "sym.fluid": "Fluid loss",
+  "sym.fluid": "Vaginal discharge",
+  "sym.rash": "Rash",
   "sym.itching": "Itching",
   "sym.breathless": "Breathlessness",
   "sym.nausea": "Nausea",
@@ -240,7 +242,18 @@ const en: Dict = {
   "sum.field.due": "Due date",
   "sum.field.today": "Today",
   "sum.field.generated": "Generated",
-  "sum.foot": "This is a personal record created by the user to help them remember and discuss their pregnancy with their care team. It does not provide medical advice, diagnosis or triage.",
+  "sum.foot": "This is a personal record created by {name} to help remember and discuss their pregnancy.",
+  "sum.labour.outcome": "Outcome",
+  "sum.labour.outcomeNote": "Note",
+  "lab.outcome.title": "How did it end?",
+  "lab.outcome.baby": "Baby delivered",
+  "lab.outcome.settled": "Symptoms settled / Braxton Hicks",
+  "lab.outcome.other": "Other",
+  "lab.outcome.otherPlaceholder": "Add a note about what happened, if you want to.",
+  "lab.outcome.skip": "End without outcome",
+  "lab.outcome.save": "End labour episode",
+  "lab.episode.title": "Labour episode",
+  "lab.episode.ended": "Ended",
   "sum.labour.title": "Labour",
   "sum.labour.started": "Labour recording started",
   "sum.labour.events": "Labour events",
@@ -260,7 +273,7 @@ const en: Dict = {
   "type.contraction": "Contractions",
 
   // Details
-  "det.title": "Pregnancy details",
+  "det.title": "About Me",
   "det.subtitle": "All optional except the first three.",
   "det.save": "Save details",
   "det.saved": "Details saved",
@@ -289,7 +302,7 @@ const en: Dict = {
   "set.deletedPerm": "Delete permanently",
   "set.empty": "Nothing here. Deleted entries appear for 30 days.",
   "set.privacy": "Privacy",
-  "set.privacy.body": "Your notes stay on this device unless you choose to share or export them. BumpNotes does not send your data anywhere, and is not a medical device, diagnostic tool or triage service.",
+  "set.privacy.body": "Your record is saved to your BumpNotes account so you can sign in from any device and pick up where you left off. We don't sell or share your data, and we don't use it to train AI.",
   "set.language": "Language",
 
   // Labour
@@ -568,7 +581,7 @@ const tr: Dict = {
   "sum.field.due": "Tahmini tarih",
   "sum.field.today": "Bugün",
   "sum.field.generated": "Oluşturuldu",
-  "sum.foot": "Bu, kullanıcının hamileliğini hatırlamasına ve bakım ekibiyle konuşmasına yardımcı olmak için oluşturduğu kişisel bir kayıttır. Tıbbi tavsiye, teşhis veya triyaj sağlamaz.",
+  "sum.foot": "Bu, {name} tarafından hamileliğini hatırlamak ve konuşmak için oluşturulmuş kişisel bir kayıttır.",
   "sum.labour.title": "Doğum",
   "sum.labour.started": "Doğum kaydı başlatıldı",
   "sum.labour.events": "Doğum olayları",

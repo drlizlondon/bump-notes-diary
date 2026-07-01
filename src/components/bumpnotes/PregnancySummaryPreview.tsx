@@ -39,8 +39,9 @@ export function PregnancySummaryPreview({
       </div>
 
       <p className="mt-6 text-[11px] text-ink-soft leading-relaxed border-t border-border pt-4">
-        {t("sum.foot")}
+        {t("sum.foot").replace("{name}", profile.userName)}
       </p>
+
     </div>
   );
 }
@@ -54,12 +55,64 @@ function LabourSection({ plan, entries }: { plan: LabourPlan; entries: Entry[] }
   const t = useT();
   const contractions = entries.filter((e): e is ContractionEntry => e.type === "contraction");
   const events = entries.filter((e): e is LabourEventEntry => e.type === "labour_event");
+  const episodes = plan.episodes ?? [];
+
+  // If no episodes recorded but we have entries, render as a single legacy block
+  if (episodes.length === 0) {
+    return (
+      <div className="rounded-xl bg-blush-soft border border-border p-4 space-y-2">
+        <p className="font-mono uppercase tracking-widest text-ink-soft text-xs">{t("sum.labour.title")}</p>
+        <LabourEpisodeBody contractions={contractions} events={events} />
+      </div>
+    );
+  }
+
+  const outcomeLabel = (o?: string) => {
+    if (o === "baby") return t("lab.outcome.baby");
+    if (o === "settled") return t("lab.outcome.settled");
+    if (o === "other") return t("lab.outcome.other");
+    return null;
+  };
+
   return (
-    <div className="rounded-xl bg-blush-soft border border-border p-4 space-y-2">
-      <p className="font-mono uppercase tracking-widest text-ink-soft text-xs">{t("sum.labour.title")}</p>
-      {plan.recordingStartISO && (
-        <p className="text-xs"><span className="font-semibold">{t("sum.labour.started")}:</span> {formatUKDateTime(plan.recordingStartISO)}</p>
-      )}
+    <div className="space-y-3">
+      {episodes
+        .slice()
+        .sort((a, b) => b.startISO.localeCompare(a.startISO))
+        .map((ep) => {
+          const inRange = (iso: string) => iso >= ep.startISO && (!ep.endISO || iso <= ep.endISO);
+          const eC = contractions.filter((c) => inRange(c.createdAt));
+          const eE = events.filter((e) => inRange(e.createdAt));
+          const ol = outcomeLabel(ep.outcome);
+          return (
+            <div key={ep.id} className="rounded-xl bg-blush-soft border border-border p-4 space-y-2">
+              <p className="font-mono uppercase tracking-widest text-ink-soft text-xs">{t("sum.labour.title")}</p>
+              <p className="text-xs">
+                <span className="font-semibold">{t("sum.labour.started")}:</span> {formatUKDateTime(ep.startISO)}
+              </p>
+              {ep.endISO && (
+                <p className="text-xs">
+                  <span className="font-semibold">{t("lab.episode.ended")}:</span> {formatUKDateTime(ep.endISO)}
+                </p>
+              )}
+              {ol && (
+                <p className="text-xs">
+                  <span className="font-semibold">{t("sum.labour.outcome")}:</span> {ol}
+                  {ep.outcome === "other" && ep.outcomeNote ? ` — ${ep.outcomeNote}` : ""}
+                </p>
+              )}
+              <LabourEpisodeBody contractions={eC} events={eE} />
+            </div>
+          );
+        })}
+    </div>
+  );
+}
+
+function LabourEpisodeBody({ contractions, events }: { contractions: ContractionEntry[]; events: LabourEventEntry[] }) {
+  const t = useT();
+  return (
+    <>
       {contractions.length > 0 && (
         <div>
           <p className="text-xs font-semibold mt-1">{t("sum.labour.contractions")} ({contractions.length})</p>
@@ -85,9 +138,10 @@ function LabourSection({ plan, entries }: { plan: LabourPlan; entries: Entry[] }
           </ul>
         </div>
       )}
-    </div>
+    </>
   );
 }
+
 
 function ByWeek({
   entries, groupMeasurements, onRemove,

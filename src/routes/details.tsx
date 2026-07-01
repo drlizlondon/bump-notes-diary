@@ -50,7 +50,7 @@ function DetailsPage() {
     <>
       <Toaster position="top-center" />
       <AppShell>
-        <PageHeader title={t("det.title")} subtitle={t("det.subtitle")} />
+        <PageHeader title={t("det.title")} />
         <div className="px-4 pb-8 space-y-3">
           {FIELDS.map(({ key, tKey, type, placeholder }) => (
             <label key={key} className="block bg-card rounded-2xl px-5 py-4 ring-1 ring-black/5">

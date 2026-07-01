@@ -208,7 +208,7 @@ function SummaryShowcase() {
 
   return (
     <div className="relative mx-auto w-full max-w-[560px] lg:max-w-none">
-      <div className="pointer-events-none absolute -inset-6 sm:-inset-10 bg-gradient-to-br from-blush-soft/80 via-transparent to-mint-soft/40 blur-3xl -z-10 rounded-[40px]" aria-hidden />
+      <div className="pointer-events-none absolute -inset-10 sm:-inset-16 -z-10 rounded-[60px] bg-[radial-gradient(ellipse_at_center,rgba(255,214,220,0.55)_0%,rgba(255,214,220,0.25)_35%,rgba(255,214,220,0.08)_60%,transparent_80%)]" aria-hidden />
       <div className="relative rounded-[28px] bg-white shadow-[0_30px_80px_-30px_rgba(36,27,27,0.25),0_10px_30px_-15px_rgba(246,95,124,0.25)] ring-1 ring-border overflow-hidden transition-transform duration-500 will-change-transform lg:rotate-[2deg] lg:hover:rotate-0">
         <FauxBrowserChrome />
         <div
