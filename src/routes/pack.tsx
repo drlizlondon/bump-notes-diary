@@ -44,7 +44,7 @@ function defaultIncluded(): Record<EntryType, boolean> {
   };
 }
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3;
 
 function SummaryPage() {
   const { profile, entries, labourPlan } = useAppState();
@@ -117,8 +117,10 @@ function SummaryPage() {
           )}
 
           {step === 2 && (
-            <StepReview
-              profile={profile} entries={selected} groupMeasurements={groupMeasurements}
+            <StepReviewCustomise
+              profile={profile} entries={selected}
+              included={included} setIncluded={setIncluded}
+              groupMeasurements={groupMeasurements} setGroupMeasurements={setGroupMeasurements}
               labourPlan={included.labour ? labourPlan : undefined}
               onRemove={(id) => setExcluded((s) => new Set(s).add(id))}
               onBack={() => setStep(1)} onNext={() => setStep(3)}
@@ -126,18 +128,10 @@ function SummaryPage() {
           )}
 
           {step === 3 && (
-            <StepCustomise
-              included={included} setIncluded={setIncluded}
-              groupMeasurements={groupMeasurements} setGroupMeasurements={setGroupMeasurements}
-              onBack={() => setStep(2)} onNext={() => setStep(4)}
-            />
-          )}
-
-          {step === 4 && (
             <StepCreate
               profile={profile} entries={selected} groupMeasurements={groupMeasurements}
               labourPlan={included.labour ? labourPlan : undefined}
-              onBack={() => setStep(3)}
+              onBack={() => setStep(2)}
               onCopy={() => {
                 const txt = buildText(profile, selected, groupMeasurements, included.labour ? labourPlan : undefined);
                 navigator.clipboard.writeText(txt).then(() => toast.success(t("sum.copied")));
@@ -158,11 +152,11 @@ function SummaryPage() {
 
 function Stepper({ step }: { step: Step }) {
   const t = useT();
-  const labels = [t("sum.stepWeeks"), t("sum.stepReview"), t("sum.stepCustomise"), t("sum.stepCreate")];
+  const labels = [t("sum.stepWeeks"), t("sum.stepReview"), t("sum.stepCreate")];
   return (
     <div>
       <div className="flex gap-2">
-        {[1,2,3,4].map((n) => (
+        {[1,2,3].map((n) => (
           <div key={n} className={`flex-1 h-1.5 rounded-full ${n <= step ? "bg-primary" : "bg-border"}`} />
         ))}
       </div>
@@ -172,6 +166,7 @@ function Stepper({ step }: { step: Step }) {
     </div>
   );
 }
+
 
 function StepWeeks({
   allWeeks, selected, onChange, onNext,
