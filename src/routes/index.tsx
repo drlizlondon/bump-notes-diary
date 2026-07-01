@@ -38,17 +38,21 @@ function Index() {
   const { profile } = useAppState();
   const [open, setOpen] = useState<PanelKey | null>(null);
   const t = useT();
-  const { userId } = useSyncSnapshot();
+  const { userId, status } = useSyncSnapshot();
   const tester = useTester();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (profile?.onboarded) return;
+    // Wait for Supabase sync to finish before deciding to send a signed-in user to onboarding.
+    // Otherwise we briefly show "What shall we call you?" before the remote profile hydrates.
+    if (userId && status === "syncing") return;
     if (userId || tester) navigate({ to: "/onboarding", replace: true });
     else navigate({ to: "/welcome", replace: true });
-  }, [userId, tester, profile, navigate]);
+  }, [userId, tester, profile, status, navigate]);
 
   if (!profile?.onboarded) return null;
+
 
   function toggle(k: PanelKey) { setOpen((p) => (p === k ? null : k)); }
 
