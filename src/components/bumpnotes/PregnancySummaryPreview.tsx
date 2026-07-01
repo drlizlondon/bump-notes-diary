@@ -39,8 +39,9 @@ export function PregnancySummaryPreview({
       </div>
 
       <p className="mt-6 text-[11px] text-ink-soft leading-relaxed border-t border-border pt-4">
-        {t("sum.foot")}
+        {t("sum.foot").replace("{name}", profile.userName)}
       </p>
+
     </div>
   );
 }
