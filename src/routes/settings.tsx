@@ -28,7 +28,7 @@ function SettingsPage() {
   
   const tester = useTester();
   const navigate = useNavigate();
-  const { status, email, userId } = useSyncSnapshot();
+  const { email, userId } = useSyncSnapshot();
   const deleteOwnAccountFn = useServerFn(deleteOwnAccount);
 
 
