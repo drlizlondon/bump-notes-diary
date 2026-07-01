@@ -302,7 +302,7 @@ const en: Dict = {
   "set.deletedPerm": "Delete permanently",
   "set.empty": "Nothing here. Deleted entries appear for 30 days.",
   "set.privacy": "Privacy",
-  "set.privacy.body": "Your notes stay on this device unless you choose to share or export them. BumpNotes does not send your data anywhere, and is not a medical device, diagnostic tool or triage service.",
+  "set.privacy.body": "Your record is saved to your BumpNotes account so you can sign in from any device and pick up where you left off. We don't sell or share your data, and we don't use it to train AI.",
   "set.language": "Language",
 
   // Labour
