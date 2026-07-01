@@ -273,7 +273,7 @@ const en: Dict = {
   "type.contraction": "Contractions",
 
   // Details
-  "det.title": "Pregnancy details",
+  "det.title": "About Me",
   "det.subtitle": "All optional except the first three.",
   "det.save": "Save details",
   "det.saved": "Details saved",
