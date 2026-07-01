@@ -217,16 +217,55 @@ function StepWeeks({
   );
 }
 
-function StepReview({
-  profile, entries, groupMeasurements, labourPlan, onRemove, onBack, onNext,
+function StepReviewCustomise({
+  profile, entries, included, setIncluded, groupMeasurements, setGroupMeasurements, labourPlan, onRemove, onBack, onNext,
 }: {
-  profile: Profile; entries: Entry[]; groupMeasurements: boolean; labourPlan?: LabourPlan;
+  profile: Profile; entries: Entry[];
+  included: Record<EntryType, boolean>; setIncluded: (r: Record<EntryType, boolean>) => void;
+  groupMeasurements: boolean; setGroupMeasurements: (b: boolean) => void;
+  labourPlan?: LabourPlan;
   onRemove: (id: string) => void; onBack: () => void; onNext: () => void;
 }) {
   const t = useT();
+  const TYPE_LABELS = typeLabels();
+  const displayTypes: EntryType[] = ["symptom","question","person","measurement","photo","note","feeling","labour","contraction","labour_event"];
   return (
     <div className="space-y-3">
+      <div className="surface-card p-4 sm:p-5">
+        <h3 className="font-serif text-base font-semibold">{t("sum.include")}</h3>
+        <p className="text-xs text-ink-soft mt-1">Tap to include or exclude a category. Everything is selected by default.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {displayTypes.map((tp) => {
+            const active = included[tp];
+            return (
+              <button
+                key={tp}
+                type="button"
+                onClick={() => {
+                  const next = { ...included, [tp]: !active };
+                  if (tp === "person") next.appointment = !active;
+                  setIncluded(next);
+                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border ${
+                  active ? "bg-primary text-primary-foreground border-primary" : "bg-white border-border text-ink-soft"
+                }`}
+              >
+                {TYPE_LABELS[tp]}
+              </button>
+            );
+          })}
+        </div>
+        <label className="mt-4 flex items-start gap-3 pt-3 border-t border-border">
+          <input type="checkbox" checked={groupMeasurements} onChange={(e) => setGroupMeasurements(e.target.checked)} className="size-4 mt-0.5 accent-[var(--primary)]" />
+          <span>
+            <span className="block text-sm font-medium">{t("sum.groupM")}</span>
+            <span className="block text-xs text-ink-soft mt-0.5">{t("sum.groupM.sub")}</span>
+          </span>
+        </label>
+      </div>
+
       <PreviewCard profile={profile} entries={entries} groupMeasurements={groupMeasurements} labourPlan={labourPlan} onRemove={onRemove} />
+
       <div className="grid grid-cols-2 gap-2">
         <button onClick={onBack} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("common.back")}</button>
         <button onClick={onNext} className="py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">{t("common.continue")}</button>
@@ -235,49 +274,6 @@ function StepReview({
   );
 }
 
-function StepCustomise({
-  included, setIncluded, groupMeasurements, setGroupMeasurements, onBack, onNext,
-}: {
-  included: Record<EntryType, boolean>; setIncluded: (r: Record<EntryType, boolean>) => void;
-  groupMeasurements: boolean; setGroupMeasurements: (b: boolean) => void;
-  onBack: () => void; onNext: () => void;
-}) {
-  const t = useT();
-  const TYPE_LABELS = typeLabels();
-  const displayTypes: EntryType[] = ["symptom","question","person","measurement","photo","note","feeling","labour","contraction","labour_event"];
-  return (
-    <div className="space-y-3">
-      <div className="surface-card p-5 space-y-3">
-        <h3 className="font-serif text-base font-semibold">{t("sum.include")}</h3>
-        {displayTypes.map((tp) => (
-          <label key={tp} className="flex items-center justify-between py-1.5">
-            <span className="text-sm font-medium">{TYPE_LABELS[tp]}</span>
-            <input type="checkbox" checked={included[tp]}
-              onChange={(e) => {
-                const next = { ...included, [tp]: e.target.checked };
-                if (tp === "person") next.appointment = e.target.checked;
-                setIncluded(next);
-              }}
-              className="size-5 accent-[var(--primary)]" />
-          </label>
-        ))}
-      </div>
-      <div className="surface-card p-5">
-        <label className="flex items-start gap-3">
-          <input type="checkbox" checked={groupMeasurements} onChange={(e) => setGroupMeasurements(e.target.checked)} className="size-5 mt-0.5 accent-[var(--primary)]" />
-          <span>
-            <span className="block text-sm font-medium">{t("sum.groupM")}</span>
-            <span className="block text-xs text-ink-soft mt-0.5">{t("sum.groupM.sub")}</span>
-          </span>
-        </label>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <button onClick={onBack} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("common.back")}</button>
-        <button onClick={onNext} className="py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">{t("common.continue")}</button>
-      </div>
-    </div>
-  );
-}
 
 function StepCreate({
   profile, entries, groupMeasurements, labourPlan, onBack, onCopy, onPrint, onShare,
