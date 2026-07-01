@@ -50,8 +50,9 @@ const en: Dict = {
   "nav.timeline": "Timeline",
   "nav.summary": "Pregnancy Summary",
   "nav.labour": "Labour",
-  "nav.baby": "Baby",
+  "nav.baby": "About Me",
   "nav.settings": "Settings",
+  "nav.menu": "Menu",
   "brand.tagline": "",
 
   // Onboarding
