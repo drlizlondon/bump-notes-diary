@@ -76,7 +76,7 @@ const en: Dict = {
 
   // Home
   "home.capture.title": "What happened?",
-  "home.capture.subtitle": "Tap any card to record it. We'll save it automatically.",
+  "home.capture.subtitle": "Tap any card to record it.",
   "home.privacy": "Your record stays private to you.",
   "home.labour.title": "Labour & Birth",
   "home.labour.subtitle": "Prepare your birth plan, hospital bag and labour notes.",
