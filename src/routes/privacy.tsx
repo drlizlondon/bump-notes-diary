@@ -23,6 +23,12 @@ function Privacy() {
           Settings → Privacy &amp; Data.
         </p>
         <p className="text-ink-soft leading-relaxed mt-3">
+          If you allow analytics cookies, we use Google Analytics 4 and Microsoft Clarity to understand
+          basic app usage such as page views and button clicks. We do not send names, email addresses,
+          pregnancy symptoms, health information, notes, free text or account identifiers to analytics.
+          Analytics is optional and is not used for advertising.
+        </p>
+        <p className="text-ink-soft leading-relaxed mt-3">
           BumpNotes is not a medical device and does not provide medical advice, diagnosis or triage.
           If you have a concern, please contact your care team.
         </p>

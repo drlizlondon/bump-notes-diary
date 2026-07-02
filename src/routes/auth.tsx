@@ -7,6 +7,7 @@ import { useAppState } from "@/lib/bumpnotes/store";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { LogoWordmark } from "@/components/bumpnotes/Logo";
 import { PasswordInput } from "@/components/bumpnotes/PasswordInput";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Create your account · BumpNotes" }] }),
@@ -63,6 +64,7 @@ function AuthPage() {
         options: { emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined },
       });
       if (error) { toast.error(error.message); return; }
+      trackEvent("account_created");
       toast.success("Account created.");
       await recordAcceptance();
       navigate({ to: "/" });
@@ -103,7 +105,7 @@ function AuthPage() {
 
           <div className="surface-card p-5 space-y-4">
             <button
-              onClick={onGoogle} disabled={busy}
+              onClick={() => { trackEvent("cta_clicked"); void onGoogle(); }} disabled={busy}
               className="w-full py-3 rounded-full bg-white border border-border text-sm font-medium disabled:opacity-60"
             >Continue with Google</button>
 
@@ -152,6 +154,7 @@ function AuthPage() {
 
               <button
                 disabled={busy} type="submit"
+                onClick={() => trackEvent("cta_clicked")}
                 className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
               >Create account</button>
             </form>

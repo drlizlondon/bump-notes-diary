@@ -8,6 +8,7 @@ import { useAppState } from "@/lib/bumpnotes/store";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 import { PregnancySummaryPreview } from "@/components/bumpnotes/PregnancySummaryPreview";
 import { buildDemoSummary } from "@/lib/bumpnotes/demo-summary";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -80,6 +81,7 @@ function Hero() {
 
           <Link
             to="/onboarding"
+            onClick={() => trackEvent("cta_clicked")}
             className="mt-7 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-primary text-primary-foreground text-[15px] font-semibold shadow-sm shadow-primary/20 hover:opacity-95"
           >
             Start your pregnancy record <ArrowRight className="size-4" />
@@ -87,6 +89,7 @@ function Hero() {
 
           <Link
             to="/demo"
+            onClick={() => trackEvent("cta_clicked")}
             className="mt-4 block text-center lg:text-left text-base font-medium text-ink underline underline-offset-4 hover:text-primary transition-colors"
           >
             See a preview
@@ -256,4 +259,3 @@ function SummarySkeleton() {
     </div>
   );
 }
-

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { setAnalyticsConsent } from "@/lib/analytics";
 
 const STORAGE_KEY = "bumpnotes.cookieConsent.v1";
 
@@ -13,8 +14,9 @@ export function CookieNotice() {
     } catch { /* ignore */ }
   }, []);
 
-  function accept() {
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ accepted: true, at: new Date().toISOString() })); } catch { /* ignore */ }
+  function savePreference(analytics: boolean) {
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ accepted: true, analytics, at: new Date().toISOString() })); } catch { /* ignore */ }
+    setAnalyticsConsent(analytics);
     setVisible(false);
   }
 
@@ -31,16 +33,24 @@ export function CookieNotice() {
           <div className="text-sm text-ink flex-1">
             <p className="font-medium">We use essential cookies</p>
             <p className="text-ink-soft text-[13px] mt-1 leading-relaxed">
-              BumpNotes uses essential cookies and local storage to keep you signed in and to remember your pregnancy record on your device. We don't use advertising or tracking cookies. See our{" "}
+              BumpNotes uses essential cookies and local storage to keep you signed in and to remember your pregnancy record on your device. With your permission, we use privacy-safe analytics to understand which pages and buttons are used, without sending names, notes, symptoms, health details or account data. See our{" "}
               <Link to="/privacy" className="text-primary underline">Privacy Policy</Link>.
             </p>
           </div>
-          <button
-            onClick={accept}
-            className="self-end sm:self-auto shrink-0 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
-          >
-            Got it
-          </button>
+          <div className="flex shrink-0 gap-2 self-end sm:self-auto">
+            <button
+              onClick={() => savePreference(false)}
+              className="px-4 py-2.5 rounded-full bg-white border border-border text-sm font-semibold text-ink"
+            >
+              Essential only
+            </button>
+            <button
+              onClick={() => savePreference(true)}
+              className="px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+            >
+              Allow analytics
+            </button>
+          </div>
         </div>
       </div>
     </div>
