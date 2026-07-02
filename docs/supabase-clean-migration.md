@@ -113,10 +113,12 @@ Add redirect URLs:
 ```text
 https://<production-bumpnotes-domain>
 https://<production-bumpnotes-domain>/
+https://<production-bumpnotes-domain>/auth/callback
 https://<production-bumpnotes-domain>/reset-password
 https://<production-bumpnotes-domain>/admin
 http://localhost:5173
 http://localhost:5173/
+http://localhost:5173/auth/callback
 http://localhost:5173/reset-password
 http://localhost:5173/admin
 ```
@@ -126,6 +128,7 @@ If Cloudflare preview deployments are used for testing, add the preview URL befo
 ```text
 https://<cloudflare-preview-host>
 https://<cloudflare-preview-host>/
+https://<cloudflare-preview-host>/auth/callback
 https://<cloudflare-preview-host>/reset-password
 https://<cloudflare-preview-host>/admin
 ```

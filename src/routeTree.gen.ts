@@ -28,6 +28,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
@@ -124,11 +125,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
   '/details': typeof DetailsRoute
@@ -145,11 +151,12 @@ export interface FileRoutesByFullPath {
   '/tester': typeof TesterRoute
   '/timeline': typeof TimelineRoute
   '/welcome': typeof WelcomeRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
   '/details': typeof DetailsRoute
@@ -166,12 +173,13 @@ export interface FileRoutesByTo {
   '/tester': typeof TesterRoute
   '/timeline': typeof TimelineRoute
   '/welcome': typeof WelcomeRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
   '/details': typeof DetailsRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/tester': typeof TesterRoute
   '/timeline': typeof TimelineRoute
   '/welcome': typeof WelcomeRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/tester'
     | '/timeline'
     | '/welcome'
+    | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/tester'
     | '/timeline'
     | '/welcome'
+    | '/auth/callback'
   id:
     | '__root__'
     | '/'
@@ -253,12 +264,13 @@ export interface FileRouteTypes {
     | '/tester'
     | '/timeline'
     | '/welcome'
+    | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   ContactRoute: typeof ContactRoute
   DemoRoute: typeof DemoRoute
   DetailsRoute: typeof DetailsRoute
@@ -412,13 +424,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
+    }
   }
 }
+
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   ContactRoute: ContactRoute,
   DemoRoute: DemoRoute,
   DetailsRoute: DetailsRoute,
@@ -439,3 +468,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

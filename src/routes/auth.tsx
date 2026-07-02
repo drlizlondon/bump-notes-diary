@@ -7,6 +7,7 @@ import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { LogoWordmark } from "@/components/bumpnotes/Logo";
 import { PasswordInput } from "@/components/bumpnotes/PasswordInput";
 import { trackEvent } from "@/lib/analytics";
+import { buildAuthCallbackUrl } from "@/lib/supabase-auth-redirect";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Create your account · BumpNotes" }] }),
@@ -60,13 +61,13 @@ function AuthPage() {
     try {
       const { error } = await supabase.auth.signUp({
         email, password,
-        options: { emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/` : undefined },
+        options: { emailRedirectTo: buildAuthCallbackUrl("/") },
       });
       if (error) { toast.error(error.message); return; }
       trackEvent("account_created");
-      toast.success("Account created. Check your email if confirmation is required.");
+      toast.success("Check your email to confirm your account, then sign in.");
       await recordAcceptance();
-      navigate({ to: "/" });
+      navigate({ to: "/signin" });
     } finally { setBusy(false); }
   }
 

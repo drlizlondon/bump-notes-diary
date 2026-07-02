@@ -125,6 +125,17 @@ function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (pathname === "/auth/callback") return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("code") && !url.searchParams.has("error")) return;
+    const callback = new URL("/auth/callback", window.location.origin);
+    url.searchParams.forEach((value, key) => callback.searchParams.set(key, value));
+    callback.searchParams.set("next", pathname || "/");
+    window.location.replace(callback.toString());
+  }, [pathname]);
+
+  useEffect(() => {
     void import("@/lib/bumpnotes/sync").then((m) => m.initSync());
   }, []);
 

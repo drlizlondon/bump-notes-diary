@@ -6,6 +6,7 @@ import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { LogoWordmark } from "@/components/bumpnotes/Logo";
 import { PasswordInput } from "@/components/bumpnotes/PasswordInput";
 import { trackEvent } from "@/lib/analytics";
+import { buildAuthCallbackUrl } from "@/lib/supabase-auth-redirect";
 
 type Search = { redirect?: string; admin?: string };
 
@@ -49,12 +50,10 @@ function SignInPage() {
     if (!email) { toast.error("Enter your email above first."); return; }
     setBusy(true);
     try {
-      const origin = typeof window !== "undefined" ? window.location.origin : undefined;
-      const emailRedirectTo = origin ? `${origin}${redirectTo}` : undefined;
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo,
+          emailRedirectTo: buildAuthCallbackUrl(redirectTo),
           shouldCreateUser: false,
         },
       });
@@ -66,7 +65,7 @@ function SignInPage() {
   async function onForgot() {
     if (!email) { toast.error("Enter your email above first."); return; }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: typeof window !== "undefined" ? `${window.location.origin}/reset-password` : undefined,
+      redirectTo: buildAuthCallbackUrl("/reset-password"),
     });
     if (error) { toast.error(error.message); return; }
     toast.success("Password reset email sent.");
