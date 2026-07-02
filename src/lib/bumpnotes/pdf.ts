@@ -11,6 +11,7 @@ type PdfOptions = {
   entries: Entry[];
   groupMeasurements: boolean;
   labourPlan?: LabourPlan;
+  hiddenItemKeys?: Set<string>;
 };
 
 const PAGE_W = 210;
@@ -53,32 +54,20 @@ export function downloadSummaryPdf(opts: PdfOptions) {
     y += 3;
   }
 
-  // Title block
-  header(doc, opts.profile, false);
-  y = MARGIN_TOP + 18;
-
-  // Metadata table
   const g = gestationFromDueDate(opts.profile.dueDateISO);
-  const meta: Array<[string, string]> = [
-    ["Name", opts.profile.userName],
-    ["Baby", opts.profile.babyNickname?.trim() || tFn("baby.fallback")],
-    ["Estimated due date", formatUKDateLong(opts.profile.dueDateISO)],
-    ["Gestation today", formatGestation(g)],
-    ["Generated", formatUKDateTime(new Date())],
-  ];
-  doc.setFontSize(10);
-  meta.forEach(([k, v]) => {
-    need(5);
-    doc.setFont("helvetica", "normal"); doc.setTextColor(110, 110, 120);
-    doc.text(k, MARGIN_X, y);
-    doc.setFont("helvetica", "bold"); doc.setTextColor(30, 30, 40);
-    doc.text(v, MARGIN_X + 50, y);
-    y += 5;
-  });
-  y += 2;
+  compressedHeader(doc, opts.profile, formatGestation(g));
+  y = MARGIN_TOP + 24;
   rule();
 
-  buildPregnancySummaryWeeks(opts.profile, opts.entries, opts.labourPlan).forEach((week) => {
+  buildPregnancySummaryWeeks(opts.profile, opts.entries, opts.labourPlan, { hiddenItemKeys: opts.hiddenItemKeys }).forEach((week) => {
+    const estimatedWeekHeight = 7 + week.sections.reduce((sum, section) => sum + 5 + sectionPdfLines(section).length * 4.5, 0);
+    if (estimatedWeekHeight < PAGE_H - MARGIN_TOP - MARGIN_BOTTOM && y + estimatedWeekHeight > PAGE_H - MARGIN_BOTTOM) {
+      footer(doc);
+      doc.addPage();
+      y = MARGIN_TOP;
+      header(doc, opts.profile, true);
+      y += 8;
+    }
     text(`Week ${week.week}`, { size: 12, bold: true, color: [180, 80, 100], gap: 2 });
     week.sections.forEach((section) => {
       text(section.title, { size: 10, bold: true, color: [110, 110, 120], gap: 1 });
@@ -116,8 +105,25 @@ function header(doc: jsPDF, profile: Profile, continued: boolean) {
   doc.text(right, PAGE_W - MARGIN_X - w, MARGIN_TOP);
 }
 
+function compressedHeader(doc: jsPDF, profile: Profile, gestation: string) {
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(180, 80, 100);
+  doc.text("Pregnancy Summary", MARGIN_X, MARGIN_TOP);
+
+  doc.setFontSize(8.5);
+  doc.setTextColor(30, 30, 40);
+  const baby = profile.babyNickname?.trim() || tFn("baby.fallback");
+  const generated = formatUKDateTime(new Date()).replace(",", "");
+  const row1 = `Name: ${profile.userName}    Baby: ${baby}    EDD: ${formatUKDateLong(profile.dueDateISO)}`;
+  const row2 = `Current gestation: ${gestation}    Generated: ${generated}`;
+  doc.text(row1, MARGIN_X, MARGIN_TOP + 6);
+  doc.text(row2, MARGIN_X, MARGIN_TOP + 11);
+}
+
 function footer(doc: jsPDF) {
   const pageCount = doc.getNumberOfPages();
+  if (pageCount <= 1) return;
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFont("helvetica", "normal");
@@ -148,5 +154,5 @@ function sectionPdfLines(section: PregnancySummarySection): string[] {
   if (section.type === "measurements") {
     return section.items.flatMap((item) => [item.label, item.value, ""]);
   }
-  return section.items.map((item) => `• ${item}`);
+  return section.items.map((item) => `• ${item.text}`);
 }

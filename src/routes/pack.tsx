@@ -2,11 +2,12 @@ import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButto
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
-import { useAppState } from "@/lib/bumpnotes/store";
+import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PageHeader, PregnancySummaryAside } from "@/components/bumpnotes/AppShell";
 import {
-  formatGestation, formatUKDateLong, formatUKDateTime, gestationFromDueDate,
+  formatGestation, formatUKDate, formatUKDateLong, formatUKDateTime, formatUKTime, gestationFromDueDate,
 } from "@/lib/bumpnotes/gestation";
+import { summariseEntry } from "@/lib/bumpnotes/summary";
 import { useT, t as tFn } from "@/lib/bumpnotes/i18n";
 import { buildPregnancySummaryWeeks, type PregnancySummarySection } from "@/lib/bumpnotes/pregnancy-summary";
 import type { Entry, EntryType, Profile, LabourPlan } from "@/lib/bumpnotes/types";
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/pack")({
 
 function typeLabels(): Record<EntryType, string> {
   return {
-    symptom: tFn("type.symptom"),
+    symptom: "Symptoms & Signs",
     question: tFn("type.question"),
     person: tFn("type.person"),
     appointment: tFn("type.person"),
@@ -28,7 +29,7 @@ function typeLabels(): Record<EntryType, string> {
     photo: tFn("type.photo"),
     note: tFn("type.note"),
     labour: tFn("sum.labour.title"),
-    labour_event: tFn("type.labour_event"),
+    labour_event: tFn("sum.labour.title"),
     contraction: tFn("type.contraction"),
     feeling: tFn("type.feeling"),
     concern: "Concerns",
@@ -49,6 +50,7 @@ function isLabourSummaryEntry(entry: Entry): boolean {
 }
 
 type Step = 1 | 2 | 3;
+type ReviewTarget = { title: string; entryIds: string[] };
 
 function SummaryPage() {
   const { profile, entries, labourPlan } = useAppState();
@@ -57,7 +59,8 @@ function SummaryPage() {
   const [selectedWeeks, setSelectedWeeks] = useState<Set<number>>(new Set());
   const [included, setIncluded] = useState<Record<EntryType, boolean>>(defaultIncluded);
   const [groupMeasurements, setGroupMeasurements] = useState(true);
-  const [excluded, setExcluded] = useState<Set<string>>(new Set());
+  const [hiddenSummaryItems, setHiddenSummaryItems] = useState<Set<string>>(new Set());
+  const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
 
   const liveEntries = useMemo(() => entries.filter((e) => !e.deletedAt), [entries]);
 
@@ -73,9 +76,8 @@ function SummaryPage() {
     return liveEntries
       .filter((e) => activeWeeks.has(e.weekDay.weeks))
       .filter((e) => isLabourSummaryEntry(e) ? included.labour : included[e.type])
-      .filter((e) => !excluded.has(e.id))
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  }, [liveEntries, activeWeeks, included, excluded]);
+  }, [liveEntries, activeWeeks, included]);
 
   if (!profile) {
     return (
@@ -126,7 +128,14 @@ function SummaryPage() {
               included={included} setIncluded={setIncluded}
               groupMeasurements={groupMeasurements} setGroupMeasurements={setGroupMeasurements}
               labourPlan={included.labour ? labourPlan : undefined}
-              onRemove={(id) => setExcluded((s) => new Set(s).add(id))}
+              hiddenItemKeys={hiddenSummaryItems}
+              onHideItem={(key) => setHiddenSummaryItems((s) => new Set(s).add(key))}
+              onUnhideItem={(key) => setHiddenSummaryItems((s) => {
+                const next = new Set(s);
+                next.delete(key);
+                return next;
+              })}
+              onReviewItem={(title, entryIds) => setReviewTarget({ title, entryIds })}
               onBack={() => setStep(1)} onNext={() => setStep(3)}
             />
           )}
@@ -135,21 +144,29 @@ function SummaryPage() {
             <StepCreate
               profile={profile} entries={selected} groupMeasurements={groupMeasurements}
               labourPlan={included.labour ? labourPlan : undefined}
+              hiddenItemKeys={hiddenSummaryItems}
               onBack={() => setStep(2)}
               onCopy={() => {
-                const txt = buildText(profile, selected, groupMeasurements, included.labour ? labourPlan : undefined);
+                const txt = buildText(profile, selected, groupMeasurements, included.labour ? labourPlan : undefined, hiddenSummaryItems);
                 navigator.clipboard.writeText(txt).then(() => toast.success(t("sum.copied")));
               }}
               onPrint={() => {
-                downloadSummaryPdf({ profile, entries: selected, groupMeasurements, labourPlan: included.labour ? labourPlan : undefined });
+                downloadSummaryPdf({ profile, entries: selected, groupMeasurements, labourPlan: included.labour ? labourPlan : undefined, hiddenItemKeys: hiddenSummaryItems });
                 toast.success("PDF downloaded");
               }}
-              onShare={() => sharePack(profile, selected, groupMeasurements, included.labour ? labourPlan : undefined)}
+              onShare={() => sharePack(profile, selected, groupMeasurements, included.labour ? labourPlan : undefined, hiddenSummaryItems)}
             />
           )}
         </div>
         <TesterFeedbackButton />
       </AppShell>
+      {reviewTarget && (
+        <ReviewRecordsModal
+          target={reviewTarget}
+          entries={liveEntries}
+          onClose={() => setReviewTarget(null)}
+        />
+      )}
     </>
   );
 }
@@ -222,17 +239,22 @@ function StepWeeks({
 }
 
 function StepReviewCustomise({
-  profile, entries, included, setIncluded, groupMeasurements, setGroupMeasurements, labourPlan, onRemove, onBack, onNext,
+  profile, entries, included, setIncluded, groupMeasurements, setGroupMeasurements, labourPlan,
+  hiddenItemKeys, onHideItem, onUnhideItem, onReviewItem, onBack, onNext,
 }: {
   profile: Profile; entries: Entry[];
   included: Record<EntryType, boolean>; setIncluded: (r: Record<EntryType, boolean>) => void;
   groupMeasurements: boolean; setGroupMeasurements: (b: boolean) => void;
   labourPlan?: LabourPlan;
-  onRemove: (id: string) => void; onBack: () => void; onNext: () => void;
+  hiddenItemKeys: Set<string>;
+  onHideItem: (key: string) => void;
+  onUnhideItem: (key: string) => void;
+  onReviewItem: (title: string, entryIds: string[]) => void;
+  onBack: () => void; onNext: () => void;
 }) {
   const t = useT();
   const TYPE_LABELS = typeLabels();
-  const displayTypes: EntryType[] = ["symptom","question","person","measurement","photo","note","feeling","labour"];
+  const displayTypes: EntryType[] = ["symptom","feeling","question","person","measurement","note","labour"];
   return (
     <div className="space-y-3">
       <div className="surface-card p-4 sm:p-5">
@@ -272,7 +294,16 @@ function StepReviewCustomise({
         </label>
       </div>
 
-      <PreviewCard profile={profile} entries={entries} groupMeasurements={groupMeasurements} labourPlan={labourPlan} onRemove={onRemove} />
+      <PreviewCard
+        profile={profile}
+        entries={entries}
+        groupMeasurements={groupMeasurements}
+        labourPlan={labourPlan}
+        hiddenItemKeys={hiddenItemKeys}
+        onHideItem={onHideItem}
+        onUnhideItem={onUnhideItem}
+        onReviewItem={onReviewItem}
+      />
 
       <div className="grid grid-cols-2 gap-2">
         <button onClick={onBack} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("common.back")}</button>
@@ -284,15 +315,16 @@ function StepReviewCustomise({
 
 
 function StepCreate({
-  profile, entries, groupMeasurements, labourPlan, onBack, onCopy, onPrint, onShare,
+  profile, entries, groupMeasurements, labourPlan, hiddenItemKeys, onBack, onCopy, onPrint, onShare,
 }: {
   profile: Profile; entries: Entry[]; groupMeasurements: boolean; labourPlan?: LabourPlan;
+  hiddenItemKeys: Set<string>;
   onBack: () => void; onCopy: () => void; onPrint: () => void; onShare: () => void;
 }) {
   const t = useT();
   return (
     <div className="space-y-3">
-      <PreviewCard profile={profile} entries={entries} groupMeasurements={groupMeasurements} labourPlan={labourPlan} />
+      <PreviewCard profile={profile} entries={entries} groupMeasurements={groupMeasurements} labourPlan={labourPlan} hiddenItemKeys={hiddenItemKeys} />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 print:hidden">
         <button onClick={onBack} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("common.back")}</button>
         <button onClick={onCopy} className="py-3 rounded-full bg-white border border-border text-sm font-medium">{t("sum.copy")}</button>
@@ -305,12 +337,15 @@ function StepCreate({
 
 function PreviewCard(props: {
   profile: Profile; entries: Entry[]; groupMeasurements: boolean; labourPlan?: LabourPlan;
-  onRemove?: (id: string) => void;
+  hiddenItemKeys?: Set<string>;
+  onHideItem?: (key: string) => void;
+  onUnhideItem?: (key: string) => void;
+  onReviewItem?: (title: string, entryIds: string[]) => void;
 }) {
   return <PregnancySummaryPreview {...props} />;
 }
 
-function buildText(profile: Profile, entries: Entry[], _groupMeasurements: boolean, labourPlan?: LabourPlan) {
+function buildText(profile: Profile, entries: Entry[], _groupMeasurements: boolean, labourPlan?: LabourPlan, hiddenItemKeys?: Set<string>) {
   const lines: string[] = [];
   lines.push(tFn("sum.header.title"));
   lines.push(tFn("sum.header.intro"));
@@ -322,7 +357,7 @@ function buildText(profile: Profile, entries: Entry[], _groupMeasurements: boole
   lines.push(`${tFn("sum.field.generated")}: ${formatUKDateTime(new Date())}`);
   lines.push("");
 
-  buildPregnancySummaryWeeks(profile, entries, labourPlan).forEach((week) => {
+  buildPregnancySummaryWeeks(profile, entries, labourPlan, { hiddenItemKeys }).forEach((week) => {
     lines.push(`${tFn("home.week")} ${week.week}`);
     week.sections.forEach((section) => {
       lines.push(section.title);
@@ -356,11 +391,140 @@ function sectionTextLines(section: PregnancySummarySection): string[] {
   if (section.type === "measurements") {
     return section.items.flatMap((item) => [item.label, item.value, ""]);
   }
-  return section.items.map((item) => `• ${item}`);
+  return section.items.map((item) => `• ${item.text}`);
 }
 
-async function sharePack(profile: Profile, entries: Entry[], groupMeasurements: boolean, labourPlan?: LabourPlan) {
-  const text = buildText(profile, entries, groupMeasurements, labourPlan);
+function ReviewRecordsModal({
+  target,
+  entries,
+  onClose,
+}: {
+  target: ReviewTarget;
+  entries: Entry[];
+  onClose: () => void;
+}) {
+  const matching = entries
+    .filter((entry) => target.entryIds.includes(entry.id))
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const [editing, setEditing] = useState<Entry | null>(null);
+  return (
+    <div className="fixed inset-0 z-50 bg-ink/40 grid place-items-end md:place-items-center px-4 py-6">
+      <div className="surface-card w-full max-w-[620px] max-h-[86vh] overflow-hidden shadow-xl">
+        <div className="p-5 border-b border-border">
+          <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">Review</p>
+          <h3 className="font-serif text-lg font-semibold mt-1">{target.title}</h3>
+          <p className="text-xs text-ink-soft mt-1">These are the underlying records used for this summary item.</p>
+        </div>
+        <div className="p-5 overflow-y-auto max-h-[58vh] space-y-3">
+          {matching.length === 0 ? (
+            <p className="text-sm text-ink-soft">This item is from Labour Journey setup rather than an individual timeline record.</p>
+          ) : (
+            matching.map((entry) => {
+              const summary = summariseEntry(entry);
+              return (
+                <article key={entry.id} className="rounded-xl border border-border bg-white p-3">
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-ink-soft">
+                    {formatUKDate(entry.createdAt)} · {formatUKTime(entry.createdAt)}
+                  </p>
+                  <p className="font-semibold text-sm mt-1">{summary.headline}</p>
+                  {summary.detail && <p className="text-sm text-ink-soft mt-1">{summary.detail}</p>}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditing(entry)}
+                      className="rounded-full border border-border bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => store.softDelete(entry.id)}
+                      className="rounded-full border border-destructive/30 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-destructive"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              );
+            })
+          )}
+        </div>
+        <div className="p-4 border-t border-border">
+          <button onClick={onClose} className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">Done</button>
+        </div>
+      </div>
+      {editing && <ReviewEditDialog entry={editing} onClose={() => setEditing(null)} />}
+    </div>
+  );
+}
+
+function getEditableText(entry: Entry): string {
+  switch (entry.type) {
+    case "note":
+    case "question":
+      return entry.text;
+    case "concern":
+    case "symptom":
+    case "feeling":
+    case "labour":
+    case "labour_event":
+    case "contraction":
+    case "photo":
+      return entry.note ?? "";
+    case "appointment":
+    case "person":
+      return entry.discussed ?? "";
+    case "measurement":
+      return entry.note ?? "";
+    default:
+      return "";
+  }
+}
+
+function ReviewEditDialog({ entry, onClose }: { entry: Entry; onClose: () => void }) {
+  const t = useT();
+  const [text, setText] = useState(() => getEditableText(entry));
+
+  function save() {
+    const patch: Partial<Entry> = {};
+    switch (entry.type) {
+      case "note":
+      case "question":
+        (patch as { text: string }).text = text; break;
+      case "concern":
+      case "symptom":
+      case "feeling":
+      case "labour":
+      case "labour_event":
+      case "contraction":
+      case "photo":
+      case "measurement":
+        (patch as { note?: string }).note = text || undefined; break;
+      case "appointment":
+      case "person":
+        (patch as { discussed?: string }).discussed = text || undefined; break;
+    }
+    store.updateEntry(entry.id, patch);
+    onClose();
+  }
+
+  return (
+    <div className="absolute inset-0 z-10 bg-ink/40 grid place-items-end md:place-items-center px-4 py-6">
+      <div className="surface-card p-5 w-full max-w-[440px] shadow-xl">
+        <h3 className="font-serif text-lg font-semibold mb-3">{t("tl.editEntry")}</h3>
+        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={5}
+          className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm resize-none" />
+        <div className="flex gap-2 mt-3">
+          <button onClick={onClose} className="flex-1 py-3 rounded-full bg-white border border-border text-sm font-medium">{t("common.cancel")}</button>
+          <button onClick={save} className="flex-1 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">{t("common.save")}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+async function sharePack(profile: Profile, entries: Entry[], groupMeasurements: boolean, labourPlan?: LabourPlan, hiddenItemKeys?: Set<string>) {
+  const text = buildText(profile, entries, groupMeasurements, labourPlan, hiddenItemKeys);
   if (typeof navigator !== "undefined" && navigator.share) {
     try {
       await navigator.share({ title: tFn("sum.header.title"), text });
