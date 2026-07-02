@@ -12,6 +12,10 @@ type GtagCommand = "js" | "config" | "event" | "consent";
 type Gtag = (command: GtagCommand, target: string | Date, params?: Record<string, unknown>) => void;
 type Clarity = (command: "event" | "consent", value?: string | boolean) => void;
 type QueuedClarity = Clarity & { q: unknown[][] };
+type PublicEnv = {
+  VITE_GA4_MEASUREMENT_ID?: string;
+  VITE_CLARITY_PROJECT_ID?: string;
+};
 
 declare global {
   interface Window {
@@ -21,8 +25,6 @@ declare global {
   }
 }
 
-const GA4_ID = import.meta.env.VITE_GA4_MEASUREMENT_ID as string | undefined;
-const CLARITY_ID = import.meta.env.VITE_CLARITY_PROJECT_ID as string | undefined;
 const CONSENT_KEY = "bumpnotes.analyticsConsent.v1";
 const CONSENT_EVENT = "bumpnotes:analytics-consent";
 
@@ -32,8 +34,22 @@ function browserReady() {
   return typeof window !== "undefined" && typeof document !== "undefined";
 }
 
-function hasProjectId(value: string | undefined): value is string {
-  return typeof value === "string" && value.trim().length > 0;
+function publicEnv(): PublicEnv {
+  return ((import.meta as ImportMeta & { env?: PublicEnv }).env ?? {}) as PublicEnv;
+}
+
+function safeTrim(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function ga4MeasurementId() {
+  const measurementId = safeTrim(publicEnv().VITE_GA4_MEASUREMENT_ID);
+  return /^G-[A-Z0-9-]+$/i.test(measurementId) ? measurementId : "";
+}
+
+function clarityProjectId() {
+  const projectId = safeTrim(publicEnv().VITE_CLARITY_PROJECT_ID);
+  return /^[a-z0-9]+$/i.test(projectId) ? projectId : "";
 }
 
 function safePath(pathname?: string) {
@@ -47,48 +63,56 @@ function safeLocation(pathname?: string) {
 }
 
 function injectScript(id: string, src: string) {
-  if (!browserReady() || document.getElementById(id)) return;
-  const script = document.createElement("script");
-  script.id = id;
-  script.async = true;
-  script.src = src;
-  document.head.appendChild(script);
+  try {
+    if (!browserReady() || document.getElementById(id) || !document.head) return;
+    const script = document.createElement("script");
+    script.id = id;
+    script.async = true;
+    script.src = src;
+    document.head.appendChild(script);
+  } catch {
+    /* Analytics must never stop the app from loading. */
+  }
 }
 
 function initGa4() {
-  const measurementId = GA4_ID?.trim();
-  if (!hasProjectId(measurementId)) return;
-  window.dataLayer = window.dataLayer ?? [];
-  window.gtag =
-    window.gtag ??
-    function gtag(...args) {
-      window.dataLayer?.push(args);
-    };
-  window.gtag("js", new Date());
-  window.gtag("config", measurementId, {
-    anonymize_ip: true,
-    send_page_view: false,
-  });
-  injectScript(
-    "bumpnotes-ga4",
-    `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`,
-  );
+  try {
+    const measurementId = ga4MeasurementId();
+    if (!measurementId) return;
+    window.dataLayer = window.dataLayer ?? [];
+    window.gtag =
+      window.gtag ??
+      function gtag(...args) {
+        window.dataLayer?.push(args);
+      };
+    window.gtag("js", new Date());
+    window.gtag("config", measurementId, {
+      anonymize_ip: true,
+      send_page_view: false,
+    });
+    injectScript(
+      "bumpnotes-ga4",
+      `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`,
+    );
+  } catch {
+    /* Analytics must never stop the app from loading. */
+  }
 }
 
 function initClarity() {
-  const projectId = CLARITY_ID?.trim();
-  if (!hasProjectId(projectId) || window.clarity) return;
-  const clarity = ((...args: Parameters<Clarity>) => {
-    clarity.q.push(args);
-  }) as QueuedClarity;
-  clarity.q = [];
-  window.clarity = clarity;
-  window.clarity("consent", true);
-  const script = document.createElement("script");
-  script.id = "bumpnotes-clarity";
-  script.async = true;
-  script.src = `https://www.clarity.ms/tag/${encodeURIComponent(projectId)}`;
-  document.head.appendChild(script);
+  try {
+    const projectId = clarityProjectId();
+    if (!projectId || window.clarity) return;
+    const clarity = ((...args: Parameters<Clarity>) => {
+      clarity.q.push(args);
+    }) as QueuedClarity;
+    clarity.q = [];
+    window.clarity = clarity;
+    window.clarity("consent", true);
+    injectScript("bumpnotes-clarity", `https://www.clarity.ms/tag/${encodeURIComponent(projectId)}`);
+  } catch {
+    /* Analytics must never stop the app from loading. */
+  }
 }
 
 export function hasAnalyticsConsent() {
@@ -112,9 +136,13 @@ export function setAnalyticsConsent(analytics: boolean) {
   } catch {
     /* ignore */
   }
-  window.dispatchEvent(new CustomEvent(CONSENT_EVENT, { detail: { analytics } }));
-  if (analytics) initAnalytics();
-  window.clarity?.("consent", analytics);
+  try {
+    window.dispatchEvent(new CustomEvent(CONSENT_EVENT, { detail: { analytics } }));
+    if (analytics) initAnalytics();
+    window.clarity?.("consent", analytics);
+  } catch {
+    /* Analytics must never stop the app from loading. */
+  }
 }
 
 export function onAnalyticsConsentChange(callback: (analytics: boolean) => void) {
@@ -130,26 +158,38 @@ export function onAnalyticsConsentChange(callback: (analytics: boolean) => void)
 export function initAnalytics() {
   if (!browserReady() || initialized || !hasAnalyticsConsent()) return;
   initialized = true;
-  initGa4();
-  initClarity();
+  try {
+    initGa4();
+    initClarity();
+  } catch {
+    /* Analytics must never stop the app from loading. */
+  }
 }
 
 export function trackEvent(eventName: AnalyticsEvent) {
   if (!browserReady() || !hasAnalyticsConsent()) return;
-  initAnalytics();
-  window.gtag?.("event", eventName, {
-    transport_type: "beacon",
-  });
-  if (eventName !== "page_view") window.clarity?.("event", eventName);
+  try {
+    initAnalytics();
+    window.gtag?.("event", eventName, {
+      transport_type: "beacon",
+    });
+    if (eventName !== "page_view") window.clarity?.("event", eventName);
+  } catch {
+    /* Analytics must never stop the app from loading. */
+  }
 }
 
 export function trackPageView(pathname?: string) {
   if (!browserReady() || !hasAnalyticsConsent()) return;
-  initAnalytics();
-  window.gtag?.("event", "page_view", {
-    page_location: safeLocation(pathname),
-    page_path: safePath(pathname),
-    transport_type: "beacon",
-  });
-  window.clarity?.("event", "page_view");
+  try {
+    initAnalytics();
+    window.gtag?.("event", "page_view", {
+      page_location: safeLocation(pathname),
+      page_path: safePath(pathname),
+      transport_type: "beacon",
+    });
+    window.clarity?.("event", "page_view");
+  } catch {
+    /* Analytics must never stop the app from loading. */
+  }
 }
