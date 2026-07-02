@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate, Link, useSearch } from "@tanstack/react-r
 import { useEffect, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { LogoWordmark } from "@/components/bumpnotes/Logo";
 import { PasswordInput } from "@/components/bumpnotes/PasswordInput";
@@ -46,18 +45,21 @@ function SignInPage() {
     } finally { setBusy(false); }
   }
 
-  async function onGoogle() {
+  async function onMagicLink() {
+    if (!email) { toast.error("Enter your email above first."); return; }
     setBusy(true);
     try {
       const origin = typeof window !== "undefined" ? window.location.origin : undefined;
-      const redirect_uri = origin && redirectTo !== "/" ? `${origin}${redirectTo}` : origin;
-      const result = await lovable.auth.signInWithOAuth("google", { redirect_uri });
-      if (result.error) { toast.error(result.error.message || "Sign in failed"); return; }
-      if (result.redirected) return;
-      trackEvent("sign_in");
-      navigate({ to: redirectTo });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Sign in failed");
+      const emailRedirectTo = origin ? `${origin}${redirectTo}` : undefined;
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo,
+          shouldCreateUser: false,
+        },
+      });
+      if (error) { toast.error(error.message); return; }
+      toast.success("Magic link sent. Check your email.");
     } finally { setBusy(false); }
   }
 
@@ -110,14 +112,11 @@ function SignInPage() {
               </button>
             </form>
 
-            <div className="relative text-center">
-              <span className="px-2 bg-card text-[11px] uppercase tracking-widest text-ink-soft">or</span>
-            </div>
-
             <button
-              onClick={() => { trackEvent("cta_clicked"); void onGoogle(); }} disabled={busy}
+              type="button"
+              onClick={() => { trackEvent("cta_clicked"); void onMagicLink(); }} disabled={busy}
               className="w-full py-3 rounded-full bg-white border border-border text-sm font-medium disabled:opacity-60"
-            >Continue with Google</button>
+            >Email me a magic link</button>
           </div>
 
           {!isAdmin && (

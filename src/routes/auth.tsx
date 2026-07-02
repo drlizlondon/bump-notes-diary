@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { useAppState } from "@/lib/bumpnotes/store";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { LogoWordmark } from "@/components/bumpnotes/Logo";
@@ -61,28 +60,13 @@ function AuthPage() {
     try {
       const { error } = await supabase.auth.signUp({
         email, password,
-        options: { emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined },
+        options: { emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/` : undefined },
       });
       if (error) { toast.error(error.message); return; }
       trackEvent("account_created");
-      toast.success("Account created.");
+      toast.success("Account created. Check your email if confirmation is required.");
       await recordAcceptance();
       navigate({ to: "/" });
-    } finally { setBusy(false); }
-  }
-
-  async function onGoogle() {
-    if (!consentOk()) return;
-    setBusy(true);
-    try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: typeof window !== "undefined" ? window.location.origin : undefined,
-      });
-      if (result.error) { toast.error(result.error.message || "Sign in failed"); return; }
-      if (result.redirected) return;
-      navigate({ to: "/" });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Sign in failed");
     } finally { setBusy(false); }
   }
 
@@ -104,15 +88,6 @@ function AuthPage() {
           </div>
 
           <div className="surface-card p-5 space-y-4">
-            <button
-              onClick={() => { trackEvent("cta_clicked"); void onGoogle(); }} disabled={busy}
-              className="w-full py-3 rounded-full bg-white border border-border text-sm font-medium disabled:opacity-60"
-            >Continue with Google</button>
-
-            <div className="relative text-center">
-              <span className="px-2 bg-card text-[11px] uppercase tracking-widest text-ink-soft">or</span>
-            </div>
-
             <form onSubmit={onEmail} className="space-y-3">
               <input
                 type="email" autoComplete="email" required value={email}
