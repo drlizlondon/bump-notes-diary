@@ -4,8 +4,18 @@ const WORDMARK_URL = "/bumpnotes-wordmark.png";
 type Props = { className?: string; alt?: string };
 
 export function LogoIcon({ className = "size-8", alt = "BumpNotes" }: Props) {
-  return <img src={ICON_URL} alt={alt} className={className} draggable={false} />;
+  return (
+    <span className={`inline-flex items-center justify-center rounded-full overflow-hidden ${className}`}>
+      <img
+        src={ICON_URL}
+        alt={alt}
+        className="size-full object-cover scale-110"
+        draggable={false}
+      />
+    </span>
+  );
 }
+
 
 export function LogoWordmark({ className = "h-16", alt = "BumpNotes" }: Props) {
   return <img src={WORDMARK_URL} alt={alt} className={className} draggable={false} />;
