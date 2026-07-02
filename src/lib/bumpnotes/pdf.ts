@@ -81,6 +81,7 @@ export function downloadSummaryPdf(opts: PdfOptions) {
   // Group by week+day
   const map = new Map<string, Entry[]>();
   for (const e of opts.entries) {
+    if (isLabourSummaryEntry(e)) continue;
     const k = weekDayKey(e);
     if (!map.has(k)) map.set(k, []);
     map.get(k)!.push(e);
@@ -141,23 +142,53 @@ export function downloadSummaryPdf(opts: PdfOptions) {
   if (opts.labourPlan) {
     const contractions = opts.entries.filter((e): e is ContractionEntry => e.type === "contraction");
     const events = opts.entries.filter((e): e is LabourEventEntry => e.type === "labour_event");
-    if (opts.labourPlan.recordingStartISO || contractions.length || events.length) {
+    const episodes = opts.labourPlan.episodes ?? [];
+    if (opts.labourPlan.recordingStartISO || episodes.length || contractions.length || events.length) {
       rule();
       text("Labour", { size: 12, bold: true, color: [180, 80, 100], gap: 2 });
-      if (opts.labourPlan.recordingStartISO) {
+      if (episodes.length > 0) {
+        episodes
+          .slice()
+          .sort((a, b) => a.startISO.localeCompare(b.startISO))
+          .forEach((ep) => {
+            const inRange = (iso: string) => iso >= ep.startISO && (!ep.endISO || iso <= ep.endISO);
+            const eC = contractions.filter((c) => inRange(c.createdAt));
+            const eE = events.filter((e) => inRange(e.createdAt));
+            text(`Recording started: ${formatUKDateTime(ep.startISO)}`, { size: 10, gap: 1 });
+            if (ep.endISO) text(`Recording ended: ${formatUKDateTime(ep.endISO)}`, { size: 10, gap: 1 });
+            const outcome = labourOutcomeLabel(ep.outcome);
+            if (outcome) {
+              text(`Outcome: ${outcome}${ep.outcome === "other" && ep.outcomeNote ? ` · ${ep.outcomeNote}` : ""}`, { size: 10, gap: 1 });
+            }
+            if (eC.length) {
+              text(`Contractions (${eC.length})`, { size: 10, bold: true, gap: 1 });
+              eC.forEach((c) => {
+                text(`• ${formatUKDate(c.createdAt)} ${formatUKTime(c.createdAt)} — ${formatDuration(c.durationSec)}${c.note ? ` · ${c.note}` : ""}`, { size: 9, gap: 0.6 });
+              });
+            }
+            if (eE.length) {
+              text(`Events (${eE.length})`, { size: 10, bold: true, gap: 1 });
+              eE.forEach((e) => {
+                text(`• ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)} — ${e.event}${e.note ? ` · ${e.note}` : ""}`, { size: 9, gap: 0.6 });
+              });
+            }
+          });
+      } else {
+        if (opts.labourPlan.recordingStartISO) {
         text(`Recording started: ${formatUKDateTime(opts.labourPlan.recordingStartISO)}`, { size: 10, gap: 1 });
-      }
-      if (contractions.length) {
-        text(`Contractions (${contractions.length})`, { size: 10, bold: true, gap: 1 });
-        contractions.forEach((c) => {
-          text(`• ${formatUKDate(c.createdAt)} ${formatUKTime(c.createdAt)} — ${formatDuration(c.durationSec)}${c.note ? ` · ${c.note}` : ""}`, { size: 9, gap: 0.6 });
-        });
-      }
-      if (events.length) {
-        text(`Events (${events.length})`, { size: 10, bold: true, gap: 1 });
-        events.forEach((e) => {
-          text(`• ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)} — ${e.event}${e.note ? ` · ${e.note}` : ""}`, { size: 9, gap: 0.6 });
-        });
+        }
+        if (contractions.length) {
+          text(`Contractions (${contractions.length})`, { size: 10, bold: true, gap: 1 });
+          contractions.forEach((c) => {
+            text(`• ${formatUKDate(c.createdAt)} ${formatUKTime(c.createdAt)} — ${formatDuration(c.durationSec)}${c.note ? ` · ${c.note}` : ""}`, { size: 9, gap: 0.6 });
+          });
+        }
+        if (events.length) {
+          text(`Events (${events.length})`, { size: 10, bold: true, gap: 1 });
+          events.forEach((e) => {
+            text(`• ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)} — ${e.event}${e.note ? ` · ${e.note}` : ""}`, { size: 9, gap: 0.6 });
+          });
+        }
       }
     }
   }
@@ -171,6 +202,17 @@ export function downloadSummaryPdf(opts: PdfOptions) {
 
   const safeName = (opts.profile.userName || "BumpNotes").replace(/[^a-z0-9\-_]+/gi, "_");
   doc.save(`BumpNotes_Pregnancy_Summary_${safeName}_${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
+function isLabourSummaryEntry(entry: Entry): boolean {
+  return entry.type === "labour" || entry.type === "labour_event" || entry.type === "contraction";
+}
+
+function labourOutcomeLabel(outcome?: "baby" | "settled" | "other"): string | null {
+  if (outcome === "baby") return tFn("lab.outcome.baby");
+  if (outcome === "settled") return tFn("lab.outcome.settled");
+  if (outcome === "other") return tFn("lab.outcome.other");
+  return null;
 }
 
 function header(doc: jsPDF, profile: Profile, continued: boolean) {

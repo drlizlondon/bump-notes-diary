@@ -299,18 +299,18 @@ function OutcomeModal({ onCancel, onSave }: {
   return (
     <div className="fixed inset-0 z-50 bg-ink/40 grid place-items-end md:place-items-center px-4 py-6">
       <div className="surface-card p-5 w-full max-w-[440px] shadow-xl">
-        <h3 className="font-serif text-lg font-semibold">{t("lab.endRecording")}</h3>
+        <h3 className="font-serif text-lg font-semibold">{t("lab.outcome.endTitle")}</h3>
         <p className="mt-1 text-sm text-ink-soft leading-relaxed">
-          You can add an outcome if you want to, or end the recording without one.
+          {t("lab.outcome.endBody")}
         </p>
         <label className="mt-4 block">
-          <span className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">Outcome (optional)</span>
+          <span className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">{t("lab.outcome.label")}</span>
           <select
             value={outcome}
             onChange={(e) => setOutcome(e.target.value as typeof outcome)}
             className="mt-1 w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
           >
-            <option value="">No outcome selected</option>
+            <option value="">{t("lab.outcome.none")}</option>
             {options.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
           </select>
         </label>
@@ -329,7 +329,7 @@ function OutcomeModal({ onCancel, onSave }: {
             onClick={() => onSave(outcome || undefined, outcome === "other" ? (note || undefined) : undefined)}
             className="flex-1 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
           >
-            {outcome ? t("lab.outcome.save") : t("lab.outcome.skip")}
+            End recording
           </button>
         </div>
       </div>

@@ -48,7 +48,12 @@ export function PregnancySummaryPreview({
 
 export function hasLabourData(plan: LabourPlan, entries: Entry[]): boolean {
   if (plan.recordingStartISO) return true;
+  if ((plan.episodes?.length ?? 0) > 0) return true;
   return entries.some((e) => e.type === "contraction" || e.type === "labour_event" || e.type === "labour");
+}
+
+function isLabourSummaryEntry(entry: Entry): boolean {
+  return entry.type === "labour" || entry.type === "labour_event" || entry.type === "contraction";
 }
 
 function LabourSection({ plan, entries }: { plan: LabourPlan; entries: Entry[] }) {
@@ -149,6 +154,7 @@ function ByWeek({
   const t = useT();
   const map = new Map<string, Entry[]>();
   for (const e of entries) {
+    if (isLabourSummaryEntry(e)) continue;
     const k = weekDayKey(e);
     if (!map.has(k)) map.set(k, []);
     map.get(k)!.push(e);

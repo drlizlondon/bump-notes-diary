@@ -44,6 +44,10 @@ function defaultIncluded(): Record<EntryType, boolean> {
   };
 }
 
+function isLabourSummaryEntry(entry: Entry): boolean {
+  return entry.type === "labour" || entry.type === "labour_event" || entry.type === "contraction";
+}
+
 type Step = 1 | 2 | 3;
 
 function SummaryPage() {
@@ -68,7 +72,7 @@ function SummaryPage() {
   const selected = useMemo(() => {
     return liveEntries
       .filter((e) => activeWeeks.has(e.weekDay.weeks))
-      .filter((e) => included[e.type])
+      .filter((e) => isLabourSummaryEntry(e) ? included.labour : included[e.type])
       .filter((e) => !excluded.has(e.id))
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }, [liveEntries, activeWeeks, included, excluded]);
@@ -228,7 +232,7 @@ function StepReviewCustomise({
 }) {
   const t = useT();
   const TYPE_LABELS = typeLabels();
-  const displayTypes: EntryType[] = ["symptom","question","person","measurement","photo","note","feeling","labour","contraction","labour_event"];
+  const displayTypes: EntryType[] = ["symptom","question","person","measurement","photo","note","feeling","labour"];
   return (
     <div className="space-y-3">
       <div className="surface-card p-4 sm:p-5">
@@ -244,6 +248,10 @@ function StepReviewCustomise({
                 onClick={() => {
                   const next = { ...included, [tp]: !active };
                   if (tp === "person") next.appointment = !active;
+                  if (tp === "labour") {
+                    next.contraction = !active;
+                    next.labour_event = !active;
+                  }
                   setIncluded(next);
                 }}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium border ${
@@ -350,7 +358,12 @@ function buildText(profile: Profile, entries: Entry[], groupMeasurements: boolea
   lines.push("");
 
   const map = new Map<string, Entry[]>();
-  for (const e of entries) { const k = weekDayKey(e); if (!map.has(k)) map.set(k, []); map.get(k)!.push(e); }
+  for (const e of entries) {
+    if (isLabourSummaryEntry(e)) continue;
+    const k = weekDayKey(e);
+    if (!map.has(k)) map.set(k, []);
+    map.get(k)!.push(e);
+  }
 
   const measurementsByWeek = new Map<number, MeasurementEntry[]>();
   if (groupMeasurements) {
@@ -397,20 +410,49 @@ function buildText(profile: Profile, entries: Entry[], groupMeasurements: boolea
 
   if (labourPlan && hasLabourData(labourPlan, entries)) {
     lines.push(tFn("sum.labour.title"));
-    if (labourPlan.recordingStartISO) lines.push(`- ${tFn("sum.labour.started")}: ${formatUKDateTime(labourPlan.recordingStartISO)}`);
     const contractions = entries.filter((e): e is ContractionEntry => e.type === "contraction");
-    contractions.forEach((c) => {
-      lines.push(`- ${tFn("type.contraction")}: ${formatUKDate(c.createdAt)} ${formatUKTime(c.createdAt)} · ${formatDuration(c.durationSec)}${c.note ? ` · ${c.note}` : ""}`);
-    });
     const events = entries.filter((e): e is LabourEventEntry => e.type === "labour_event");
-    events.forEach((e) => {
-      lines.push(`- ${e.event}: ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)}${e.note ? ` · ${e.note}` : ""}`);
-    });
+    const episodes = labourPlan.episodes ?? [];
+    if (episodes.length > 0) {
+      episodes
+        .slice()
+        .sort((a, b) => a.startISO.localeCompare(b.startISO))
+        .forEach((ep) => {
+          const inRange = (iso: string) => iso >= ep.startISO && (!ep.endISO || iso <= ep.endISO);
+          const eC = contractions.filter((c) => inRange(c.createdAt));
+          const eE = events.filter((e) => inRange(e.createdAt));
+          lines.push(`- ${tFn("sum.labour.started")}: ${formatUKDateTime(ep.startISO)}`);
+          if (ep.endISO) lines.push(`- ${tFn("lab.episode.ended")}: ${formatUKDateTime(ep.endISO)}`);
+          const outcome = labourOutcomeLabel(ep.outcome);
+          if (outcome) lines.push(`- ${tFn("sum.labour.outcome")}: ${outcome}${ep.outcome === "other" && ep.outcomeNote ? ` · ${ep.outcomeNote}` : ""}`);
+          eC.forEach((c) => {
+            lines.push(`  - ${tFn("type.contraction")}: ${formatUKDate(c.createdAt)} ${formatUKTime(c.createdAt)} · ${formatDuration(c.durationSec)}${c.note ? ` · ${c.note}` : ""}`);
+          });
+          eE.forEach((e) => {
+            lines.push(`  - ${e.event}: ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)}${e.note ? ` · ${e.note}` : ""}`);
+          });
+        });
+    } else {
+      if (labourPlan.recordingStartISO) lines.push(`- ${tFn("sum.labour.started")}: ${formatUKDateTime(labourPlan.recordingStartISO)}`);
+      contractions.forEach((c) => {
+        lines.push(`- ${tFn("type.contraction")}: ${formatUKDate(c.createdAt)} ${formatUKTime(c.createdAt)} · ${formatDuration(c.durationSec)}${c.note ? ` · ${c.note}` : ""}`);
+      });
+      events.forEach((e) => {
+        lines.push(`- ${e.event}: ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)}${e.note ? ` · ${e.note}` : ""}`);
+      });
+    }
     lines.push("");
   }
 
   lines.push(tFn("sum.foot").replace("{name}", profile.userName));
   return lines.join("\n");
+}
+
+function labourOutcomeLabel(outcome?: "baby" | "settled" | "other"): string | null {
+  if (outcome === "baby") return tFn("lab.outcome.baby");
+  if (outcome === "settled") return tFn("lab.outcome.settled");
+  if (outcome === "other") return tFn("lab.outcome.other");
+  return null;
 }
 
 async function sharePack(profile: Profile, entries: Entry[], groupMeasurements: boolean, labourPlan?: LabourPlan) {

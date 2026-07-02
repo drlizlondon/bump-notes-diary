@@ -280,14 +280,13 @@ function LabourEpisodeCard({ item }: { item: LabourEpisodeItem }) {
             )}
           </div>
 
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl bg-white/75 border border-border p-3">
-              <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">
-                Contractions ({contractions.length})
-              </p>
-              {contractions.length === 0 ? (
-                <p className="text-xs text-ink-soft mt-2">None recorded in this episode.</p>
-              ) : (
+          {(contractions.length > 0 || events.length > 0) && (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {contractions.length > 0 && (
+              <div className="rounded-xl bg-white/75 border border-border p-3">
+                <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">
+                  Contractions ({contractions.length})
+                </p>
                 <ul className="mt-2 space-y-1.5">
                   {contractions.map((entry) => (
                     <li key={entry.id} className="text-xs text-ink">
@@ -297,16 +296,14 @@ function LabourEpisodeCard({ item }: { item: LabourEpisodeItem }) {
                     </li>
                   ))}
                 </ul>
+              </div>
               )}
-            </div>
 
-            <div className="rounded-xl bg-white/75 border border-border p-3">
-              <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">
-                Quick logs ({events.length})
-              </p>
-              {events.length === 0 ? (
-                <p className="text-xs text-ink-soft mt-2">None recorded in this episode.</p>
-              ) : (
+              {events.length > 0 && (
+              <div className="rounded-xl bg-white/75 border border-border p-3">
+                <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">
+                  Quick logs ({events.length})
+                </p>
                 <ul className="mt-2 space-y-1.5">
                   {events.map((entry) => (
                     <li key={entry.id} className="text-xs text-ink">
@@ -316,9 +313,10 @@ function LabourEpisodeCard({ item }: { item: LabourEpisodeItem }) {
                     </li>
                   ))}
                 </ul>
+              </div>
               )}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </li>
