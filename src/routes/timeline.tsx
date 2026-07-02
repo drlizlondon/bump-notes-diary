@@ -1,6 +1,6 @@
 import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButton";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Toaster } from "sonner";
 import { Pencil, Trash2, Search, X } from "lucide-react";
 import { store, useAppState } from "@/lib/bumpnotes/store";
@@ -9,6 +9,7 @@ import { formatUKDate, formatUKTime } from "@/lib/bumpnotes/gestation";
 import { summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
 import { useT } from "@/lib/bumpnotes/i18n";
 import type { Entry } from "@/lib/bumpnotes/types";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/timeline")({
   head: () => ({ meta: [{ title: "Timeline · BumpNotes" }] }),
@@ -56,6 +57,10 @@ function TimelinePage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
   const t = useT();
+
+  useEffect(() => {
+    trackEvent("timeline_opened");
+  }, []);
 
   const grouped = useMemo(() => {
     const q = query.trim().toLowerCase();

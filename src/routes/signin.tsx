@@ -6,6 +6,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { LogoWordmark } from "@/components/bumpnotes/Logo";
 import { PasswordInput } from "@/components/bumpnotes/PasswordInput";
+import { trackEvent } from "@/lib/analytics";
 
 type Search = { redirect?: string; admin?: string };
 
@@ -40,6 +41,7 @@ function SignInPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) { toast.error(error.message); return; }
+      trackEvent("sign_in");
       navigate({ to: redirectTo });
     } finally { setBusy(false); }
   }
@@ -52,6 +54,7 @@ function SignInPage() {
       const result = await lovable.auth.signInWithOAuth("google", { redirect_uri });
       if (result.error) { toast.error(result.error.message || "Sign in failed"); return; }
       if (result.redirected) return;
+      trackEvent("sign_in");
       navigate({ to: redirectTo });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Sign in failed");
@@ -99,6 +102,7 @@ function SignInPage() {
               />
               <button
                 disabled={busy} type="submit"
+                onClick={() => trackEvent("cta_clicked")}
                 className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
               >Sign in</button>
               <button type="button" onClick={onForgot} className="block mx-auto text-xs text-ink-soft underline underline-offset-2">
@@ -111,7 +115,7 @@ function SignInPage() {
             </div>
 
             <button
-              onClick={onGoogle} disabled={busy}
+              onClick={() => { trackEvent("cta_clicked"); void onGoogle(); }} disabled={busy}
               className="w-full py-3 rounded-full bg-white border border-border text-sm font-medium disabled:opacity-60"
             >Continue with Google</button>
           </div>
@@ -124,6 +128,7 @@ function SignInPage() {
               </p>
               <Link
                 to="/onboarding"
+                onClick={() => trackEvent("cta_clicked")}
                 className="inline-flex w-full justify-center py-3 rounded-full bg-white border border-primary/40 text-primary text-sm font-semibold hover:bg-blush-soft"
               >
                 Start your pregnancy record

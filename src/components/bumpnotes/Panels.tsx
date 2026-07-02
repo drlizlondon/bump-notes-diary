@@ -5,6 +5,7 @@ import type { Entry, MeasurementKind } from "@/lib/bumpnotes/types";
 import { toast } from "sonner";
 import { useT } from "@/lib/bumpnotes/i18n";
 import { UndoStrip } from "./UndoStrip";
+import { trackEvent } from "@/lib/analytics";
 
 type Tone = "coral" | "blush" | "mint" | "butter" | "lavender" | "primary";
 
@@ -519,6 +520,7 @@ export function NotePanelBody() {
   function save() {
     if (!text.trim()) return;
     store.addEntry({ type: "note", text: text.trim() } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+    trackEvent("note_created");
     loggedToast(t("n.saved"));
     setText("");
   }

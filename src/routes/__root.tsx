@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -12,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CookieNotice } from "@/components/bumpnotes/CookieNotice";
+import { initAnalytics, onAnalyticsConsentChange, trackPageView } from "@/lib/analytics";
 
 function NotFoundComponent() {
   return (
@@ -120,10 +122,22 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   useEffect(() => {
     void import("@/lib/bumpnotes/sync").then((m) => m.initSync());
   }, []);
+
+  useEffect(() => {
+    initAnalytics();
+    return onAnalyticsConsentChange((allowed) => {
+      if (allowed) trackPageView(pathname);
+    });
+  }, [pathname]);
+
+  useEffect(() => {
+    trackPageView(pathname);
+  }, [pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -133,4 +147,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

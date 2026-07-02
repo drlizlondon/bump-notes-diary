@@ -14,12 +14,12 @@ export function AppShell({ children, hideNav = false, right }: { children: React
       <DemoBanner />
       <div className="app-shell flex flex-col lg:hidden">
         {!hideNav && <MobileTopBar />}
-        <div className="flex-1 flex flex-col">{children}</div>
+        <div className="flex-1 flex flex-col" data-clarity-mask="True">{children}</div>
       </div>
 
       <div className="hidden lg:grid lg:grid-cols-[240px_minmax(0,1fr)_320px] lg:gap-8 lg:max-w-[1200px] lg:mx-auto lg:px-6 lg:py-8 lg:min-h-[100dvh]">
         <DesktopSidebar />
-        <main className="min-w-0">{children}</main>
+        <main className="min-w-0" data-clarity-mask="True">{children}</main>
         <aside className="min-w-0">{right ?? <DefaultAside />}</aside>
       </div>
 
