@@ -1,9 +1,9 @@
 import jsPDF from "jspdf";
-import type { ContractionEntry, Entry, LabourEventEntry, LabourPlan, MeasurementEntry, Profile } from "./types";
+import type { Entry, LabourPlan, Profile } from "./types";
 import {
-  formatGestation, formatUKDate, formatUKDateLong, formatUKDateTime, formatUKTime, gestationFromDueDate,
+  formatGestation, formatUKDateLong, formatUKDateTime, gestationFromDueDate,
 } from "./gestation";
-import { formatDuration, measurementLabel, summariseEntry, weekDayKey } from "./summary";
+import { buildPregnancySummaryWeeks, type PregnancySummarySection } from "./pregnancy-summary";
 import { t as tFn } from "./i18n";
 
 type PdfOptions = {
@@ -78,120 +78,15 @@ export function downloadSummaryPdf(opts: PdfOptions) {
   y += 2;
   rule();
 
-  // Group by week+day
-  const map = new Map<string, Entry[]>();
-  for (const e of opts.entries) {
-    if (isLabourSummaryEntry(e)) continue;
-    const k = weekDayKey(e);
-    if (!map.has(k)) map.set(k, []);
-    map.get(k)!.push(e);
-  }
-  const groups = Array.from(map.entries()).sort(([a], [b]) => {
-    const [aw, ad] = a.split("+").map(Number);
-    const [bw, bd] = b.split("+").map(Number);
-    return aw - bw || ad - bd;
-  });
-
-  const measurementsByWeek = new Map<number, MeasurementEntry[]>();
-  if (opts.groupMeasurements) {
-    for (const e of opts.entries) {
-      if (e.type === "measurement") {
-        if (!measurementsByWeek.has(e.weekDay.weeks)) measurementsByWeek.set(e.weekDay.weeks, []);
-        measurementsByWeek.get(e.weekDay.weeks)!.push(e);
-      }
-    }
-  }
-  const printedWeeks = new Set<number>();
-
-  groups.forEach(([k, list]) => {
-    const [w, d] = k.split("+");
-    const wn = Number(w);
-    const filtered = opts.groupMeasurements ? list.filter((e) => e.type !== "measurement") : list;
-    const showM = opts.groupMeasurements && !printedWeeks.has(wn) && measurementsByWeek.has(wn);
-    if (showM) printedWeeks.add(wn);
-    if (filtered.length === 0 && !showM) return;
-
-    text(`Week ${w} + ${d}`, { size: 11, bold: true, color: [180, 80, 100], gap: 2 });
-
-    filtered.forEach((e) => {
-      const s = summariseEntry(e);
-      const head = `${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)}  ·  ${s.headline}`;
-      text(head, { size: 10, bold: true, gap: 0.5 });
-      if (s.detail) text(s.detail, { size: 9, color: [90, 90, 100], gap: 1.5 });
+  buildPregnancySummaryWeeks(opts.profile, opts.entries, opts.labourPlan).forEach((week) => {
+    text(`Week ${week.week}`, { size: 12, bold: true, color: [180, 80, 100], gap: 2 });
+    week.sections.forEach((section) => {
+      text(section.title, { size: 10, bold: true, color: [110, 110, 120], gap: 1 });
+      sectionPdfLines(section).forEach((line) => text(line, { size: 9, gap: 0.7 }));
+      y += 1;
     });
-
-    if (showM) {
-      const ms = measurementsByWeek.get(wn)!;
-      text("Measurements this week", { size: 10, bold: true, color: [110, 110, 120], gap: 1 });
-      const byKind = new Map<string, MeasurementEntry[]>();
-      for (const m of ms) {
-        const key = m.kind === "custom" ? (m.customLabel || tFn("m.custom")) : measurementLabel(m);
-        if (!byKind.has(key)) byKind.set(key, []);
-        byKind.get(key)!.push(m);
-      }
-      byKind.forEach((items, label) => {
-        const r = rangeText(items);
-        const line = `• ${label} — ${items.length} reading${items.length === 1 ? "" : "s"}${r ? ` (range ${r})` : ""}`;
-        text(line, { size: 9, gap: 0.8 });
-      });
-    }
     y += 2;
   });
-
-  // Labour
-  if (opts.labourPlan) {
-    const contractions = opts.entries.filter((e): e is ContractionEntry => e.type === "contraction");
-    const events = opts.entries.filter((e): e is LabourEventEntry => e.type === "labour_event");
-    const episodes = opts.labourPlan.episodes ?? [];
-    if (opts.labourPlan.recordingStartISO || episodes.length || contractions.length || events.length) {
-      rule();
-      text("Labour", { size: 12, bold: true, color: [180, 80, 100], gap: 2 });
-      if (episodes.length > 0) {
-        episodes
-          .slice()
-          .sort((a, b) => a.startISO.localeCompare(b.startISO))
-          .forEach((ep) => {
-            const inRange = (iso: string) => iso >= ep.startISO && (!ep.endISO || iso <= ep.endISO);
-            const eC = contractions.filter((c) => inRange(c.createdAt));
-            const eE = events.filter((e) => inRange(e.createdAt));
-            text(`Recording started: ${formatUKDateTime(ep.startISO)}`, { size: 10, gap: 1 });
-            if (ep.endISO) text(`Recording ended: ${formatUKDateTime(ep.endISO)}`, { size: 10, gap: 1 });
-            const outcome = labourOutcomeLabel(ep.outcome);
-            if (outcome) {
-              text(`Outcome: ${outcome}${ep.outcome === "other" && ep.outcomeNote ? ` · ${ep.outcomeNote}` : ""}`, { size: 10, gap: 1 });
-            }
-            if (eC.length) {
-              text(`Contractions (${eC.length})`, { size: 10, bold: true, gap: 1 });
-              eC.forEach((c) => {
-                text(`• ${formatUKDate(c.createdAt)} ${formatUKTime(c.createdAt)} — ${formatDuration(c.durationSec)}${c.note ? ` · ${c.note}` : ""}`, { size: 9, gap: 0.6 });
-              });
-            }
-            if (eE.length) {
-              text(`Events (${eE.length})`, { size: 10, bold: true, gap: 1 });
-              eE.forEach((e) => {
-                text(`• ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)} — ${e.event}${e.note ? ` · ${e.note}` : ""}`, { size: 9, gap: 0.6 });
-              });
-            }
-          });
-      } else {
-        if (opts.labourPlan.recordingStartISO) {
-        text(`Recording started: ${formatUKDateTime(opts.labourPlan.recordingStartISO)}`, { size: 10, gap: 1 });
-        }
-        if (contractions.length) {
-          text(`Contractions (${contractions.length})`, { size: 10, bold: true, gap: 1 });
-          contractions.forEach((c) => {
-            text(`• ${formatUKDate(c.createdAt)} ${formatUKTime(c.createdAt)} — ${formatDuration(c.durationSec)}${c.note ? ` · ${c.note}` : ""}`, { size: 9, gap: 0.6 });
-          });
-        }
-        if (events.length) {
-          text(`Events (${events.length})`, { size: 10, bold: true, gap: 1 });
-          events.forEach((e) => {
-            text(`• ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)} — ${e.event}${e.note ? ` · ${e.note}` : ""}`, { size: 9, gap: 0.6 });
-          });
-        }
-      }
-    }
-  }
 
   // Footer disclaimer
   y += 4;
@@ -202,17 +97,6 @@ export function downloadSummaryPdf(opts: PdfOptions) {
 
   const safeName = (opts.profile.userName || "BumpNotes").replace(/[^a-z0-9\-_]+/gi, "_");
   doc.save(`BumpNotes_Pregnancy_Summary_${safeName}_${new Date().toISOString().slice(0, 10)}.pdf`);
-}
-
-function isLabourSummaryEntry(entry: Entry): boolean {
-  return entry.type === "labour" || entry.type === "labour_event" || entry.type === "contraction";
-}
-
-function labourOutcomeLabel(outcome?: "baby" | "settled" | "other"): string | null {
-  if (outcome === "baby") return tFn("lab.outcome.baby");
-  if (outcome === "settled") return tFn("lab.outcome.settled");
-  if (outcome === "other") return tFn("lab.outcome.other");
-  return null;
 }
 
 function header(doc: jsPDF, profile: Profile, continued: boolean) {
@@ -244,18 +128,25 @@ function footer(doc: jsPDF) {
   }
 }
 
-function rangeText(list: MeasurementEntry[]): string | null {
-  if (list.length === 0) return null;
-  const first = list[0];
-  if (first.kind === "blood_pressure") {
-    const sys = list.map((m) => m.systolic ?? 0).filter(Boolean);
-    const dia = list.map((m) => m.diastolic ?? 0).filter(Boolean);
-    if (!sys.length || !dia.length) return null;
-    return `${Math.min(...sys)}/${Math.min(...dia)} to ${Math.max(...sys)}/${Math.max(...dia)} mmHg`;
+function sectionPdfLines(section: PregnancySummarySection): string[] {
+  if (section.type === "symptoms") {
+    return section.items.flatMap((item) => [
+      `• ${item.symptom}${item.count > 1 ? ` ×${item.count}` : ""}`,
+      ...item.qualifiers.map((qualifier) => `    • ${qualifier}`),
+    ]);
   }
-  const vals = list.map((m) => m.value).filter((v): v is number => typeof v === "number");
-  if (!vals.length) return null;
-  const unit = first.unit || "";
-  if (Math.min(...vals) === Math.max(...vals)) return `${vals[0]} ${unit}`.trim();
-  return `${Math.min(...vals)} to ${Math.max(...vals)} ${unit}`.trim();
+  if (section.type === "feelings") {
+    return section.items.map((item) => `• ${item.feeling}${item.days > 1 ? `, ${item.days} days this week` : ""}`);
+  }
+  if (section.type === "people") {
+    return section.groups.flatMap((group) => [
+      group.professional,
+      ...group.items.map((item) => `• ${item}`),
+      "",
+    ]);
+  }
+  if (section.type === "measurements") {
+    return section.items.flatMap((item) => [item.label, item.value, ""]);
+  }
+  return section.items.map((item) => `• ${item}`);
 }

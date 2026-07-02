@@ -5,11 +5,11 @@ import { Toaster, toast } from "sonner";
 import { useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PageHeader, PregnancySummaryAside } from "@/components/bumpnotes/AppShell";
 import {
-  formatGestation, formatUKDate, formatUKDateLong, formatUKDateTime, formatUKTime, gestationFromDueDate,
+  formatGestation, formatUKDateLong, formatUKDateTime, gestationFromDueDate,
 } from "@/lib/bumpnotes/gestation";
-import { formatDuration, measurementLabel, summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
 import { useT, t as tFn } from "@/lib/bumpnotes/i18n";
-import type { ContractionEntry, Entry, EntryType, LabourEventEntry, MeasurementEntry, Profile, LabourPlan } from "@/lib/bumpnotes/types";
+import { buildPregnancySummaryWeeks, type PregnancySummarySection } from "@/lib/bumpnotes/pregnancy-summary";
+import type { Entry, EntryType, Profile, LabourPlan } from "@/lib/bumpnotes/types";
 import { downloadSummaryPdf } from "@/lib/bumpnotes/pdf";
 import { PregnancySummaryPreview, hasLabourData } from "@/components/bumpnotes/PregnancySummaryPreview";
 
@@ -310,42 +310,7 @@ function PreviewCard(props: {
   return <PregnancySummaryPreview {...props} />;
 }
 
-function rangeText(list: MeasurementEntry[]): string | null {
-  if (list.length === 0) return null;
-  const first = list[0];
-  if (first.kind === "blood_pressure") {
-    const sys = list.map((m) => m.systolic ?? 0).filter(Boolean);
-    const dia = list.map((m) => m.diastolic ?? 0).filter(Boolean);
-    if (!sys.length || !dia.length) return null;
-    return `${Math.min(...sys)}/${Math.min(...dia)} to ${Math.max(...sys)}/${Math.max(...dia)} mmHg`;
-  }
-  const vals = list.map((m) => m.value).filter((v): v is number => typeof v === "number");
-  if (!vals.length) return null;
-  const unit = first.unit || "";
-  if (Math.min(...vals) === Math.max(...vals)) return `${vals[0]} ${unit}`.trim();
-  return `${Math.min(...vals)} to ${Math.max(...vals)} ${unit}`.trim();
-}
-
-
-function EntryRow({ entry, onRemove }: { entry: Entry; onRemove?: (id: string) => void }) {
-  const s = summariseEntry(entry);
-  return (
-    <li className="text-xs leading-snug flex flex-wrap items-start gap-x-2 gap-y-0.5">
-      <span className="text-ink-soft shrink-0 whitespace-nowrap">
-        {formatUKDate(entry.createdAt)} {formatUKTime(entry.createdAt)} —
-      </span>
-      <span className="flex-1 min-w-0 break-words">
-        <span className="font-medium">{s.headline}</span>
-        {s.detail && <span className="text-ink-soft"> · {s.detail}</span>}
-      </span>
-      {onRemove && (
-        <button onClick={() => onRemove(entry.id)} className="text-destructive text-[10px] font-semibold uppercase tracking-wider print:hidden shrink-0">remove</button>
-      )}
-    </li>
-  );
-}
-
-function buildText(profile: Profile, entries: Entry[], groupMeasurements: boolean, labourPlan?: LabourPlan) {
+function buildText(profile: Profile, entries: Entry[], _groupMeasurements: boolean, labourPlan?: LabourPlan) {
   const lines: string[] = [];
   lines.push(tFn("sum.header.title"));
   lines.push(tFn("sum.header.intro"));
@@ -357,102 +322,41 @@ function buildText(profile: Profile, entries: Entry[], groupMeasurements: boolea
   lines.push(`${tFn("sum.field.generated")}: ${formatUKDateTime(new Date())}`);
   lines.push("");
 
-  const map = new Map<string, Entry[]>();
-  for (const e of entries) {
-    if (isLabourSummaryEntry(e)) continue;
-    const k = weekDayKey(e);
-    if (!map.has(k)) map.set(k, []);
-    map.get(k)!.push(e);
-  }
-
-  const measurementsByWeek = new Map<number, MeasurementEntry[]>();
-  if (groupMeasurements) {
-    for (const e of entries) {
-      if (e.type === "measurement") {
-        if (!measurementsByWeek.has(e.weekDay.weeks)) measurementsByWeek.set(e.weekDay.weeks, []);
-        measurementsByWeek.get(e.weekDay.weeks)!.push(e);
-      }
-    }
-  }
-  const printedWeeks = new Set<number>();
-
-  Array.from(map.entries()).sort(([a],[b]) => {
-    const [aw,ad]=a.split("+").map(Number); const [bw,bd]=b.split("+").map(Number);
-    return aw-bw || ad-bd;
-  }).forEach(([k, list]) => {
-    const [w, d] = k.split("+");
-    const wn = Number(w);
-    const filtered = groupMeasurements ? list.filter((e) => e.type !== "measurement") : list;
-    const showM = groupMeasurements && !printedWeeks.has(wn) && measurementsByWeek.has(wn);
-    if (showM) printedWeeks.add(wn);
-    if (filtered.length === 0 && !showM) return;
-    lines.push(`${tFn("home.week")} ${w} + ${d}`);
-    filtered.forEach((e) => {
-      const s = summariseEntry(e);
-      lines.push(`- ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)} — ${s.headline}${s.detail ? ` · ${s.detail}` : ""}`);
+  buildPregnancySummaryWeeks(profile, entries, labourPlan).forEach((week) => {
+    lines.push(`${tFn("home.week")} ${week.week}`);
+    week.sections.forEach((section) => {
+      lines.push(section.title);
+      lines.push(...sectionTextLines(section));
+      lines.push("");
     });
-    if (showM) {
-      const ms = measurementsByWeek.get(wn)!;
-      const byKind = new Map<string, MeasurementEntry[]>();
-      for (const m of ms) {
-        const key = m.kind === "custom" ? (m.customLabel || tFn("m.custom")) : measurementLabel(m);
-        if (!byKind.has(key)) byKind.set(key, []);
-        byKind.get(key)!.push(m);
-      }
-      lines.push(`  ${tFn("sum.measThisWeek")}:`);
-      byKind.forEach((list, label) => {
-        const r = rangeText(list);
-        lines.push(`  - ${label}: ${list.length} reading${list.length === 1 ? "" : "s"}${r ? ` · range ${r}` : ""}`);
-      });
-    }
     lines.push("");
   });
-
-  if (labourPlan && hasLabourData(labourPlan, entries)) {
-    lines.push(tFn("sum.labour.title"));
-    const contractions = entries.filter((e): e is ContractionEntry => e.type === "contraction");
-    const events = entries.filter((e): e is LabourEventEntry => e.type === "labour_event");
-    const episodes = labourPlan.episodes ?? [];
-    if (episodes.length > 0) {
-      episodes
-        .slice()
-        .sort((a, b) => a.startISO.localeCompare(b.startISO))
-        .forEach((ep) => {
-          const inRange = (iso: string) => iso >= ep.startISO && (!ep.endISO || iso <= ep.endISO);
-          const eC = contractions.filter((c) => inRange(c.createdAt));
-          const eE = events.filter((e) => inRange(e.createdAt));
-          lines.push(`- ${tFn("sum.labour.started")}: ${formatUKDateTime(ep.startISO)}`);
-          if (ep.endISO) lines.push(`- ${tFn("lab.episode.ended")}: ${formatUKDateTime(ep.endISO)}`);
-          const outcome = labourOutcomeLabel(ep.outcome);
-          if (outcome) lines.push(`- ${tFn("sum.labour.outcome")}: ${outcome}${ep.outcome === "other" && ep.outcomeNote ? ` · ${ep.outcomeNote}` : ""}`);
-          eC.forEach((c) => {
-            lines.push(`  - ${tFn("type.contraction")}: ${formatUKDate(c.createdAt)} ${formatUKTime(c.createdAt)} · ${formatDuration(c.durationSec)}${c.note ? ` · ${c.note}` : ""}`);
-          });
-          eE.forEach((e) => {
-            lines.push(`  - ${e.event}: ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)}${e.note ? ` · ${e.note}` : ""}`);
-          });
-        });
-    } else {
-      if (labourPlan.recordingStartISO) lines.push(`- ${tFn("sum.labour.started")}: ${formatUKDateTime(labourPlan.recordingStartISO)}`);
-      contractions.forEach((c) => {
-        lines.push(`- ${tFn("type.contraction")}: ${formatUKDate(c.createdAt)} ${formatUKTime(c.createdAt)} · ${formatDuration(c.durationSec)}${c.note ? ` · ${c.note}` : ""}`);
-      });
-      events.forEach((e) => {
-        lines.push(`- ${e.event}: ${formatUKDate(e.createdAt)} ${formatUKTime(e.createdAt)}${e.note ? ` · ${e.note}` : ""}`);
-      });
-    }
-    lines.push("");
-  }
 
   lines.push(tFn("sum.foot").replace("{name}", profile.userName));
   return lines.join("\n");
 }
 
-function labourOutcomeLabel(outcome?: "baby" | "settled" | "other"): string | null {
-  if (outcome === "baby") return tFn("lab.outcome.baby");
-  if (outcome === "settled") return tFn("lab.outcome.settled");
-  if (outcome === "other") return tFn("lab.outcome.other");
-  return null;
+function sectionTextLines(section: PregnancySummarySection): string[] {
+  if (section.type === "symptoms") {
+    return section.items.flatMap((item) => [
+      `• ${item.symptom}${item.count > 1 ? ` ×${item.count}` : ""}`,
+      ...item.qualifiers.map((qualifier) => `    • ${qualifier}`),
+    ]);
+  }
+  if (section.type === "feelings") {
+    return section.items.map((item) => `• ${item.feeling}${item.days > 1 ? `, ${item.days} days this week` : ""}`);
+  }
+  if (section.type === "people") {
+    return section.groups.flatMap((group) => [
+      group.professional,
+      ...group.items.map((item) => `• ${item}`),
+      "",
+    ]);
+  }
+  if (section.type === "measurements") {
+    return section.items.flatMap((item) => [item.label, item.value, ""]);
+  }
+  return section.items.map((item) => `• ${item}`);
 }
 
 async function sharePack(profile: Profile, entries: Entry[], groupMeasurements: boolean, labourPlan?: LabourPlan) {
