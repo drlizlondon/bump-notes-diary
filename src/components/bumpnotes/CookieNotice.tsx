@@ -33,7 +33,7 @@ export function CookieNotice() {
           <div className="text-sm text-ink flex-1">
             <p className="font-medium">We use essential cookies</p>
             <p className="text-ink-soft text-[13px] mt-1 leading-relaxed">
-              BumpNotes uses essential cookies and local storage to keep you signed in and to remember your pregnancy record on your device. With your permission, we use privacy-safe analytics to understand which pages and buttons are used, without sending names, notes, symptoms, health details or account data. See our{" "}
+              BumpNotes uses essential cookies and local storage to keep you signed in, remember your choices, and protect unsynced notes on your device. When you create an account, your pregnancy record can also be saved securely to your BumpNotes account. With your permission, we use privacy-safe analytics to understand pages and buttons used, without sending names, notes, symptoms, health details or account data. See our{" "}
               <Link to="/privacy" className="text-primary underline">Privacy Policy</Link>.
             </p>
           </div>

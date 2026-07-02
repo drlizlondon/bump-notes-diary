@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { useAppState } from "@/lib/bumpnotes/store";
-import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
+import { AppShell, PageHeader, PregnancySummaryAside } from "@/components/bumpnotes/AppShell";
 import {
   formatGestation, formatUKDate, formatUKDateLong, formatUKDateTime, formatUKTime, gestationFromDueDate,
 } from "@/lib/bumpnotes/gestation";
@@ -77,7 +77,7 @@ function SummaryPage() {
     return (
       <>
         <Toaster position="top-center" />
-        <AppShell>
+        <AppShell right={<PregnancySummaryAside />}>
           <PageHeader title={t("sum.title")} subtitle={t("sum.subtitle")} />
           <div className="px-4 lg:px-0 pb-10">
             <div className="surface-card blush-bg p-6 text-center">
@@ -103,7 +103,7 @@ function SummaryPage() {
   return (
     <>
       <Toaster position="top-center" />
-      <AppShell>
+      <AppShell right={<PregnancySummaryAside />}>
         <PageHeader title={t("sum.title")} subtitle={t("sum.subtitle")} />
         <div className="px-4 lg:px-0 pb-10 space-y-5">
           <div className="surface-card blush-bg p-4 text-sm text-ink-soft leading-relaxed">

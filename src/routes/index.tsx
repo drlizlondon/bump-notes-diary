@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { Activity, HelpCircle, Users, Gauge, Camera, NotebookPen, Heart, Sparkles } from "lucide-react";
 import { useAppState } from "@/lib/bumpnotes/store";
-import { AppShell } from "@/components/bumpnotes/AppShell";
+import { AppShell, PregnancySummaryAside } from "@/components/bumpnotes/AppShell";
 import { HomeHeader } from "@/components/bumpnotes/HomeHeader";
 import {
   ActionCard, SymptomPanelBody, QuestionPanelBody, PeopleCarePanelBody,
@@ -59,7 +59,7 @@ function Index() {
   return (
     <>
       <Toaster position="top-center" />
-      <AppShell>
+      <AppShell right={<PregnancySummaryAside />}>
         <HomeHeader profile={profile} />
 
         <ThisWeekCard />

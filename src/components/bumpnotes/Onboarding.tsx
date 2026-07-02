@@ -26,9 +26,7 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
 
   return (
     <div className="app-shell flex flex-col bg-background">
-      <div className="flex-1 flex flex-col px-6 pt-10 pb-10">
-
-
+      <div className="flex-1 flex flex-col w-full max-w-[640px] mx-auto px-5 sm:px-8 pt-10 pb-10">
 
         {step === 1 && (
           <Step
@@ -149,7 +147,7 @@ function Step({
   placeholder: string; onNext: () => void; disabled: boolean; cta: string;
 }) {
   return (
-    <div className="flex-1 flex flex-col gap-6">
+    <div className="flex-1 flex flex-col gap-6 w-full">
       <div>
         <h2 className="font-serif text-2xl font-semibold text-balance">{title}</h2>
         {subtitle && <p className="mt-2 text-ink-soft text-sm">{subtitle}</p>}

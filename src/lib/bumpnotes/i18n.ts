@@ -371,7 +371,7 @@ const en: Dict = {
   "auth.signedOut": "Signed out",
   "set.account": "Account",
   "set.signedInAs": "Signed in as",
-  "set.notSignedIn": "Not signed in. Your record stays on this device.",
+  "set.notSignedIn": "Not signed in. Your record is kept on this device until you create an account or sign in.",
   "set.signInCta": "Sign in or create an account",
   "sync.local": "Saved locally",
   "sync.syncing": "Syncing",

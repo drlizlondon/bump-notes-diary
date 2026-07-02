@@ -231,14 +231,14 @@ function LabourMode({ plan, entries }: { plan: LabourPlan; entries: Entry[] }) {
 
   return (
     <div className="space-y-5">
-      <div className="surface-card p-4 blush-bg flex items-center justify-between gap-3">
+      <div className="surface-card px-4 py-3 blush-bg flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">{t("lab.episode.title")}</p>
-          <p className="font-mono text-sm mt-0.5 break-words">{t("sum.labour.started")}: {formatUKDateTime(start)}</p>
+          <p className="text-[10px] uppercase tracking-widest text-ink-soft font-semibold">{t("lab.episode.title")}</p>
+          <p className="font-mono text-xs sm:text-sm mt-0.5 break-words">{t("sum.labour.started")}: {formatUKDateTime(start)}</p>
         </div>
         <button
           onClick={() => setOutcomeOpen(true)}
-          className="px-4 py-2 rounded-full bg-white border border-border text-xs font-semibold shrink-0"
+          className="px-3.5 py-2 rounded-full bg-white border border-border text-xs font-semibold shrink-0 text-ink"
         >
           {t("lab.endRecording")}
         </button>
@@ -289,7 +289,7 @@ function OutcomeModal({ onCancel, onSave }: {
   onSave: (outcome?: "baby" | "settled" | "other", note?: string) => void;
 }) {
   const t = useT();
-  const [outcome, setOutcome] = useState<"baby" | "settled" | "other" | null>(null);
+  const [outcome, setOutcome] = useState<"" | "baby" | "settled" | "other">("");
   const [note, setNote] = useState("");
   const options: { key: "baby" | "settled" | "other"; label: string }[] = [
     { key: "baby", label: t("lab.outcome.baby") },
@@ -299,21 +299,21 @@ function OutcomeModal({ onCancel, onSave }: {
   return (
     <div className="fixed inset-0 z-50 bg-ink/40 grid place-items-end md:place-items-center px-4 py-6">
       <div className="surface-card p-5 w-full max-w-[440px] shadow-xl">
-        <h3 className="font-serif text-lg font-semibold">{t("lab.outcome.title")}</h3>
-        <div className="mt-3 space-y-2">
-          {options.map((o) => (
-            <button
-              key={o.key}
-              type="button"
-              onClick={() => setOutcome(o.key)}
-              className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium ${
-                outcome === o.key ? "border-primary bg-primary/10 text-primary" : "border-border bg-white"
-              }`}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
+        <h3 className="font-serif text-lg font-semibold">{t("lab.endRecording")}</h3>
+        <p className="mt-1 text-sm text-ink-soft leading-relaxed">
+          You can add an outcome if you want to, or end the recording without one.
+        </p>
+        <label className="mt-4 block">
+          <span className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">Outcome (optional)</span>
+          <select
+            value={outcome}
+            onChange={(e) => setOutcome(e.target.value as typeof outcome)}
+            className="mt-1 w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
+          >
+            <option value="">No outcome selected</option>
+            {options.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
+          </select>
+        </label>
         {outcome === "other" && (
           <textarea
             value={note} onChange={(e) => setNote(e.target.value)} rows={3}
@@ -326,7 +326,7 @@ function OutcomeModal({ onCancel, onSave }: {
             {t("common.cancel")}
           </button>
           <button
-            onClick={() => onSave(outcome ?? undefined, outcome === "other" ? (note || undefined) : undefined)}
+            onClick={() => onSave(outcome || undefined, outcome === "other" ? (note || undefined) : undefined)}
             className="flex-1 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
           >
             {outcome ? t("lab.outcome.save") : t("lab.outcome.skip")}

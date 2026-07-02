@@ -5,10 +5,10 @@ import { Toaster } from "sonner";
 import { Pencil, Trash2, Search, X } from "lucide-react";
 import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
-import { formatUKDate, formatUKTime } from "@/lib/bumpnotes/gestation";
-import { summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
+import { formatUKDate, formatUKTime, gestationFromDueDate } from "@/lib/bumpnotes/gestation";
+import { formatDuration, summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
 import { useT } from "@/lib/bumpnotes/i18n";
-import type { Entry } from "@/lib/bumpnotes/types";
+import type { ContractionEntry, Entry, LabourEpisode, LabourEventEntry } from "@/lib/bumpnotes/types";
 import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/timeline")({
@@ -29,6 +29,38 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "baby", label: "Baby" },
   { key: "labour", label: "Labour" },
 ];
+
+type LabourEpisodeItem = {
+  kind: "labourEpisode";
+  episode: LabourEpisode;
+  entries: Array<ContractionEntry | LabourEventEntry>;
+};
+type TimelineItem = { kind: "entry"; entry: Entry } | LabourEpisodeItem;
+
+function itemCreatedAt(item: TimelineItem): string {
+  return item.kind === "entry" ? item.entry.createdAt : item.episode.startISO;
+}
+
+function itemWeekDayKey(item: TimelineItem, dueDateISO?: string): string {
+  if (item.kind === "entry") return weekDayKey(item.entry);
+  if (!dueDateISO) return "0+0";
+  const gest = gestationFromDueDate(dueDateISO, new Date(item.episode.startISO));
+  return `${gest.weeks}+${gest.days}`;
+}
+
+function labourEpisodeText(episode: LabourEpisode, entries: Array<ContractionEntry | LabourEventEntry>): string {
+  const bits = [
+    "labour episode",
+    episode.outcome ?? "",
+    episode.outcomeNote ?? "",
+    episode.startISO,
+    episode.endISO ?? "",
+    ...entries.flatMap((entry) => entry.type === "contraction"
+      ? ["contraction", entry.note ?? "", String(entry.durationSec)]
+      : ["labour event", entry.event, entry.note ?? ""]),
+  ];
+  return bits.join(" ").toLowerCase();
+}
 
 function matchesFilter(e: Entry, f: FilterKey): boolean {
   if (f === "all") return true;
@@ -52,7 +84,7 @@ function entryText(e: Entry): string {
 }
 
 function TimelinePage() {
-  const { entries } = useAppState();
+  const { entries, labourPlan, profile } = useAppState();
   const [editing, setEditing] = useState<Entry | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -64,25 +96,44 @@ function TimelinePage() {
 
   const grouped = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const live = entries.filter((e) => {
+    const liveEntries = entries.filter((e) => !e.deletedAt);
+    const episodes = (labourPlan?.episodes ?? []).map((episode) => {
+      const labourEntries = liveEntries
+        .filter((e): e is ContractionEntry | LabourEventEntry => e.type === "contraction" || e.type === "labour_event")
+        .filter((e) => e.createdAt >= episode.startISO && (!episode.endISO || e.createdAt <= episode.endISO))
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      return { kind: "labourEpisode" as const, episode, entries: labourEntries };
+    });
+    const assignedLabourIds = new Set(episodes.flatMap((episode) => episode.entries.map((entry) => entry.id)));
+
+    const live = liveEntries.filter((e) => {
       if (e.deletedAt) return false;
+      if ((e.type === "contraction" || e.type === "labour_event") && assignedLabourIds.has(e.id)) return false;
       if (!matchesFilter(e, filter)) return false;
       if (q && !entryText(e).includes(q)) return false;
       return true;
+    }).map((entry) => ({ kind: "entry" as const, entry }));
+
+    const episodeItems = episodes.filter((item) => {
+      if (filter !== "all" && filter !== "labour") return false;
+      if (!q) return true;
+      return labourEpisodeText(item.episode, item.entries).includes(q);
     });
-    const map = new Map<string, Entry[]>();
-    for (const e of live) {
-      const k = weekDayKey(e);
+
+    const items: TimelineItem[] = [...live, ...episodeItems];
+    const map = new Map<string, TimelineItem[]>();
+    for (const e of items) {
+      const k = itemWeekDayKey(e, profile?.dueDateISO);
       if (!map.has(k)) map.set(k, []);
       map.get(k)!.push(e);
     }
-    for (const arr of map.values()) arr.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    for (const arr of map.values()) arr.sort((a, b) => itemCreatedAt(b).localeCompare(itemCreatedAt(a)));
     return Array.from(map.entries()).sort(([a], [b]) => {
       const [aw, ad] = a.split("+").map(Number);
       const [bw, bd] = b.split("+").map(Number);
       return bw - aw || bd - ad;
     });
-  }, [entries, query, filter]);
+  }, [entries, labourPlan?.episodes, profile?.dueDateISO, query, filter]);
 
   return (
     <>
@@ -91,14 +142,14 @@ function TimelinePage() {
         <PageHeader title={t("tl.title")} subtitle={t("tl.subtitle")} />
 
         <div className="sticky top-0 z-20 bg-white/85 backdrop-blur-md px-4 lg:px-0 pt-2 pb-3 border-b border-border">
-          <label className="relative block">
+          <label className="relative block max-w-[680px]">
             <Search className="size-4 text-ink-soft absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search your pregnancy record"
-              className="w-full pl-9 pr-9 py-2.5 rounded-full bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
+              className="w-full pl-9 pr-9 py-2 rounded-full bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
             />
             {query && (
               <button
@@ -111,8 +162,8 @@ function TimelinePage() {
               </button>
             )}
           </label>
-          <div className="-mx-4 lg:mx-0 mt-2 overflow-x-auto no-scrollbar">
-            <div className="flex gap-1.5 px-4 lg:px-0 w-max">
+          <div className="-mx-4 lg:mx-0 mt-2 overflow-x-auto md:overflow-visible">
+            <div className="flex md:flex-wrap gap-1.5 px-4 lg:px-0 w-max md:w-auto pb-1 md:pb-0">
               {FILTERS.map((f) => {
                 const active = filter === f.key;
                 return (
@@ -153,7 +204,11 @@ function TimelinePage() {
                   </span>
                 </div>
                 <ul className="space-y-2.5">
-                  {list.map((e) => {
+                  {list.map((item) => {
+                    if (item.kind === "labourEpisode") {
+                      return <LabourEpisodeCard key={item.episode.id} item={item} />;
+                    }
+                    const e = item.entry;
                     const s = summariseEntry(e);
                     return (
                       <li key={e.id} className="surface-card p-4">
@@ -192,6 +247,81 @@ function TimelinePage() {
       </AppShell>
       {editing && <EditDialog entry={editing} onClose={() => setEditing(null)} />}
     </>
+  );
+}
+
+function LabourEpisodeCard({ item }: { item: LabourEpisodeItem }) {
+  const contractions = item.entries.filter((e): e is ContractionEntry => e.type === "contraction");
+  const events = item.entries.filter((e): e is LabourEventEntry => e.type === "labour_event");
+  const outcomeLabel = item.episode.outcome === "baby"
+    ? "Baby delivered"
+    : item.episode.outcome === "settled"
+      ? "Symptoms settled / Braxton Hicks"
+      : item.episode.outcome === "other"
+        ? "Other"
+        : null;
+
+  return (
+    <li className="surface-card p-4 bg-blush-soft/35">
+      <div className="flex justify-between items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-ink-soft break-words">
+            Labour episode
+          </p>
+          <p className="font-semibold mt-1 break-words">
+            Started {formatUKDate(item.episode.startISO)} · {formatUKTime(item.episode.startISO)}
+          </p>
+          <div className="mt-2 grid gap-1.5 text-sm text-ink-soft">
+            {item.episode.endISO && (
+              <p>Ended {formatUKDate(item.episode.endISO)} · {formatUKTime(item.episode.endISO)}</p>
+            )}
+            {outcomeLabel && (
+              <p>Outcome: {outcomeLabel}{item.episode.outcomeNote ? ` · ${item.episode.outcomeNote}` : ""}</p>
+            )}
+          </div>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl bg-white/75 border border-border p-3">
+              <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">
+                Contractions ({contractions.length})
+              </p>
+              {contractions.length === 0 ? (
+                <p className="text-xs text-ink-soft mt-2">None recorded in this episode.</p>
+              ) : (
+                <ul className="mt-2 space-y-1.5">
+                  {contractions.map((entry) => (
+                    <li key={entry.id} className="text-xs text-ink">
+                      <span className="font-mono text-ink-soft">{formatUKTime(entry.createdAt)}</span>
+                      {" · "}{formatDuration(entry.durationSec)}
+                      {entry.note ? ` · ${entry.note}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="rounded-xl bg-white/75 border border-border p-3">
+              <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">
+                Quick logs ({events.length})
+              </p>
+              {events.length === 0 ? (
+                <p className="text-xs text-ink-soft mt-2">None recorded in this episode.</p>
+              ) : (
+                <ul className="mt-2 space-y-1.5">
+                  {events.map((entry) => (
+                    <li key={entry.id} className="text-xs text-ink">
+                      <span className="font-mono text-ink-soft">{formatUKTime(entry.createdAt)}</span>
+                      {" · "}<span className="font-medium">{entry.event}</span>
+                      {entry.note ? ` · ${entry.note}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </li>
   );
 }
 

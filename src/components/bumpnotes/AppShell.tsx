@@ -17,10 +17,10 @@ export function AppShell({ children, hideNav = false, right }: { children: React
         <div className="flex-1 flex flex-col" data-clarity-mask="True">{children}</div>
       </div>
 
-      <div className="hidden lg:grid lg:grid-cols-[240px_minmax(0,1fr)_320px] lg:gap-8 lg:max-w-[1200px] lg:mx-auto lg:px-6 lg:py-8 lg:min-h-[100dvh]">
+      <div className={`hidden lg:grid ${right ? "lg:grid-cols-[240px_minmax(0,1fr)_320px]" : "lg:grid-cols-[240px_minmax(0,1fr)]"} lg:gap-8 lg:max-w-[1200px] lg:mx-auto lg:px-6 lg:py-8 lg:min-h-[100dvh]`}>
         <DesktopSidebar />
         <main className="min-w-0" data-clarity-mask="True">{children}</main>
-        <aside className="min-w-0">{right ?? <DefaultAside />}</aside>
+        {right && <aside className="min-w-0">{right}</aside>}
       </div>
 
       <FeedbackButton />
@@ -164,7 +164,7 @@ function DesktopSidebar() {
   );
 }
 
-function DefaultAside() {
+export function PregnancySummaryAside() {
   const t = useT();
   return (
     <div className="sticky top-8 space-y-4">
