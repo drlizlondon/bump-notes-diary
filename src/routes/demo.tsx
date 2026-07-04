@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Toaster } from "sonner";
-import { Activity, HelpCircle, Users, Gauge, Camera, NotebookPen, Heart, Sparkles, ArrowLeft } from "lucide-react";
+import { Activity, HelpCircle, Users, Gauge, FileUp, NotebookPen, Heart, Sparkles, ArrowLeft } from "lucide-react";
 import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell } from "@/components/bumpnotes/AppShell";
 import { HomeHeader } from "@/components/bumpnotes/HomeHeader";
@@ -83,7 +83,7 @@ function Demo() {
               <MeasurementPanelBody />
             </ActionCard>
             <ActionCard label={t("cap.photo")} helper={t("cap.photo.helper")} tone="blush"
-              icon={<Camera className="size-5" />} open={open === "photo"} onToggle={() => toggle("photo")}>
+              icon={<FileUp className="size-5" />} open={open === "photo"} onToggle={() => toggle("photo")}>
               <PhotoPanelBody />
             </ActionCard>
             <ActionCard label={t("cap.note")} helper={t("cap.note.helper")} tone="mint"
@@ -139,7 +139,7 @@ function ThisWeekCard() {
     question: "questions",
     person: "appointments",
     measurement: "measurements",
-    photo: "photos",
+    photo: "uploads",
     note: "notes",
     feeling: "feelings",
   };

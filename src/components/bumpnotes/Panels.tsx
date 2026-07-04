@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, FileUp } from "lucide-react";
 import { store } from "@/lib/bumpnotes/store";
 import type { Entry, MeasurementKind } from "@/lib/bumpnotes/types";
 import { toast } from "sonner";
@@ -66,6 +66,26 @@ function loggedToast(label: string) {
 const inputClass = "w-full px-3.5 py-2.5 sm:py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60";
 const primaryBtn = "w-full py-2.5 sm:py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50";
 const secondaryBtn = "flex-1 py-2.5 sm:py-3 rounded-full bg-white border border-border text-sm font-medium";
+const uploadAccept = "image/*,.pdf,.doc,.docx,.txt,.rtf,.heic,.heif";
+
+function isImageDataUrl(dataUrl: string) {
+  return dataUrl.startsWith("data:image/");
+}
+
+function UploadPreview({ dataUrl, alt = "" }: { dataUrl: string; alt?: string }) {
+  const t = useT();
+  if (isImageDataUrl(dataUrl)) {
+    return <img src={dataUrl} alt={alt} className="w-full rounded-xl border border-border" />;
+  }
+  return (
+    <div className="w-full min-h-32 rounded-xl border border-border bg-white grid place-items-center text-sm text-ink-soft">
+      <span className="inline-flex items-center gap-2">
+        <FileUp className="size-4" />
+        {t("upload.ready")}
+      </span>
+    </div>
+  );
+}
 
 /* -------------------------------- SYMPTOM -------------------------------- */
 
@@ -332,11 +352,11 @@ export function PeopleCarePanelBody() {
       <textarea value={advised} onChange={(e) => setAdvised(e.target.value)} placeholder={t("p.advised")} rows={2} className={inputClass + " resize-none"} />
       <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("common.notes")} rows={2} className={inputClass + " resize-none"} />
       {dataUrl ? (
-        <img src={dataUrl} alt="" className="w-full rounded-xl border border-border" />
+        <UploadPreview dataUrl={dataUrl} />
       ) : (
         <label className="block w-full py-3 rounded-xl bg-white border border-dashed border-border text-center text-sm text-ink-soft cursor-pointer">
           {t("p.attach")}
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+          <input type="file" accept={uploadAccept} className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
         </label>
       )}
       <button onClick={save} className={primaryBtn}>{t("common.save")}</button>
@@ -467,11 +487,13 @@ export function PhotoPanelBody() {
         {PHOTO_TAGS.map((p) => <Chip key={p.key} active={tag === p.key} onClick={() => setTag(p.key)}>{t(p.tKey)}</Chip>)}
       </div>
       {dataUrl ? (
-        <img src={dataUrl} alt="" className="w-full aspect-square object-cover rounded-xl border border-border" />
+        <div className={isImageDataUrl(dataUrl) ? "[&_img]:aspect-square [&_img]:object-cover" : ""}>
+          <UploadPreview dataUrl={dataUrl} alt={tag} />
+        </div>
       ) : (
         <label className="block w-full aspect-[16/10] rounded-xl bg-white border border-dashed border-border grid place-items-center text-sm text-ink-soft cursor-pointer">
           {t("ph.choose")}
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+          <input type="file" accept={uploadAccept} className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
         </label>
       )}
       <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("ph.optionalNote")} rows={2} className={inputClass + " resize-none"} />

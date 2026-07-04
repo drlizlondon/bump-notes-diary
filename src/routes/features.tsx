@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CalendarClock, Activity, HeartPulse, HelpCircle, FileText, Lock, Stethoscope, Share2, Camera, Users, Ruler } from "lucide-react";
+import { ArrowRight, CalendarClock, Activity, HeartPulse, HelpCircle, FileText, Lock, Stethoscope, Share2, FileUp, Users, Ruler } from "lucide-react";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 
 export const Route = createFileRoute("/features")({
@@ -52,9 +52,9 @@ const features: Feature[] = [
     body: "Record blood pressure, weight, baby's movements and other measurements when you want to track them.",
   },
   {
-    icon: <Camera className="size-5" />,
-    title: "Photos & notes",
-    body: "Add a bump photo, a scan or a quick note to remember the moments alongside the medical detail.",
+    icon: <FileUp className="size-5" />,
+    title: "Uploads & notes",
+    body: "Add scan reports, letters, files and quick notes alongside the medical detail.",
   },
   {
     icon: <FileText className="size-5" />,

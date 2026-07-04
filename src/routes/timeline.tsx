@@ -2,7 +2,7 @@ import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButto
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Toaster } from "sonner";
-import { Pencil, Trash2, Search, X } from "lucide-react";
+import { FileUp, Pencil, Trash2, Search, X } from "lucide-react";
 import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
 import { formatUKDate, formatUKTime, gestationFromDueDate } from "@/lib/bumpnotes/gestation";
@@ -24,7 +24,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "question", label: "Questions" },
   { key: "measurement", label: "Measurements" },
   { key: "note", label: "Notes" },
-  { key: "photo", label: "Photos" },
+  { key: "photo", label: "Uploads" },
   { key: "appointment", label: "Appointments" },
   { key: "baby", label: "Baby" },
   { key: "labour", label: "Labour" },
@@ -220,10 +220,22 @@ function TimelinePage() {
                             <p className="font-semibold mt-1 break-words">{s.headline}</p>
                             {s.detail && <p className="text-sm text-ink-soft mt-1 break-words">{s.detail}</p>}
                             {e.type === "photo" && (
-                              <img src={e.dataUrl} alt={e.tag} className="mt-3 w-full rounded-xl border border-border" />
+                              e.dataUrl.startsWith("data:image/")
+                                ? <img src={e.dataUrl} alt={e.tag} className="mt-3 w-full rounded-xl border border-border" />
+                                : (
+                                  <div className="mt-3 w-full min-h-28 rounded-xl border border-border bg-white grid place-items-center text-sm text-ink-soft">
+                                    <span className="inline-flex items-center gap-2"><FileUp className="size-4" /> {t("upload.ready")}</span>
+                                  </div>
+                                )
                             )}
                             {e.type === "person" && e.dataUrl && (
-                              <img src={e.dataUrl} alt="" className="mt-3 w-full rounded-xl border border-border" />
+                              e.dataUrl.startsWith("data:image/")
+                                ? <img src={e.dataUrl} alt="" className="mt-3 w-full rounded-xl border border-border" />
+                                : (
+                                  <div className="mt-3 w-full min-h-28 rounded-xl border border-border bg-white grid place-items-center text-sm text-ink-soft">
+                                    <span className="inline-flex items-center gap-2"><FileUp className="size-4" /> {t("upload.ready")}</span>
+                                  </div>
+                                )
                             )}
                           </div>
                         </div>

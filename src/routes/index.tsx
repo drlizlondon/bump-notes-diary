@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
-import { Activity, HelpCircle, Users, Gauge, Camera, NotebookPen, Heart, Sparkles } from "lucide-react";
+import { Activity, HelpCircle, Users, Gauge, FileUp, NotebookPen, Heart, Sparkles } from "lucide-react";
 import { useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PregnancySummaryAside } from "@/components/bumpnotes/AppShell";
 import { HomeHeader } from "@/components/bumpnotes/HomeHeader";
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "BumpNotes — your pregnancy record" },
-      { name: "description", content: "A simple, private pregnancy record. Capture symptoms, measurements, questions, care and photos, then create a clear summary by pregnancy week." },
+      { name: "description", content: "A simple, private pregnancy record. Capture symptoms, measurements, questions, care and uploads, then create a clear summary by pregnancy week." },
       { name: "theme-color", content: "#ffffff" },
     ],
     links: [
@@ -85,7 +85,7 @@ function Index() {
               <MeasurementPanelBody />
             </ActionCard>
             <ActionCard label={t("cap.photo")} helper={t("cap.photo.helper")} tone="blush"
-              icon={<Camera className="size-5" />} open={open === "photo"} onToggle={() => toggle("photo")}>
+              icon={<FileUp className="size-5" />} open={open === "photo"} onToggle={() => toggle("photo")}>
               <PhotoPanelBody />
             </ActionCard>
             <ActionCard label={t("cap.note")} helper={t("cap.note.helper")} tone="mint"
@@ -142,7 +142,7 @@ function ThisWeekCard() {
     question: "questions",
     person: "appointments",
     measurement: "measurements",
-    photo: "photos",
+    photo: "uploads",
     note: "notes",
     feeling: "feelings",
   };
