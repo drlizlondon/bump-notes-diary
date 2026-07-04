@@ -27,6 +27,7 @@ declare global {
 
 const CONSENT_KEY = "bumpnotes.analyticsConsent.v1";
 const CONSENT_EVENT = "bumpnotes:analytics-consent";
+const DEFAULT_GA4_MEASUREMENT_ID = "G-JX1L89C791";
 
 let initialized = false;
 
@@ -43,7 +44,7 @@ function safeTrim(value: unknown) {
 }
 
 function ga4MeasurementId() {
-  const measurementId = safeTrim(publicEnv().VITE_GA4_MEASUREMENT_ID);
+  const measurementId = safeTrim(publicEnv().VITE_GA4_MEASUREMENT_ID) || DEFAULT_GA4_MEASUREMENT_ID;
   return /^G-[A-Z0-9-]+$/i.test(measurementId) ? measurementId : "";
 }
 
@@ -109,7 +110,10 @@ function initClarity() {
     clarity.q = [];
     window.clarity = clarity;
     window.clarity("consent", true);
-    injectScript("bumpnotes-clarity", `https://www.clarity.ms/tag/${encodeURIComponent(projectId)}`);
+    injectScript(
+      "bumpnotes-clarity",
+      `https://www.clarity.ms/tag/${encodeURIComponent(projectId)}`,
+    );
   } catch {
     /* Analytics must never stop the app from loading. */
   }
@@ -171,6 +175,7 @@ export function trackEvent(eventName: AnalyticsEvent) {
   try {
     initAnalytics();
     window.gtag?.("event", eventName, {
+      send_to: ga4MeasurementId(),
       transport_type: "beacon",
     });
     if (eventName !== "page_view") window.clarity?.("event", eventName);
@@ -183,10 +188,10 @@ export function trackPageView(pathname?: string) {
   if (!browserReady() || !hasAnalyticsConsent()) return;
   try {
     initAnalytics();
-    window.gtag?.("event", "page_view", {
+    window.gtag?.("config", ga4MeasurementId(), {
+      anonymize_ip: true,
       page_location: safeLocation(pathname),
       page_path: safePath(pathname),
-      transport_type: "beacon",
     });
     window.clarity?.("event", "page_view");
   } catch {
