@@ -58,11 +58,6 @@ function safePath(pathname?: string) {
   return pathname && pathname.startsWith("/") ? pathname : window.location.pathname || "/";
 }
 
-function safeLocation(pathname?: string) {
-  if (!browserReady()) return "";
-  return `${window.location.origin}${safePath(pathname)}`;
-}
-
 function injectScript(id: string, src: string) {
   try {
     if (!browserReady() || document.getElementById(id) || !document.head) return;
@@ -83,8 +78,10 @@ function initGa4() {
     window.dataLayer = window.dataLayer ?? [];
     window.gtag =
       window.gtag ??
-      function gtag(...args) {
-        window.dataLayer?.push(args);
+      function gtag() {
+        // Google's loader expects the standard gtag arguments object, not a rest array.
+        // eslint-disable-next-line prefer-rest-params
+        window.dataLayer?.push(arguments);
       };
     window.gtag("js", new Date());
     window.gtag("config", measurementId, {
@@ -188,10 +185,11 @@ export function trackPageView(pathname?: string) {
   if (!browserReady() || !hasAnalyticsConsent()) return;
   try {
     initAnalytics();
-    window.gtag?.("config", ga4MeasurementId(), {
-      anonymize_ip: true,
-      page_location: safeLocation(pathname),
-      page_path: safePath(pathname),
+    const path = safePath(pathname);
+    window.gtag?.("event", "page_view", {
+      send_to: ga4MeasurementId(),
+      page_location: window.location.href,
+      page_path: path,
     });
     window.clarity?.("event", "page_view");
   } catch {
