@@ -51,11 +51,11 @@ The one sentence that settles product disputes without escalation: **"BumpNotes 
 | Field | Value |
 |---|---|
 | Working branch | `staging` (PRs target `main`) |
-| Current phase | **Phase 0 — Hygiene** (not started) |
-| Next task | 0.1 |
-| Last completed task | — |
+| Current phase | **Phase 0 — Hygiene** (in progress) |
+| Next task | 0.2 |
+| Last completed task | 0.1 |
 | Migration strategy | Lazy per-user blob→V2 backfill (PLAN §5.8); blob becomes read-only archive at Phase 2; old store deleted end of Phase 3 |
-| Notes / open escalations | none |
+| Notes / open escalations | `npm run lint` had never passed on `staging` (1412 pre-existing prettier/lint problems) before Phase 0 could start, contradicting WORK.md §3.3's "never commit red" gate. Resolved via an unplanned mechanical `eslint --fix` commit (fbb52c1) ahead of 0.1, confirmed with the user before landing. Task 0.1 (dead `components/ui/*`, `BottomNav.tsx`, `SilhouetteIllustration.tsx`, `example.functions.ts`, `bun.lock`) landed clean on top of it; `calendar.tsx`/`popover.tsx`/`button.tsx` kept (only ones imported, transitively via `Onboarding.tsx`) and verified working in `npm run dev` (due-date picker flow). |
 
 Phase progress: `0 ☐ · 1 ☐ · 2 ☐ · 3 ☐ · 4 ☐ · 5 ☐ · 6 ☐ · 7 ☐ · 8 ☐`
 

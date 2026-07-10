@@ -422,7 +422,7 @@ UX risks called out to the product owner: (1) per-item summary aggregation ("hea
 Every task independently completable and committable; dependencies noted as `[after n.n]`. Claude Sonnet executes top to bottom.
 
 **Phase 0 — Hygiene**
-- [ ] 0.1 Script-verify unused `components/ui/*`; delete them, `BottomNav.tsx`, `SilhouetteIllustration.tsx`, `example.functions.ts`, `bun.lock`.
+- [x] 0.1 Script-verify unused `components/ui/*`; delete them, `BottomNav.tsx`, `SilhouetteIllustration.tsx`, `example.functions.ts`, `bun.lock`.
 - [ ] 0.2 Fix `__root.tsx` meta (title/OG/author → BumpNotes; OG image into `public/`).
 - [ ] 0.3 Extract shared `EntryEditDialog` + `getEditableText` into `components/bumpnotes/EntryEditDialog.tsx`; use from `timeline.tsx` and `pack.tsx`.
 
