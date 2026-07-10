@@ -331,6 +331,7 @@ Short, and shorter than the previous draft — the refined direction's restraint
 3. **Summaries as part of the record** (§5.4, §3.6) — immutable snapshots, timeline events, "generate again."
 4. **Full data export** (§9, Settings).
 5. **The pregnancy entity** (§5.2) — created by onboarding step 2; the schema simply agrees with the UI.
+6. **A one-time "what's new" card for migrated users.** Users whose record was migrated from V1 see a single dismissible card on Home: their record has been upgraded, and About Me now has new optional cards (health, previous pregnancies, how they'd like to receive care), with a link to About Me. One card, one dismissal, gone forever — no completion tracking, no reappearance, no nagging. This exists only for the migration cohort and is not part of the durable product; it may be deleted once the cohort has aged out.
 
 Explicitly parked, not built in V2: summary types in the UI, audiences, birth preferences as a section, partner access, clinician-side viewing, postpartum module, any engagement/reminder layer.
 

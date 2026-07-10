@@ -288,7 +288,7 @@ Strategy only; SQL is written during Phase 2 (§10, tasks 2.x). All new tables g
 `contact_messages`, `feedback_submissions`, `feedback_responses`, `tester_access_codes`, `tester_sessions`, `user_roles` (+ `has_role`).
 
 ## 5.2 Tables to modify
-- **`profiles`** — add: `preferred_name text`, `date_of_birth date`, `health_identifier text`, `health_identifier_label text` (ARCH §12.1; label stored per user, default "NHS number"), `photo_path text` (Storage path). Existing tester/ToS columns keep.
+- **`profiles`** — add: `preferred_name text`, `date_of_birth date`, `health_identifier text`, `health_identifier_label text` (ARCH §12.1; label stored per user, default "NHS number"), `photo_path text` (Storage path), `v2_notice_dismissed_at timestamptz` (one-time migrated-user "what's new" card, ARCH §11.6; server-persisted so dismissal holds across devices). Existing tester/ToS columns keep.
 - **`bumpnotes_state`** — becomes archive: revoke client INSERT/UPDATE/DELETE (SELECT stays for owner + service role), add `migrated_at timestamptz`, `migration_checksum jsonb` (per-type counts). No structural change.
 
 ## 5.3 New tables (owner-scoped by `user_id` unless noted)
@@ -356,7 +356,7 @@ Each phase ends green: `npm run build` + `npm run lint` pass, app deployable, al
 - **Phase 2 — Schema + Storage** (additive; app unchanged): migrations for §5.2–5.6, buckets + policies, regenerate DB types. *Objective: target exists in production, unused.*
 - **Phase 3 — Data layer + cutover** (the big one): repository interface + Supabase/Local implementations + outbox + hooks; `ensureMigrated()` server function + backfill + read-only fallback mode; then migrate screens in-phase in this order: capture panels → home → timeline → settings; delete `store.ts`/`sync.ts`/blob types last. Demo/tester fixtures rebuilt here (they block deleting the old store). *Objective: V2 persistence is the only persistence.*
 - **Phase 4 — Onboarding V2**: 7 steps, LMP alternative, pre-auth buffer → post-signup flush, welcome-page CTA rewiring, analytics events. *Objective: new users are born on V2 shapes.*
-- **Phase 5 — About Me V2**: `/about-me` (redirect from `/details`), five cards, People management UI, previous-pregnancies flow with the ARCH §3.4 sensitivity rules, My Preferences with placeholder examples (ARCH §3.5 copy is flagship work — copy strings reviewed by Liz before merge). *Objective: the V2 state model has its UI.*
+- **Phase 5 — About Me V2**: `/about-me` (redirect from `/details`), five cards, People management UI, previous-pregnancies flow with the ARCH §3.4 sensitivity rules, My Preferences with placeholder examples (ARCH §3.5 copy is flagship work — copy strings reviewed by Liz before merge), one-time migrated-user "what's new" card on Home (ARCH §11.6 — ships here, not in Phase 3, because it links to About Me and must never point at the old `/details` form). *Objective: the V2 state model has its UI.*
 - **Phase 6 — Summary V2**: `lib/summary/` (document model, snapshot builder), `/summary` flow (range → draft → review → share/keep), snapshot persistence, My Summaries, timeline summary events, `/pack` redirect. Old summary files deleted at phase end. *Objective: the centrepiece ships.*
 - **Phase 7 — PDF V2**: `render-pdf.ts` from snapshot only; page-1 contract; store PDF to `summary-pdfs`; "show my screen" full-screen render. *Objective: the shareable artifact matches ARCH §8.*
 - **Phase 8 — Closeout**: settings export V2 (entities + PDFs + legacy blob), deletion paths cover Storage, admin dashboard updated, marketing copy pass, i18n prune, analytics event audit, delete anything in §8 not yet gone. *Objective: no V1 residue outside the archive table.*
@@ -435,7 +435,7 @@ Every task independently completable and committable; dependencies noted as `[af
 **Phase 2 — Schema + Storage** `[after 1.x]`
 - [ ] 2.1 Migration: `pregnancies`, `people`, `health_items`, `previous_pregnancy_notes`, `preferences` + RLS + triggers + indexes (§5.3, §5.6).
 - [ ] 2.2 Migration: `entries`, `attachments`, `summaries` (no UPDATE policy on `summaries`) + RLS + indexes.
-- [ ] 2.3 Migration: `profiles` new columns; `bumpnotes_state` archive lock (revoke client writes; add `migrated_at`, `migration_checksum`).
+- [ ] 2.3 Migration: `profiles` new columns (incl. `v2_notice_dismissed_at`); `bumpnotes_state` archive lock (revoke client writes; add `migrated_at`, `migration_checksum`).
 - [ ] 2.4 Buckets `attachments`, `summary-pdfs` + path-prefix RLS policies.
 - [ ] 2.5 Regenerate `integrations/supabase/types.ts`; commit.
 
@@ -464,6 +464,7 @@ Every task independently completable and committable; dependencies noted as `[af
 - [ ] 5.4 My Pregnancy card (EDD/LMP edit, nickname, birth place; care team = people list with roles + contact details).
 - [ ] 5.5 Previous Pregnancies card (first-pregnancy gate; counts with §3.4 sensitivity flow; prompt-tagged free-text notes).
 - [ ] 5.6 My Preferences card (ordered items + "anything else"; placeholder examples verbatim from ARCH §3.5; copy sign-off before merge).
+- [ ] 5.7 Migrated-user "what's new" card on Home (ARCH §11.6): shown only when the user's `bumpnotes_state.migrated_at` is set (exposed via the `ensureMigrated` response) and `profiles.v2_notice_dismissed_at` is NULL; links to `/about-me`; dismissal writes the timestamp and the card never renders again. Copy sign-off before merge. `[after 5.1]`
 
 **Phase 6 — Summary V2** `[after 4.x or 5.x — needs 3.x only, but 5.x content improves it; execute after 5]`
 - [ ] 6.1 `lib/summary/document-model.ts` + `build-snapshot.ts`: draft builder (range resolution incl. "since last summary"; standing sections from About Me entities; open questions; non-private entries; manifest).
@@ -492,7 +493,7 @@ The migration is complete when all of the following are true:
 
 **Functional**
 1. A brand-new user completes 7-step onboarding, records one entry of every type (with a photo), fills all five About Me cards, generates/reviews/shares a summary, sees it on the timeline and in My Summaries, re-downloads its identical PDF, exports everything, and deletes their account — with no console errors and no orphaned rows or Storage objects.
-2. A pre-V2 account (seeded from a production-shaped blob incl. labour data and base64 photos) logs in, migrates transparently with matching checksums, sees an unchanged timeline (minus labour UI), and its photos render from Storage.
+2. A pre-V2 account (seeded from a production-shaped blob incl. labour data and base64 photos) logs in, migrates transparently with matching checksums, sees an unchanged timeline (minus labour UI), and its photos render from Storage. The one-time "what's new" card appears on Home, links to About Me, and never reappears after dismissal (including on a second device).
 3. Airplane-mode capture lands after reconnect. Demo and tester modes work end-to-end with zero Supabase writes.
 4. Feelings never appear in any draft, share, or show-my-screen render; a `personal` note shows its review badge; an excluded entry appears in no PDF; the PDF contains no "excluded" indication.
 
