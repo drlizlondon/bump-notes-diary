@@ -19,8 +19,8 @@ import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButto
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "BumpNotes — your pregnancy record" },
-      { name: "description", content: "A simple, private pregnancy record. Capture symptoms, measurements, questions, care and uploads, then create a clear summary by pregnancy week." },
+      { title: "BumpNotes | Your Pregnancy Bump Note, Organised in One Place" },
+      { name: "description", content: "Create a clear, organised bump note for your pregnancy. Track appointments, symptoms, questions, scans and key moments, then generate summaries when you need them." },
       { name: "theme-color", content: "#ffffff" },
     ],
     links: [
