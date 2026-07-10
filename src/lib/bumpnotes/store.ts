@@ -36,7 +36,11 @@ function load(): AppState {
     if (demoRaw) {
       demoMode = true;
       const parsed = JSON.parse(demoRaw) as AppState;
-      return { profile: parsed.profile ?? null, entries: parsed.entries ?? [], labourPlan: parsed.labourPlan };
+      return {
+        profile: parsed.profile ?? null,
+        entries: parsed.entries ?? [],
+        labourPlan: parsed.labourPlan,
+      };
     }
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return initial;
@@ -59,31 +63,56 @@ function persist() {
     } else {
       window.localStorage.setItem(KEY, JSON.stringify(state));
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
-function emit() { listeners.forEach((l) => l()); }
-function setState(next: AppState) { state = next; persist(); emit(); }
+function emit() {
+  listeners.forEach((l) => l());
+}
+function setState(next: AppState) {
+  state = next;
+  persist();
+  emit();
+}
 
 if (typeof window !== "undefined") state = load();
 
-function subscribeStore(cb: () => void) { listeners.add(cb); return () => listeners.delete(cb); }
+function subscribeStore(cb: () => void) {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
 
-export function subscribe(cb: () => void) { return subscribeStore(cb); }
+export function subscribe(cb: () => void) {
+  return subscribeStore(cb);
+}
 
 export function useAppState(): AppState {
-  return useSyncExternalStore(subscribeStore, () => state, () => initial);
+  return useSyncExternalStore(
+    subscribeStore,
+    () => state,
+    () => initial,
+  );
 }
 
 export function useDemoMode(): boolean {
-  return useSyncExternalStore(subscribeStore, () => demoMode, () => false);
+  return useSyncExternalStore(
+    subscribeStore,
+    () => demoMode,
+    () => false,
+  );
 }
 
 export const store = {
   getState: () => state,
   subscribe: subscribeStore,
-  replaceState(next: AppState) { setState(next); },
-  setProfile(p: Profile) { setState({ ...state, profile: p }); },
+  replaceState(next: AppState) {
+    setState(next);
+  },
+  setProfile(p: Profile) {
+    setState({ ...state, profile: p });
+  },
 
   updateProfile(patch: Partial<Profile>) {
     if (!state.profile) return;
@@ -115,7 +144,9 @@ export const store = {
   restore(id: string) {
     setState({
       ...state,
-      entries: state.entries.map((e) => (e.id === id ? ({ ...e, deletedAt: undefined } as Entry) : e)),
+      entries: state.entries.map((e) =>
+        e.id === id ? ({ ...e, deletedAt: undefined } as Entry) : e,
+      ),
     });
   },
   hardDelete(id: string) {
@@ -125,15 +156,24 @@ export const store = {
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
     setState({
       ...state,
-      entries: state.entries.filter((e) => !e.deletedAt || new Date(e.deletedAt).getTime() > cutoff),
+      entries: state.entries.filter(
+        (e) => !e.deletedAt || new Date(e.deletedAt).getTime() > cutoff,
+      ),
     });
   },
-  clearAll() { setState(initial); },
+  clearAll() {
+    setState(initial);
+  },
 
-  isDemoMode() { return demoMode; },
+  isDemoMode() {
+    return demoMode;
+  },
   enterDemoMode(demoState: AppState) {
     if (demoMode) {
-      state = demoState; persist(); emit(); return;
+      state = demoState;
+      persist();
+      emit();
+      return;
     }
     demoBackup = state;
     demoMode = true;
@@ -144,13 +184,19 @@ export const store = {
   exitDemoMode() {
     if (!demoMode) return;
     demoMode = false;
-    try { if (typeof window !== "undefined") window.sessionStorage.removeItem(DEMO_KEY); } catch { /* ignore */ }
+    try {
+      if (typeof window !== "undefined") window.sessionStorage.removeItem(DEMO_KEY);
+    } catch {
+      /* ignore */
+    }
     state = demoBackup ?? load();
     demoBackup = null;
     emit();
   },
 
-  exportAll() { return JSON.stringify(state, null, 2); },
+  exportAll() {
+    return JSON.stringify(state, null, 2);
+  },
 
   // Labour
   getLabourPlan(): LabourPlan {
@@ -177,7 +223,9 @@ export const store = {
     const episodes = (state.labourPlan.episodes ?? []).map((ep) =>
       ep.endISO ? ep : { ...ep, endISO, outcome: opts?.outcome, outcomeNote: opts?.outcomeNote },
     );
-    setState({ ...state, labourPlan: { ...state.labourPlan, recordingStartISO: undefined, episodes } });
+    setState({
+      ...state,
+      labourPlan: { ...state.labourPlan, recordingStartISO: undefined, episodes },
+    });
   },
-
 };

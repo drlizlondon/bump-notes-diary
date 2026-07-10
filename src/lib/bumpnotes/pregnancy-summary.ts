@@ -100,17 +100,26 @@ export function buildPregnancySummaryWeeks(
       const sortedEntries = weekEntries.slice().sort(compareEntries);
       return {
         week,
-        sections: buildWeekSections(sortedEntries, labourItems.filter((item) => item.week === week), options.hiddenItemKeys ?? new Set()),
+        sections: buildWeekSections(
+          sortedEntries,
+          labourItems.filter((item) => item.week === week),
+          options.hiddenItemKeys ?? new Set(),
+        ),
       };
     })
     .filter((week) => week.sections.length > 0);
 }
 
-function buildWeekSections(entries: Entry[], labourItems: LabourItem[], hiddenItemKeys: Set<string>): PregnancySummarySection[] {
+function buildWeekSections(
+  entries: Entry[],
+  labourItems: LabourItem[],
+  hiddenItemKeys: Set<string>,
+): PregnancySummarySection[] {
   const sections: PregnancySummarySection[] = [];
 
   const symptoms = symptomItems(entries).filter((item) => !hiddenItemKeys.has(item.key));
-  if (symptoms.length) sections.push({ type: "symptoms", title: "Symptoms & Signs", items: symptoms });
+  if (symptoms.length)
+    sections.push({ type: "symptoms", title: "Symptoms & Signs", items: symptoms });
 
   const feelings = feelingItems(entries).filter((item) => !hiddenItemKeys.has(item.key));
   if (feelings.length) sections.push({ type: "feelings", title: "Feelings", items: feelings });
@@ -125,7 +134,8 @@ function buildWeekSections(entries: Entry[], labourItems: LabourItem[], hiddenIt
   if (people.length) sections.push({ type: "people", title: "People & Care", groups: people });
 
   const measurements = measurementItems(entries).filter((item) => !hiddenItemKeys.has(item.key));
-  if (measurements.length) sections.push({ type: "measurements", title: "Measurements", items: measurements });
+  if (measurements.length)
+    sections.push({ type: "measurements", title: "Measurements", items: measurements });
 
   const notes = entries
     .filter((entry) => entry.type === "note")
@@ -143,7 +153,17 @@ function buildWeekSections(entries: Entry[], labourItems: LabourItem[], hiddenIt
 }
 
 function symptomItems(entries: Entry[]): SymptomSummaryItem[] {
-  const bySymptom = new Map<string, { count: number; qualifiers: string[]; qualifierSet: Set<string>; firstOrder: string; entryIds: string[]; week: number }>();
+  const bySymptom = new Map<
+    string,
+    {
+      count: number;
+      qualifiers: string[];
+      qualifierSet: Set<string>;
+      firstOrder: string;
+      entryIds: string[];
+      week: number;
+    }
+  >();
   for (const entry of entries) {
     if (entry.type !== "symptom") continue;
     const existing = bySymptom.get(entry.symptom) ?? {
@@ -165,7 +185,13 @@ function symptomItems(entries: Entry[]): SymptomSummaryItem[] {
   }
   return Array.from(bySymptom.entries())
     .sort(([, a], [, b]) => a.firstOrder.localeCompare(b.firstOrder))
-    .map(([symptom, item]) => ({ key: `symptom:${item.week}:${symptom}`, entryIds: item.entryIds, symptom, count: item.count, qualifiers: item.qualifiers }));
+    .map(([symptom, item]) => ({
+      key: `symptom:${item.week}:${symptom}`,
+      entryIds: item.entryIds,
+      symptom,
+      count: item.count,
+      qualifiers: item.qualifiers,
+    }));
 }
 
 function symptomQualifiers(entry: SymptomEntry): string[] {
@@ -175,25 +201,46 @@ function symptomQualifiers(entry: SymptomEntry): string[] {
 }
 
 function feelingItems(entries: Entry[]): FeelingSummaryItem[] {
-  const byFeeling = new Map<string, { days: Set<string>; firstOrder: string; entryIds: string[]; week: number }>();
+  const byFeeling = new Map<
+    string,
+    { days: Set<string>; firstOrder: string; entryIds: string[]; week: number }
+  >();
   for (const entry of entries) {
     if (entry.type !== "feeling") continue;
-    const existing = byFeeling.get(entry.feeling) ?? { days: new Set<string>(), firstOrder: entry.createdAt, entryIds: [], week: entry.weekDay.weeks };
+    const existing = byFeeling.get(entry.feeling) ?? {
+      days: new Set<string>(),
+      firstOrder: entry.createdAt,
+      entryIds: [],
+      week: entry.weekDay.weeks,
+    };
     existing.days.add(calendarDay(entry.createdAt));
     existing.entryIds.push(entry.id);
     byFeeling.set(entry.feeling, existing);
   }
   return Array.from(byFeeling.entries())
     .sort(([, a], [, b]) => a.firstOrder.localeCompare(b.firstOrder))
-    .map(([feeling, item]) => ({ key: `feeling:${item.week}:${feeling}`, entryIds: item.entryIds, feeling, days: item.days.size }));
+    .map(([feeling, item]) => ({
+      key: `feeling:${item.week}:${feeling}`,
+      entryIds: item.entryIds,
+      feeling,
+      days: item.days.size,
+    }));
 }
 
 function peopleCareGroups(entries: Entry[]): PeopleCareSummaryGroup[] {
-  const groups = new Map<string, { items: string[]; firstOrder: string; entryIds: string[]; week: number }>();
+  const groups = new Map<
+    string,
+    { items: string[]; firstOrder: string; entryIds: string[]; week: number }
+  >();
   for (const entry of entries) {
     if (entry.type !== "person" && entry.type !== "appointment") continue;
     const professional = professionalLabel(entry);
-    const group = groups.get(professional) ?? { items: [], firstOrder: entry.createdAt, entryIds: [], week: entry.weekDay.weeks };
+    const group = groups.get(professional) ?? {
+      items: [],
+      firstOrder: entry.createdAt,
+      entryIds: [],
+      week: entry.weekDay.weeks,
+    };
     group.items.push(...peopleCareItems(entry));
     group.entryIds.push(entry.id);
     groups.set(professional, group);
@@ -218,7 +265,9 @@ function professionalLabel(entry: PersonEntry | AppointmentEntry): string {
 
 function peopleCareItems(entry: PersonEntry | AppointmentEntry): string[] {
   if (entry.type === "person") {
-    return [entry.discussed, entry.advised, entry.note].map((item) => item?.trim() ?? "").filter(Boolean);
+    return [entry.discussed, entry.advised, entry.note]
+      .map((item) => item?.trim() ?? "")
+      .filter(Boolean);
   }
   return [entry.discussed, entry.advice, entry.questionsAnswered, entry.followUp]
     .map((item) => item?.trim() ?? "")
@@ -229,14 +278,22 @@ function measurementItems(entries: Entry[]): MeasurementSummaryItem[] {
   const groups = new Map<string, { items: MeasurementEntry[]; firstOrder: string }>();
   for (const entry of entries) {
     if (entry.type !== "measurement") continue;
-    const label = entry.kind === "custom" ? entry.customLabel?.trim() || tFn("m.custom") : measurementLabel(entry);
+    const label =
+      entry.kind === "custom"
+        ? entry.customLabel?.trim() || tFn("m.custom")
+        : measurementLabel(entry);
     const group = groups.get(label) ?? { items: [], firstOrder: entry.createdAt };
     group.items.push(entry);
     groups.set(label, group);
   }
   return Array.from(groups.entries())
     .sort(([, a], [, b]) => a.firstOrder.localeCompare(b.firstOrder))
-    .map(([label, group]) => ({ key: `measurement:${group.items[0]?.weekDay.weeks ?? "unknown"}:${label}`, entryIds: group.items.map((item) => item.id), label, value: measurementRange(group.items) }))
+    .map(([label, group]) => ({
+      key: `measurement:${group.items[0]?.weekDay.weeks ?? "unknown"}:${label}`,
+      entryIds: group.items.map((item) => item.id),
+      label,
+      value: measurementRange(group.items),
+    }))
     .filter((item) => item.value.length > 0);
 }
 
@@ -267,17 +324,39 @@ function measurementRange(items: MeasurementEntry[]): string {
   return min === max ? `${min}${suffix}` : `${min}${suffix} to ${max}${suffix}`;
 }
 
-function buildLabourItems(profile: Profile, entries: Entry[], labourPlan?: LabourPlan): LabourItem[] {
+function buildLabourItems(
+  profile: Profile,
+  entries: Entry[],
+  labourPlan?: LabourPlan,
+): LabourItem[] {
   const items: LabourItem[] = [];
   for (const entry of entries) {
     if (entry.type === "labour") {
-      items.push({ key: `labour:${entry.id}`, entryIds: [entry.id], week: entry.weekDay.weeks, order: entry.createdAt, text: joinParts([entry.event, entry.note]) });
+      items.push({
+        key: `labour:${entry.id}`,
+        entryIds: [entry.id],
+        week: entry.weekDay.weeks,
+        order: entry.createdAt,
+        text: joinParts([entry.event, entry.note]),
+      });
     }
     if (entry.type === "labour_event") {
-      items.push({ key: `labour:${entry.id}`, entryIds: [entry.id], week: entry.weekDay.weeks, order: entry.createdAt, text: joinParts([entry.event, entry.note]) });
+      items.push({
+        key: `labour:${entry.id}`,
+        entryIds: [entry.id],
+        week: entry.weekDay.weeks,
+        order: entry.createdAt,
+        text: joinParts([entry.event, entry.note]),
+      });
     }
     if (entry.type === "contraction") {
-      items.push({ key: `labour:${entry.id}`, entryIds: [entry.id], week: entry.weekDay.weeks, order: entry.createdAt, text: joinParts(["Contraction", formatDuration(entry.durationSec), entry.note]) });
+      items.push({
+        key: `labour:${entry.id}`,
+        entryIds: [entry.id],
+        week: entry.weekDay.weeks,
+        order: entry.createdAt,
+        text: joinParts(["Contraction", formatDuration(entry.durationSec), entry.note]),
+      });
     }
   }
 
@@ -314,7 +393,8 @@ function buildLabourItems(profile: Profile, entries: Entry[], labourPlan?: Labou
       items.push({
         key: `labour-episode-outcome:${episode.id}`,
         entryIds: episodeEntryIds,
-        week: gestationFromDueDate(profile.dueDateISO, parseISO(episode.endISO ?? episode.startISO)).weeks,
+        week: gestationFromDueDate(profile.dueDateISO, parseISO(episode.endISO ?? episode.startISO))
+          .weeks,
         order: episode.endISO ?? episode.startISO,
         text: joinParts([outcome, episode.outcome === "other" ? episode.outcomeNote : undefined]),
       });
@@ -325,9 +405,14 @@ function buildLabourItems(profile: Profile, entries: Entry[], labourPlan?: Labou
 
 function labourEntryIdsForEpisode(entries: Entry[], startISO: string, endISO?: string): string[] {
   return entries
-    .filter((entry) => (entry.type === "contraction" || entry.type === "labour_event" || entry.type === "labour")
-      && entry.createdAt >= startISO
-      && (!endISO || entry.createdAt <= endISO))
+    .filter(
+      (entry) =>
+        (entry.type === "contraction" ||
+          entry.type === "labour_event" ||
+          entry.type === "labour") &&
+        entry.createdAt >= startISO &&
+        (!endISO || entry.createdAt <= endISO),
+    )
     .map((entry) => entry.id);
 }
 
@@ -348,14 +433,22 @@ function calendarDay(iso: string): string {
 
 function defaultUnit(kind: MeasurementEntry["kind"]): string {
   switch (kind) {
-    case "weight": return "kg";
-    case "blood_sugar": return "mmol/L";
-    case "temperature": return "°C";
-    case "movements": return "movements";
-    default: return "";
+    case "weight":
+      return "kg";
+    case "blood_sugar":
+      return "mmol/L";
+    case "temperature":
+      return "°C";
+    case "movements":
+      return "movements";
+    default:
+      return "";
   }
 }
 
 function joinParts(parts: Array<string | undefined>): string {
-  return parts.map((part) => part?.trim() ?? "").filter(Boolean).join(" · ");
+  return parts
+    .map((part) => part?.trim() ?? "")
+    .filter(Boolean)
+    .join(" · ");
 }

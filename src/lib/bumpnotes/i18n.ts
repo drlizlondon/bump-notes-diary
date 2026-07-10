@@ -4,22 +4,31 @@ export type Lang = "en" | "tr";
 
 const KEY = "bumpnotes:lang";
 const listeners = new Set<() => void>();
-let current: Lang = "en";
+const current: Lang = "en";
 
 // English-only for public beta. Turkish translations are kept for later, but
 // the language selector is hidden until localisation is complete.
 if (typeof window !== "undefined") {
-  try { window.localStorage.removeItem(KEY); } catch { /* ignore */ }
+  try {
+    window.localStorage.removeItem(KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
-export function getLang(): Lang { return current; }
+export function getLang(): Lang {
+  return current;
+}
 export function setLang(_l: Lang) {
   // No-op during beta. English only.
 }
 
 export function useLang(): Lang {
   return useSyncExternalStore(
-    (cb) => { listeners.add(cb); return () => listeners.delete(cb); },
+    (cb) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
     () => current,
     () => "en",
   );
@@ -65,14 +74,14 @@ const en: Dict = {
   "onb.baby.subtitle": "You can use Baby, a nickname, or their name if you know it.",
   "onb.baby.placeholder": "Baby, Peanut, Nugget, Pearl, Diamond",
   "onb.baby.blank": "Leave name blank",
-  "onb.baby.blankHelp": "No problem if you don't have a name yet. We'll refer to your baby as \"Baby\" until you choose one.",
+  "onb.baby.blankHelp":
+    "No problem if you don't have a name yet. We'll refer to your baby as \"Baby\" until you choose one.",
   "onb.due.title": "What is your estimated due date?",
   "onb.due.subtitle": "You can change this later in Pregnancy Details.",
   "onb.due.today": "Today, {name} is {gest}.",
   "onb.due.tap": "Tap to choose your due date",
   "onb.finish": "Open BumpNotes",
   "baby.fallback": "Baby",
-
 
   // Home
   "home.capture.title": "What happened?",
@@ -178,15 +187,26 @@ const en: Dict = {
   "ph.optionalNote": "Optional note",
   "ph.save": "Save upload",
   "ph.saved": "Upload saved",
-  "ph.bump": "Bump", "ph.swelling": "Swelling", "ph.skin": "Skin",
-  "ph.document": "Document", "ph.scan": "Scan", "ph.other": "Other",
+  "ph.bump": "Bump",
+  "ph.swelling": "Swelling",
+  "ph.skin": "Skin",
+  "ph.document": "Document",
+  "ph.scan": "Scan",
+  "ph.other": "Other",
 
   // Feelings
   "f.note": "Kept out of your summary unless you choose to include it.",
   "f.save": "Save feeling",
-  "f.calm": "Calm", "f.happy": "Happy", "f.excited": "Excited", "f.tired": "Tired",
-  "f.anxious": "Anxious", "f.worried": "Worried", "f.overwhelmed": "Overwhelmed",
-  "f.frustrated": "Frustrated", "f.sad": "Sad", "f.other": "Other",
+  "f.calm": "Calm",
+  "f.happy": "Happy",
+  "f.excited": "Excited",
+  "f.tired": "Tired",
+  "f.anxious": "Anxious",
+  "f.worried": "Worried",
+  "f.overwhelmed": "Overwhelmed",
+  "f.frustrated": "Frustrated",
+  "f.sad": "Sad",
+  "f.other": "Other",
 
   // Note
   "n.placeholder": "Notes, thoughts or anything else",
@@ -194,10 +214,15 @@ const en: Dict = {
   "n.saved": "Note saved",
 
   // Roles
-  "role.midwife": "Midwife", "role.obstetrician": "Obstetrician",
-  "role.sonographer": "Sonographer", "role.gp": "GP", "role.nurse": "Nurse",
-  "role.healthVisitor": "Health visitor", "role.doula": "Doula",
-  "role.triage": "Triage", "role.other": "Other",
+  "role.midwife": "Midwife",
+  "role.obstetrician": "Obstetrician",
+  "role.sonographer": "Sonographer",
+  "role.gp": "GP",
+  "role.nurse": "Nurse",
+  "role.healthVisitor": "Health visitor",
+  "role.doula": "Doula",
+  "role.triage": "Triage",
+  "role.other": "Other",
 
   // Common prompts (questions)
   "prompt.result": "What does this result mean?",
@@ -218,7 +243,8 @@ const en: Dict = {
   // Summary
   "sum.title": "Pregnancy Summary",
   "sum.subtitle": "Generate a clear, printable document from your record.",
-  "sum.intro": "Your Pregnancy Record is everything you've saved in BumpNotes. Your Pregnancy Summary is the formatted document you can share with your care team. Choose what to include.",
+  "sum.intro":
+    "Your Pregnancy Record is everything you've saved in BumpNotes. Your Pregnancy Summary is the formatted document you can share with your care team. Choose what to include.",
   "sum.stepWeeks": "Choose weeks",
   "sum.stepReview": "Review",
   "sum.stepCustomise": "Customise",
@@ -243,7 +269,8 @@ const en: Dict = {
   "sum.field.due": "Due date",
   "sum.field.today": "Today",
   "sum.field.generated": "Generated",
-  "sum.foot": "This is a personal record created by {name} to help remember and discuss their pregnancy.",
+  "sum.foot":
+    "This is a personal record created by {name} to help remember and discuss their pregnancy.",
   "sum.labour.outcome": "Outcome",
   "sum.labour.outcomeNote": "Note",
   "lab.outcome.endTitle": "End labour recording?",
@@ -306,7 +333,8 @@ const en: Dict = {
   "set.deletedPerm": "Delete permanently",
   "set.empty": "Nothing here. Deleted entries appear for 30 days.",
   "set.privacy": "Privacy",
-  "set.privacy.body": "Your record is saved to your BumpNotes account so you can sign in from any device and pick up where you left off. We don't sell or share your data, and we don't use it to train AI.",
+  "set.privacy.body":
+    "Your record is saved to your BumpNotes account so you can sign in from any device and pick up where you left off. We don't sell or share your data, and we don't use it to train AI.",
   "set.language": "Language",
 
   // Labour
@@ -331,7 +359,8 @@ const en: Dict = {
   "lab.cta.sub": "Start recording contractions and labour events →",
 
   "lab.confirm.title": "Start Labour Recording?",
-  "lab.confirm.body": "You can record contractions, labour events and notes. BumpNotes does not provide medical advice or interpretation.",
+  "lab.confirm.body":
+    "You can record contractions, labour events and notes. BumpNotes does not provide medical advice or interpretation.",
   "lab.confirm.start": "Start Recording",
   "lab.timeline.title": "Labour Timeline",
   "lab.contractions": "Contraction Recorder",
@@ -375,17 +404,18 @@ const en: Dict = {
   "auth.signedOut": "Signed out",
   "set.account": "Account",
   "set.signedInAs": "Signed in as",
-  "set.notSignedIn": "Not signed in. Your record is kept on this device until you create an account or sign in.",
+  "set.notSignedIn":
+    "Not signed in. Your record is kept on this device until you create an account or sign in.",
   "set.signInCta": "Sign in or create an account",
   "sync.local": "Saved locally",
   "sync.syncing": "Syncing",
   "sync.synced": "Synced",
   "sync.error": "Sync failed",
   "sync.migrate.title": "Records found in both places",
-  "sync.migrate.body": "We loaded the version saved to your account. Your previous local notes are still safe on this device — you can export them from Settings if you want to merge by hand.",
+  "sync.migrate.body":
+    "We loaded the version saved to your account. Your previous local notes are still safe on this device — you can export them from Settings if you want to merge by hand.",
   "sync.migrate.ok": "Got it",
 };
-
 
 const tr: Dict = {
   "common.back": "Geri",
@@ -420,14 +450,14 @@ const tr: Dict = {
   "onb.baby.subtitle": "Bebek, takma ad veya biliyorsanız ismini kullanabilirsiniz.",
   "onb.baby.placeholder": "Bebek, Fıstık, Minik, İnci",
   "onb.baby.blank": "İsim girmeden devam et",
-  "onb.baby.blankHelp": "Henüz bir isminiz yoksa sorun değil. Siz seçene kadar bebeğinize \"Bebek\" diyeceğiz.",
+  "onb.baby.blankHelp":
+    'Henüz bir isminiz yoksa sorun değil. Siz seçene kadar bebeğinize "Bebek" diyeceğiz.',
   "onb.due.title": "Tahmini doğum tarihiniz nedir?",
   "onb.due.subtitle": "Bunu daha sonra Hamilelik Detayları'ndan değiştirebilirsiniz.",
   "onb.due.today": "Bugün {name} {gest} oldu.",
   "onb.due.tap": "Tahmini tarihinizi seçmek için dokunun",
   "onb.finish": "BumpNotes'u aç",
   "baby.fallback": "Bebek",
-
 
   "home.capture.title": "Ne eklemek istersiniz?",
   "home.capture.subtitle": "Bir kart için dokunarak giriş ekleyin.",
@@ -456,7 +486,6 @@ const tr: Dict = {
   "cap.labour.helper": "Kasılmalar, doğum notları ve doğum hazırlığı",
   "cap.feelings": "Duygular",
   "cap.feelings.helper": "Ruh hali ve duygusal iyilik",
-
 
   "sym.prompt": "Ne fark ediyorsunuz?",
   "sym.quantifier": "Nasıl tarif edersiniz?",
@@ -525,23 +554,39 @@ const tr: Dict = {
   "ph.optionalNote": "İsteğe bağlı not",
   "ph.save": "Yüklemeyi kaydet",
   "ph.saved": "Yükleme kaydedildi",
-  "ph.bump": "Karın", "ph.swelling": "Şişlik", "ph.skin": "Cilt",
-  "ph.document": "Belge", "ph.scan": "Ultrason", "ph.other": "Diğer",
+  "ph.bump": "Karın",
+  "ph.swelling": "Şişlik",
+  "ph.skin": "Cilt",
+  "ph.document": "Belge",
+  "ph.scan": "Ultrason",
+  "ph.other": "Diğer",
 
   "f.note": "Siz seçmediğiniz sürece özetinize eklenmez.",
   "f.save": "Duyguyu kaydet",
-  "f.calm": "Sakin", "f.happy": "Mutlu", "f.excited": "Heyecanlı",
-  "f.tired": "Yorgun", "f.anxious": "Kaygılı", "f.worried": "Endişeli",
-  "f.overwhelmed": "Bunalmış", "f.frustrated": "Bezgin", "f.sad": "Üzgün", "f.other": "Diğer",
+  "f.calm": "Sakin",
+  "f.happy": "Mutlu",
+  "f.excited": "Heyecanlı",
+  "f.tired": "Yorgun",
+  "f.anxious": "Kaygılı",
+  "f.worried": "Endişeli",
+  "f.overwhelmed": "Bunalmış",
+  "f.frustrated": "Bezgin",
+  "f.sad": "Üzgün",
+  "f.other": "Diğer",
 
   "n.placeholder": "Notlar, düşünceler veya başka bir şey",
   "n.save": "Notu kaydet",
   "n.saved": "Not kaydedildi",
 
-  "role.midwife": "Ebe", "role.obstetrician": "Kadın doğum uzmanı",
-  "role.sonographer": "Ultrason teknisyeni", "role.gp": "Aile hekimi",
-  "role.nurse": "Hemşire", "role.healthVisitor": "Sağlık ziyaretçisi",
-  "role.doula": "Doula", "role.triage": "Triyaj", "role.other": "Diğer",
+  "role.midwife": "Ebe",
+  "role.obstetrician": "Kadın doğum uzmanı",
+  "role.sonographer": "Ultrason teknisyeni",
+  "role.gp": "Aile hekimi",
+  "role.nurse": "Hemşire",
+  "role.healthVisitor": "Sağlık ziyaretçisi",
+  "role.doula": "Doula",
+  "role.triage": "Triyaj",
+  "role.other": "Diğer",
 
   "prompt.result": "Bu sonuç ne anlama geliyor?",
   "prompt.why": "Bu neden öneriliyor?",
@@ -552,14 +597,16 @@ const tr: Dict = {
 
   "tl.title": "Zaman çizelgesi",
   "tl.subtitle": "Hamilelik haftasına göre düzenlenmiş",
-  "tl.empty": "Henüz bir şey eklenmedi. Ana sayfadan herhangi bir karta dokunarak ilk girişinizi ekleyin.",
+  "tl.empty":
+    "Henüz bir şey eklenmedi. Ana sayfadan herhangi bir karta dokunarak ilk girişinizi ekleyin.",
   "tl.entries.one": "{n} giriş",
   "tl.entries.other": "{n} giriş",
   "tl.editEntry": "Girişi düzenle",
 
   "sum.title": "Hamilelik Özeti",
   "sum.subtitle": "Sizin kaydınız. Sizin özetiniz. Sizin tarzınız.",
-  "sum.intro": "Eklediğiniz her şey zaman çizelgenizde düzenlenir. Hazır olduğunuzda bakım ekibinizle paylaşmak için net bir özet oluşturun.",
+  "sum.intro":
+    "Eklediğiniz her şey zaman çizelgenizde düzenlenir. Hazır olduğunuzda bakım ekibinizle paylaşmak için net bir özet oluşturun.",
   "sum.stepWeeks": "Haftaları seç",
   "sum.stepReview": "İncele",
   "sum.stepCustomise": "Özelleştir",
@@ -584,7 +631,8 @@ const tr: Dict = {
   "sum.field.due": "Tahmini tarih",
   "sum.field.today": "Bugün",
   "sum.field.generated": "Oluşturuldu",
-  "sum.foot": "Bu, {name} tarafından hamileliğini hatırlamak ve konuşmak için oluşturulmuş kişisel bir kayıttır.",
+  "sum.foot":
+    "Bu, {name} tarafından hamileliğini hatırlamak ve konuşmak için oluşturulmuş kişisel bir kayıttır.",
   "sum.labour.title": "Doğum Yolculuğu",
   "sum.labour.started": "Doğum kaydı başlatıldı",
   "sum.labour.events": "Doğum olayları",
@@ -630,7 +678,8 @@ const tr: Dict = {
   "set.deletedPerm": "Kalıcı olarak sil",
   "set.empty": "Burada bir şey yok. Silinen girişler 30 gün boyunca görünür.",
   "set.privacy": "Gizlilik",
-  "set.privacy.body": "Notlarınız, paylaşmayı veya dışa aktarmayı seçmediğiniz sürece bu cihazda kalır. BumpNotes verilerinizi hiçbir yere göndermez ve bir tıbbi cihaz, teşhis aracı veya triyaj hizmeti değildir.",
+  "set.privacy.body":
+    "Notlarınız, paylaşmayı veya dışa aktarmayı seçmediğiniz sürece bu cihazda kalır. BumpNotes verilerinizi hiçbir yere göndermez ve bir tıbbi cihaz, teşhis aracı veya triyaj hizmeti değildir.",
   "set.language": "Dil",
 
   "lab.title": "Doğum & Lohusalık",
@@ -654,7 +703,8 @@ const tr: Dict = {
   "lab.cta.sub": "Kasılmaları ve doğum olaylarını kaydetmeye başlayın →",
 
   "lab.confirm.title": "Doğum kaydı başlatılsın mı?",
-  "lab.confirm.body": "Kasılmaları, doğum olaylarını ve notları kaydedebilirsiniz. BumpNotes tıbbi tavsiye veya yorum sağlamaz.",
+  "lab.confirm.body":
+    "Kasılmaları, doğum olaylarını ve notları kaydedebilirsiniz. BumpNotes tıbbi tavsiye veya yorum sağlamaz.",
   "lab.confirm.start": "Kaydı başlat",
   "lab.timeline.title": "Doğum zaman çizelgesi",
   "lab.contractions": "Kasılma Kaydedici",
@@ -704,10 +754,10 @@ const tr: Dict = {
   "sync.synced": "Eşitlendi",
   "sync.error": "Eşitleme başarısız",
   "sync.migrate.title": "Her iki yerde de kayıt bulundu",
-  "sync.migrate.body": "Hesabınıza kayıtlı sürümü yükledik. Önceki yerel notlarınız bu cihazda hâlâ güvende — birleştirmek isterseniz Ayarlar'dan dışa aktarabilirsiniz.",
+  "sync.migrate.body":
+    "Hesabınıza kayıtlı sürümü yükledik. Önceki yerel notlarınız bu cihazda hâlâ güvende — birleştirmek isterseniz Ayarlar'dan dışa aktarabilirsiniz.",
   "sync.migrate.ok": "Anladım",
 };
-
 
 const dicts: Record<Lang, Dict> = { en, tr };
 

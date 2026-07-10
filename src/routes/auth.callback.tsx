@@ -57,7 +57,9 @@ function AuthCallbackPage() {
     }
 
     void finishSignIn();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [navigate, search.next]);
 
   return (

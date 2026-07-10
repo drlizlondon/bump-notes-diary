@@ -18,15 +18,26 @@ function ResetPasswordPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 6) { toast.error("Use at least 6 characters."); return; }
-    if (password !== confirm) { toast.error("Passwords don't match."); return; }
+    if (password.length < 6) {
+      toast.error("Use at least 6 characters.");
+      return;
+    }
+    if (password !== confirm) {
+      toast.error("Passwords don't match.");
+      return;
+    }
     setBusy(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
-      if (error) { toast.error(error.message); return; }
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       toast.success("Password updated.");
       navigate({ to: "/" });
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -39,26 +50,39 @@ function ResetPasswordPage() {
               <LogoWordmark className="h-20 w-auto" />
             </Link>
             <h1 className="font-serif text-2xl font-semibold mt-4">Choose a new password</h1>
-            <p className="text-sm text-ink-soft mt-2">Enter a new password for your BumpNotes account.</p>
+            <p className="text-sm text-ink-soft mt-2">
+              Enter a new password for your BumpNotes account.
+            </p>
           </div>
           <form onSubmit={onSubmit} className="surface-card p-5 space-y-3">
             <PasswordInput
-              autoComplete="new-password" required minLength={6}
-              value={password} onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="New password (min 6 characters)"
             />
             <PasswordInput
-              autoComplete="new-password" required minLength={6}
-              value={confirm} onChange={(e) => setConfirm(e.target.value)}
+              autoComplete="new-password"
+              required
+              minLength={6}
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
               placeholder="Confirm new password"
             />
             <button
-              disabled={busy} type="submit"
+              disabled={busy}
+              type="submit"
               className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
-            >Update password</button>
+            >
+              Update password
+            </button>
           </form>
           <p className="text-center text-xs">
-            <Link to="/signin" className="text-ink-soft">← Back to sign in</Link>
+            <Link to="/signin" className="text-ink-soft">
+              ← Back to sign in
+            </Link>
           </p>
         </div>
       </div>

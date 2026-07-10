@@ -64,7 +64,9 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
     // Pack the "why" reasoning and any extra notes into improvement_text.
     const parts: string[] = [];
     if (showPersonal) {
-      parts.push(`Personal use: ${personalUse ?? "—"}${personalWhy.trim() ? ` — ${personalWhy.trim()}` : ""}`);
+      parts.push(
+        `Personal use: ${personalUse ?? "—"}${personalWhy.trim() ? ` — ${personalWhy.trim()}` : ""}`,
+      );
     }
     if (showPro) {
       parts.push(`Professional use: ${proUse ?? "—"}${proWhy.trim() ? ` — ${proWhy.trim()}` : ""}`);
@@ -100,9 +102,7 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
 
   const canContinueFromIdentity = pregnancy !== null && professional !== null;
   const canSubmit =
-    q1 !== null &&
-    (!showPersonal || personalUse !== null) &&
-    (!showPro || proUse !== null);
+    q1 !== null && (!showPersonal || personalUse !== null) && (!showPro || proUse !== null);
 
   return (
     <div
@@ -117,9 +117,15 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2 text-primary">
             <FlaskConical className="size-4" />
-            <span className="text-[11px] uppercase tracking-[0.2em] font-semibold">Tester feedback</span>
+            <span className="text-[11px] uppercase tracking-[0.2em] font-semibold">
+              Tester feedback
+            </span>
           </div>
-          <button onClick={onClose} className="-mr-1 -mt-1 size-8 grid place-items-center text-ink-soft" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="-mr-1 -mt-1 size-8 grid place-items-center text-ink-soft"
+            aria-label="Close"
+          >
             <X className="size-4" />
           </button>
         </div>
@@ -131,8 +137,8 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
             </h3>
             <div className="mt-3 text-sm text-ink-soft leading-relaxed space-y-3">
               <p>
-                This is just for people helping me test the early version. Please be honest, I'm trying to
-                understand whether it feels clear, easy to use and genuinely useful.
+                This is just for people helping me test the early version. Please be honest, I'm
+                trying to understand whether it feels clear, easy to use and genuinely useful.
               </p>
               <p>It should only take a minute.</p>
             </div>
@@ -148,7 +154,9 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
         {stage === "identity" && (
           <div>
             <h3 className="font-serif text-lg font-semibold">A quick bit about you</h3>
-            <p className="mt-1 text-sm text-ink-soft">Two short questions so the rest can be tailored.</p>
+            <p className="mt-1 text-sm text-ink-soft">
+              Two short questions so the rest can be tailored.
+            </p>
 
             <ChoiceQuestion
               label="Have you ever been pregnant, are you currently pregnant, or are you planning a pregnancy?"
@@ -186,7 +194,9 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
 
             {showPersonal && (
               <div className="mt-5 pt-4 border-t border-border/60">
-                <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-primary">As someone close to pregnancy</p>
+                <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-primary">
+                  As someone close to pregnancy
+                </p>
                 <ChoiceQuestion
                   label="Would you use BumpNotes yourself?"
                   value={personalUse}
@@ -204,7 +214,9 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
 
             {showPro && (
               <div className="mt-5 pt-4 border-t border-border/60">
-                <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-primary">As a professional</p>
+                <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-primary">
+                  As a professional
+                </p>
                 <ChoiceQuestion
                   label="Would you recommend BumpNotes to someone you support?"
                   value={proUse}
@@ -241,7 +253,9 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
             </div>
 
             {error && (
-              <p className="mt-3 text-sm text-coral leading-relaxed" role="alert">{error}</p>
+              <p className="mt-3 text-sm text-coral leading-relaxed" role="alert">
+                {error}
+              </p>
             )}
 
             <button
@@ -260,8 +274,8 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
               Thank you so much, I really appreciate you taking the time to do this.
             </h3>
             <p className="mt-3 text-sm text-ink-soft leading-relaxed">
-              If anything else comes to mind afterwards, please feel free to message me directly or send over
-              any extra thoughts. Even small bits of feedback are really helpful.
+              If anything else comes to mind afterwards, please feel free to message me directly or
+              send over any extra thoughts. Even small bits of feedback are really helpful.
             </p>
             <button
               onClick={onClose}
@@ -277,7 +291,10 @@ export function TesterFeedbackModal({ onClose }: { onClose: () => void }) {
 }
 
 function ChoiceQuestion<T extends string>({
-  label, value, options, onChange,
+  label,
+  value,
+  options,
+  onChange,
 }: {
   label: string;
   value: T | null;
@@ -311,8 +328,16 @@ function ChoiceQuestion<T extends string>({
 }
 
 function TextField({
-  label, value, onChange, placeholder,
-}: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
   return (
     <label className="mt-3 block">
       <span className="block text-[13px] font-semibold text-ink mb-1.5">{label}</span>
@@ -332,23 +357,23 @@ function RouteIntro({ route }: { route: Route }) {
   if (route === "yes_to_both") {
     return (
       <p className="text-sm text-ink-soft leading-relaxed">
-        Thank you, this is especially helpful because you can look at BumpNotes from both sides. There are a
-        couple of questions for each perspective below.
+        Thank you, this is especially helpful because you can look at BumpNotes from both sides.
+        There are a couple of questions for each perspective below.
       </p>
     );
   }
   if (route === "yes_to_either") {
     return (
       <p className="text-sm text-ink-soft leading-relaxed">
-        Thank you, your feedback is really helpful because BumpNotes is designed for people who are close to
-        pregnancy in some way.
+        Thank you, your feedback is really helpful because BumpNotes is designed for people who are
+        close to pregnancy in some way.
       </p>
     );
   }
   return (
     <p className="text-sm text-ink-soft leading-relaxed">
-      Thank you, this is still really helpful. Even if BumpNotes isn't directly relevant to you, I'd love to
-      know whether it makes sense and feels easy to use.
+      Thank you, this is still really helpful. Even if BumpNotes isn't directly relevant to you, I'd
+      love to know whether it makes sense and feels easy to use.
     </p>
   );
 }

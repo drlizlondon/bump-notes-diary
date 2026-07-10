@@ -154,7 +154,11 @@ export interface Profile {
   onboarded: boolean;
 }
 
-export interface BagItem { id: string; label: string; packed: boolean; }
+export interface BagItem {
+  id: string;
+  label: string;
+  packed: boolean;
+}
 
 export interface LabourEpisode {
   id: string;
@@ -178,7 +182,6 @@ export interface LabourPlan {
   recordingStartISO?: string; // present when actively recording labour
   episodes?: LabourEpisode[]; // completed and in-progress labour episodes
 }
-
 
 export interface AppState {
   profile: Profile | null;

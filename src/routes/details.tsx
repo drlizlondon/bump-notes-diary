@@ -29,7 +29,9 @@ function DetailsPage() {
   const [form, setForm] = useState<Profile | null>(profile);
   const t = useT();
 
-  useEffect(() => { setForm(profile); }, [profile]);
+  useEffect(() => {
+    setForm(profile);
+  }, [profile]);
 
   if (!form) {
     return (
@@ -54,7 +56,9 @@ function DetailsPage() {
         <div className="px-4 pb-8 space-y-3">
           {FIELDS.map(({ key, tKey, type, placeholder }) => (
             <label key={key} className="block bg-card rounded-2xl px-5 py-4 ring-1 ring-black/5">
-              <span className="text-[10px] uppercase tracking-widest text-ink-soft font-semibold">{t(tKey)}</span>
+              <span className="text-[10px] uppercase tracking-widest text-ink-soft font-semibold">
+                {t(tKey)}
+              </span>
               <input
                 type={type ?? "text"}
                 value={(form[key] as string | undefined) ?? ""}
@@ -64,7 +68,10 @@ function DetailsPage() {
               />
             </label>
           ))}
-          <button onClick={save} className="w-full py-4 rounded-full bg-primary text-primary-foreground font-semibold">
+          <button
+            onClick={save}
+            className="w-full py-4 rounded-full bg-primary text-primary-foreground font-semibold"
+          >
             {t("det.save")}
           </button>
         </div>

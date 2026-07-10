@@ -32,7 +32,8 @@ export function SilhouetteIllustration({ className = "" }: Props) {
         {/* Head */}
         <circle cx="205" cy="92" r="34" />
         {/* Neck + body + bump as one flowing path */}
-        <path d="
+        <path
+          d="
           M188,124
           C186,140 184,152 182,162
           C160,170 144,188 140,214
@@ -46,7 +47,8 @@ export function SilhouetteIllustration({ className = "" }: Props) {
           C272,170 254,162 236,158
           C230,148 226,138 224,124
           Z
-        " />
+        "
+        />
         {/* Subtle arm hint resting on bump */}
         <path
           d="M158,210 C168,224 188,236 214,238 C200,248 178,246 160,236 C150,230 150,218 158,210 Z"

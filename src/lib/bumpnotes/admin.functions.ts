@@ -39,7 +39,9 @@ export const checkAdmin = createServerFn({ method: "POST" })
  */
 export const claimAdminWithSecret = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { secret: string }) => ({ secret: String(data?.secret ?? "").slice(0, 200) }))
+  .inputValidator((data: { secret: string }) => ({
+    secret: String(data?.secret ?? "").slice(0, 200),
+  }))
   .handler(async ({ data, context }) => {
     const expected = process.env.TESTER_PASSWORD;
     if (!expected) throw new Error("Admin bootstrap is not configured");
@@ -71,7 +73,11 @@ export const listAccessCodes = createServerFn({ method: "POST" })
 export const generateAccessCodeBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { prefix: string; count: number; startAt?: number; label?: string }) => ({
-    prefix: String(d.prefix ?? "TESTA").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12) || "TESTA",
+    prefix:
+      String(d.prefix ?? "TESTA")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
+        .slice(0, 12) || "TESTA",
     count: Math.max(1, Math.min(50, Math.floor(Number(d.count) || 1))),
     startAt: Math.max(1, Math.floor(Number(d.startAt) || 1)),
     label: String(d.label ?? "").slice(0, 120) || null,
@@ -107,7 +113,10 @@ export const generateAccessCodeBatch = createServerFn({ method: "POST" })
 export const createCustomAccessCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { code: string; label?: string; notes?: string }) => ({
-    code: String(d.code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 32),
+    code: String(d.code ?? "")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, 32),
     label: String(d.label ?? "").slice(0, 120) || null,
     notes: String(d.notes ?? "").slice(0, 500) || null,
   }))
@@ -128,7 +137,7 @@ export const setAccessCodeStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; status: "active" | "inactive" }) => ({
     id: String(d.id ?? ""),
-    status: d.status === "inactive" ? "inactive" as const : "active" as const,
+    status: d.status === "inactive" ? ("inactive" as const) : ("active" as const),
   }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
@@ -152,10 +161,7 @@ export const deleteAccessCode = createServerFn({ method: "POST" })
     // Remove dependent rows first in case FK is not ON DELETE CASCADE.
     await supabaseAdmin.from("feedback_responses").delete().eq("access_code_id", data.id);
     await supabaseAdmin.from("tester_sessions").delete().eq("access_code_id", data.id);
-    const { error } = await supabaseAdmin
-      .from("tester_access_codes")
-      .delete()
-      .eq("id", data.id);
+    const { error } = await supabaseAdmin.from("tester_access_codes").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -335,4 +341,3 @@ export const deleteOwnAccount = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
-

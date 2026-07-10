@@ -28,7 +28,6 @@ function LabourPage() {
       <AppShell>
         <PageHeader title={t("lab.title")} subtitle={t("lab.subtitle")} />
         <div className="px-4 lg:px-0 pb-10 space-y-5">
-
           {!recording ? (
             <>
               <button
@@ -39,8 +38,12 @@ function LabourPage() {
                   <span className="text-lg">❤️</span>
                 </span>
                 <span className="flex-1 min-w-0">
-                  <span className="block font-semibold text-[15px] leading-tight text-ink">{t("lab.cta.iThink")}</span>
-                  <span className="block text-[12.5px] text-ink-soft mt-0.5 leading-snug">{t("lab.cta.sub")}</span>
+                  <span className="block font-semibold text-[15px] leading-tight text-ink">
+                    {t("lab.cta.iThink")}
+                  </span>
+                  <span className="block text-[12.5px] text-ink-soft mt-0.5 leading-snug">
+                    {t("lab.cta.sub")}
+                  </span>
                 </span>
               </button>
 
@@ -56,7 +59,6 @@ function LabourPage() {
           ) : (
             <LabourMode plan={plan} entries={entries} />
           )}
-
         </div>
         <TesterFeedbackButton />
       </AppShell>
@@ -67,9 +69,17 @@ function LabourPage() {
             <h3 className="font-serif text-lg font-semibold">{t("lab.confirm.title")}</h3>
             <p className="text-sm text-ink-soft mt-2 leading-relaxed">{t("lab.confirm.body")}</p>
             <div className="flex gap-2 mt-4">
-              <button onClick={() => setConfirmOpen(false)} className="flex-1 py-3 rounded-full bg-white border border-border text-sm font-medium">{t("common.cancel")}</button>
               <button
-                onClick={() => { store.startLabourRecording(); setConfirmOpen(false); }}
+                onClick={() => setConfirmOpen(false)}
+                className="flex-1 py-3 rounded-full bg-white border border-border text-sm font-medium"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  store.startLabourRecording();
+                  setConfirmOpen(false);
+                }}
                 className="flex-1 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
               >
                 {t("lab.confirm.start")}
@@ -103,19 +113,36 @@ function BirthPlanSection({ plan }: { plan: LabourPlan }) {
       <Field label={t("lab.plan.pain")} value={painRelief} onChange={setPainRelief} />
       <Field label={t("lab.plan.partner")} value={partnerNotes} onChange={setPartnerNotes} />
       <Field label={t("lab.plan.notes")} value={notes} onChange={setNotes} rows={4} />
-      <button onClick={save} className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+      <button
+        onClick={save}
+        className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+      >
         {t("common.save")}
       </button>
     </section>
   );
 }
 
-function Field({ label, value, onChange, rows = 2 }: { label: string; value: string; onChange: (v: string) => void; rows?: number }) {
+function Field({
+  label,
+  value,
+  onChange,
+  rows = 2,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  rows?: number;
+}) {
   return (
     <label className="block">
-      <span className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">{label}</span>
+      <span className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">
+        {label}
+      </span>
       <textarea
-        value={value} onChange={(e) => onChange(e.target.value)} rows={rows}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
         className="mt-1 w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60 resize-none"
       />
     </label>
@@ -129,7 +156,7 @@ function HospitalBagSection({ plan }: { plan: LabourPlan }) {
   const [newItem, setNewItem] = useState("");
 
   function toggle(id: string) {
-    store.setBag(plan.bag.map((i) => i.id === id ? { ...i, packed: !i.packed } : i));
+    store.setBag(plan.bag.map((i) => (i.id === id ? { ...i, packed: !i.packed } : i)));
   }
   function remove(id: string) {
     store.setBag(plan.bag.filter((i) => i.id !== id));
@@ -147,11 +174,19 @@ function HospitalBagSection({ plan }: { plan: LabourPlan }) {
         {plan.bag.map((item) => (
           <li key={item.id} className="flex items-center gap-3 py-1.5">
             <input
-              type="checkbox" checked={item.packed} onChange={() => toggle(item.id)}
+              type="checkbox"
+              checked={item.packed}
+              onChange={() => toggle(item.id)}
               className="size-5 accent-[var(--primary)]"
             />
-            <span className={`flex-1 text-sm ${item.packed ? "text-ink-soft" : "text-ink"}`}>{item.label}</span>
-            <button onClick={() => remove(item.id)} aria-label="Remove" className="text-ink-soft hover:text-destructive">
+            <span className={`flex-1 text-sm ${item.packed ? "text-ink-soft" : "text-ink"}`}>
+              {item.label}
+            </span>
+            <button
+              onClick={() => remove(item.id)}
+              aria-label="Remove"
+              className="text-ink-soft hover:text-destructive"
+            >
               <X className="size-4" />
             </button>
           </li>
@@ -159,12 +194,16 @@ function HospitalBagSection({ plan }: { plan: LabourPlan }) {
       </ul>
       <div className="mt-3 flex gap-2">
         <input
-          value={newItem} onChange={(e) => setNewItem(e.target.value)}
+          value={newItem}
+          onChange={(e) => setNewItem(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && add()}
           placeholder={t("lab.bag.placeholder")}
           className="flex-1 px-4 py-2.5 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
         />
-        <button onClick={add} className="px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-1">
+        <button
+          onClick={add}
+          className="px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-1"
+        >
           <Plus className="size-4" /> {t("lab.bag.add")}
         </button>
       </div>
@@ -184,8 +223,11 @@ function ImportantInfoSection({ plan }: { plan: LabourPlan }) {
 
   function save() {
     store.updateLabourPlan({
-      infoHospital: hospital, infoContacts: contacts, infoParking: parking,
-      infoChildcare: childcare, infoNotes: notes,
+      infoHospital: hospital,
+      infoContacts: contacts,
+      infoParking: parking,
+      infoChildcare: childcare,
+      infoNotes: notes,
     });
     toast.success(t("common.save"));
   }
@@ -198,7 +240,10 @@ function ImportantInfoSection({ plan }: { plan: LabourPlan }) {
       <Field label={t("lab.info.parking")} value={parking} onChange={setParking} />
       <Field label={t("lab.info.childcare")} value={childcare} onChange={setChildcare} />
       <Field label={t("lab.info.notes")} value={notes} onChange={setNotes} rows={3} />
-      <button onClick={save} className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+      <button
+        onClick={save}
+        className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+      >
         {t("common.save")}
       </button>
     </section>
@@ -222,10 +267,11 @@ function LabourMode({ plan, entries }: { plan: LabourPlan; entries: Entry[] }) {
   const start = plan.recordingStartISO!;
   const [outcomeOpen, setOutcomeOpen] = useState(false);
   const labourEntries = useMemo(
-    () => entries
-      .filter((e) => !e.deletedAt && (e.type === "contraction" || e.type === "labour_event"))
-      .filter((e) => e.createdAt >= start)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    () =>
+      entries
+        .filter((e) => !e.deletedAt && (e.type === "contraction" || e.type === "labour_event"))
+        .filter((e) => e.createdAt >= start)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [entries, start],
   );
 
@@ -233,8 +279,12 @@ function LabourMode({ plan, entries }: { plan: LabourPlan; entries: Entry[] }) {
     <div className="space-y-5">
       <div className="surface-card px-4 py-3 blush-bg flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-widest text-ink-soft font-semibold">{t("lab.episode.title")}</p>
-          <p className="font-mono text-xs sm:text-sm mt-0.5 break-words">{t("sum.labour.started")}: {formatUKDateTime(start)}</p>
+          <p className="text-[10px] uppercase tracking-widest text-ink-soft font-semibold">
+            {t("lab.episode.title")}
+          </p>
+          <p className="font-mono text-xs sm:text-sm mt-0.5 break-words">
+            {t("sum.labour.started")}: {formatUKDateTime(start)}
+          </p>
         </div>
         <button
           onClick={() => setOutcomeOpen(true)}
@@ -254,15 +304,25 @@ function LabourMode({ plan, entries }: { plan: LabourPlan; entries: Entry[] }) {
         ) : (
           <ul className="space-y-2">
             {labourEntries.map((e) => (
-              <li key={e.id} className="text-sm border-b border-border last:border-b-0 pb-2 last:pb-0">
+              <li
+                key={e.id}
+                className="text-sm border-b border-border last:border-b-0 pb-2 last:pb-0"
+              >
                 <p className="text-[10px] font-mono uppercase tracking-widest text-ink-soft">
                   {formatUKDate(e.createdAt)} · {formatUKTime(e.createdAt)}
                 </p>
                 {e.type === "contraction" && (
-                  <p className="mt-0.5"><span className="font-semibold">{t("type.contraction")}</span> · {formatDuration(e.durationSec)}{e.note ? ` · ${e.note}` : ""}</p>
+                  <p className="mt-0.5">
+                    <span className="font-semibold">{t("type.contraction")}</span> ·{" "}
+                    {formatDuration(e.durationSec)}
+                    {e.note ? ` · ${e.note}` : ""}
+                  </p>
                 )}
                 {e.type === "labour_event" && (
-                  <p className="mt-0.5"><span className="font-semibold">{e.event}</span>{e.note ? ` · ${e.note}` : ""}</p>
+                  <p className="mt-0.5">
+                    <span className="font-semibold">{e.event}</span>
+                    {e.note ? ` · ${e.note}` : ""}
+                  </p>
                 )}
               </li>
             ))}
@@ -284,7 +344,10 @@ function LabourMode({ plan, entries }: { plan: LabourPlan; entries: Entry[] }) {
   );
 }
 
-function OutcomeModal({ onCancel, onSave }: {
+function OutcomeModal({
+  onCancel,
+  onSave,
+}: {
   onCancel: () => void;
   onSave: (outcome?: "baby" | "settled" | "other", note?: string) => void;
 }) {
@@ -300,33 +363,44 @@ function OutcomeModal({ onCancel, onSave }: {
     <div className="fixed inset-0 z-50 bg-ink/40 grid place-items-end md:place-items-center px-4 py-6">
       <div className="surface-card p-5 w-full max-w-[440px] shadow-xl">
         <h3 className="font-serif text-lg font-semibold">{t("lab.outcome.endTitle")}</h3>
-        <p className="mt-1 text-sm text-ink-soft leading-relaxed">
-          {t("lab.outcome.endBody")}
-        </p>
+        <p className="mt-1 text-sm text-ink-soft leading-relaxed">{t("lab.outcome.endBody")}</p>
         <label className="mt-4 block">
-          <span className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">{t("lab.outcome.label")}</span>
+          <span className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">
+            {t("lab.outcome.label")}
+          </span>
           <select
             value={outcome}
             onChange={(e) => setOutcome(e.target.value as typeof outcome)}
             className="mt-1 w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
           >
             <option value="">{t("lab.outcome.none")}</option>
-            {options.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
+            {options.map((o) => (
+              <option key={o.key} value={o.key}>
+                {o.label}
+              </option>
+            ))}
           </select>
         </label>
         {outcome === "other" && (
           <textarea
-            value={note} onChange={(e) => setNote(e.target.value)} rows={3}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
             placeholder={t("lab.outcome.otherPlaceholder")}
             className="mt-3 w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60 resize-none"
           />
         )}
         <div className="flex gap-2 mt-4">
-          <button onClick={onCancel} className="flex-1 py-3 rounded-full bg-white border border-border text-sm font-medium">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-3 rounded-full bg-white border border-border text-sm font-medium"
+          >
             {t("common.cancel")}
           </button>
           <button
-            onClick={() => onSave(outcome || undefined, outcome === "other" ? (note || undefined) : undefined)}
+            onClick={() =>
+              onSave(outcome || undefined, outcome === "other" ? note || undefined : undefined)
+            }
             className="flex-1 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
           >
             End recording
@@ -336,7 +410,6 @@ function OutcomeModal({ onCancel, onSave }: {
     </div>
   );
 }
-
 
 function ContractionRecorder() {
   const t = useT();
@@ -351,7 +424,9 @@ function ContractionRecorder() {
   // Reference tick so React keeps it in the dep cycle visibly
   void tick;
 
-  function start() { setStartedAt(Date.now()); }
+  function start() {
+    setStartedAt(Date.now());
+  }
   function stop() {
     if (startedAt === null) return;
     const endMs = Date.now();
@@ -359,7 +434,11 @@ function ContractionRecorder() {
     const startISO = new Date(startedAt).toISOString();
     const endISO = new Date(endMs).toISOString();
     store.addEntry({
-      type: "contraction", startISO, endISO, durationSec, createdAt: startISO,
+      type: "contraction",
+      startISO,
+      endISO,
+      durationSec,
+      createdAt: startISO,
     } as Omit<Entry, "id" | "createdAt" | "weekDay"> & { createdAt: string });
     toast.success(t("lab.contraction.saved"));
     setStartedAt(null);
@@ -374,12 +453,18 @@ function ContractionRecorder() {
         <>
           <p className="mt-3 font-mono text-3xl text-primary">{formatDuration(elapsed)}</p>
           <p className="text-xs text-ink-soft mt-0.5">{t("lab.contraction.active")}</p>
-          <button onClick={stop} className="mt-4 w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2">
+          <button
+            onClick={stop}
+            className="mt-4 w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2"
+          >
             <Square className="size-4" /> {t("lab.contraction.stop")}
           </button>
         </>
       ) : (
-        <button onClick={start} className="mt-3 w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2">
+        <button
+          onClick={start}
+          className="mt-3 w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2"
+        >
           <Play className="size-4" /> {t("lab.contraction.start")}
         </button>
       )}
@@ -395,10 +480,13 @@ function QuickEvents() {
   function save() {
     if (!selected) return;
     store.addEntry({
-      type: "labour_event", event: selected, note: note || undefined,
+      type: "labour_event",
+      event: selected,
+      note: note || undefined,
     } as Omit<Entry, "id" | "createdAt" | "weekDay">);
     toast.success(t("lab.event.saved"));
-    setSelected(null); setNote("");
+    setSelected(null);
+    setNote("");
   }
 
   return (
@@ -407,9 +495,12 @@ function QuickEvents() {
       <div className="flex flex-wrap gap-2">
         {QUICK_EVENTS.map((q) => (
           <button
-            key={q.key} onClick={() => setSelected(q.key)}
+            key={q.key}
+            onClick={() => setSelected(q.key)}
             className={`px-3.5 py-2 rounded-full text-sm font-medium border ${
-              selected === q.key ? "bg-primary text-primary-foreground border-primary" : "bg-white border-border"
+              selected === q.key
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-white border-border"
             }`}
           >
             {t(q.tKey)}
@@ -419,11 +510,16 @@ function QuickEvents() {
       {selected && (
         <>
           <textarea
-            value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={2}
             placeholder={t("lab.event.note")}
             className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60 resize-none"
           />
-          <button onClick={save} className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+          <button
+            onClick={save}
+            className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+          >
             {t("lab.event.add")}
           </button>
         </>

@@ -13,14 +13,21 @@ export const Route = createFileRoute("/tester")({
   head: () => ({
     meta: [
       { title: "BumpNotes — Tester Mode" },
-      { name: "description", content: "Tester Mode for invited BumpNotes testers. Explore the full experience with fake data — no account needed." },
+      {
+        name: "description",
+        content:
+          "Tester Mode for invited BumpNotes testers. Explore the full experience with fake data — no account needed.",
+      },
       { name: "theme-color", content: "#ffffff" },
       { name: "robots", content: "noindex,nofollow" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
+      },
     ],
   }),
   component: Tester,
@@ -56,7 +63,8 @@ function Tester() {
               Help us shape BumpNotes.
             </h1>
             <p className="mt-3 text-[15px] sm:text-base text-ink-soft leading-relaxed text-balance max-w-[480px] mx-auto">
-              You've been invited to try BumpNotes. Use fake data only — no account needed. Tap around, then tell us what works and what doesn't.
+              You've been invited to try BumpNotes. Use fake data only — no account needed. Tap
+              around, then tell us what works and what doesn't.
             </p>
 
             <div className="mt-6 flex flex-col items-center gap-3">
@@ -75,17 +83,35 @@ function Tester() {
 
         <section className="px-5 sm:px-8 pb-10">
           <div className="max-w-[860px] mx-auto grid gap-3 sm:grid-cols-3">
-            <Feature icon={<NotebookPen className="size-5" />} title="Try the real flow" body="You'll go through the same onboarding and recording experience as a real user." />
-            <Feature icon={<Sparkles className="size-5" />} title="Fake data only" body="Please don't enter real pregnancy details. This is a shared testing sandbox." />
-            <Feature icon={<FileText className="size-5" />} title="Tell us anything" body="Use the small feedback button in the corner whenever something feels off." />
+            <Feature
+              icon={<NotebookPen className="size-5" />}
+              title="Try the real flow"
+              body="You'll go through the same onboarding and recording experience as a real user."
+            />
+            <Feature
+              icon={<Sparkles className="size-5" />}
+              title="Fake data only"
+              body="Please don't enter real pregnancy details. This is a shared testing sandbox."
+            />
+            <Feature
+              icon={<FileText className="size-5" />}
+              title="Tell us anything"
+              body="Use the small feedback button in the corner whenever something feels off."
+            />
           </div>
         </section>
 
         <section className="px-5 sm:px-8 pb-16">
           <div className="max-w-[680px] mx-auto flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
-            <Link to="/welcome" className="text-primary font-medium">Public site</Link>
-            <Link to="/contact" className="text-primary font-medium">Get in contact</Link>
-            <Link to="/privacy" className="text-primary font-medium">Privacy</Link>
+            <Link to="/welcome" className="text-primary font-medium">
+              Public site
+            </Link>
+            <Link to="/contact" className="text-primary font-medium">
+              Get in contact
+            </Link>
+            <Link to="/privacy" className="text-primary font-medium">
+              Privacy
+            </Link>
           </div>
         </section>
       </PublicShell>
@@ -96,7 +122,9 @@ function Tester() {
 function Feature({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
   return (
     <div className="surface-card p-4">
-      <span className="size-10 rounded-2xl bg-blush-soft grid place-items-center text-primary">{icon}</span>
+      <span className="size-10 rounded-2xl bg-blush-soft grid place-items-center text-primary">
+        {icon}
+      </span>
       <h3 className="mt-3 font-serif text-base font-semibold">{title}</h3>
       <p className="text-sm text-ink-soft mt-1 leading-relaxed">{body}</p>
     </div>

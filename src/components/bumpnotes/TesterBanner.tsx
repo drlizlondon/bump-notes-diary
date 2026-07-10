@@ -12,7 +12,11 @@ export function TesterBanner() {
   if (!tester) return null;
 
   function reset() {
-    if (!confirmReset) { setConfirmReset(true); setTimeout(() => setConfirmReset(false), 4000); return; }
+    if (!confirmReset) {
+      setConfirmReset(true);
+      setTimeout(() => setConfirmReset(false), 4000);
+      return;
+    }
     store.clearAll();
     toast.success("Tester workspace reset.");
     setConfirmReset(false);
@@ -29,7 +33,9 @@ export function TesterBanner() {
         <div className="max-w-[1200px] mx-auto px-3 py-2 flex flex-wrap items-center gap-2 text-[12px]">
           <FlaskConical className="size-4 shrink-0" />
           <span className="font-semibold">Tester mode.</span>
-          <span className="text-ink-soft hidden sm:inline">Explore BumpNotes. When you're ready, complete the tester feedback.</span>
+          <span className="text-ink-soft hidden sm:inline">
+            Explore BumpNotes. When you're ready, complete the tester feedback.
+          </span>
           <div className="ml-auto flex gap-1.5">
             <button
               onClick={() => setFeedbackOpen(true)}
@@ -37,10 +43,16 @@ export function TesterBanner() {
             >
               <MessageSquareHeart className="size-3" /> Give feedback
             </button>
-            <button onClick={reset} className="px-2.5 py-1 rounded-full bg-white border border-border text-[11px] font-medium">
+            <button
+              onClick={reset}
+              className="px-2.5 py-1 rounded-full bg-white border border-border text-[11px] font-medium"
+            >
               {confirmReset ? "Tap to confirm" : "Reset"}
             </button>
-            <button onClick={exit} className="px-2.5 py-1 rounded-full bg-white border border-border text-[11px] font-medium inline-flex items-center gap-1">
+            <button
+              onClick={exit}
+              className="px-2.5 py-1 rounded-full bg-white border border-border text-[11px] font-medium inline-flex items-center gap-1"
+            >
               <X className="size-3" /> Exit
             </button>
           </div>

@@ -14,17 +14,32 @@ export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
       { title: "BumpNotes — your pregnancy, clearly organised" },
-      { name: "description", content: "Record pregnancy symptoms, appointments and questions privately. Share a clear summary with your care team when you need it." },
+      {
+        name: "description",
+        content:
+          "Record pregnancy symptoms, appointments and questions privately. Share a clear summary with your care team when you need it.",
+      },
       { name: "theme-color", content: "#ffffff" },
       { property: "og:title", content: "BumpNotes — your pregnancy, clearly organised" },
-      { property: "og:description", content: "Private pregnancy notebook. Share a clear summary with your care team when you need it." },
+      {
+        property: "og:description",
+        content:
+          "Private pregnancy notebook. Share a clear summary with your care team when you need it.",
+      },
       { name: "twitter:title", content: "BumpNotes — your pregnancy, clearly organised" },
-      { name: "twitter:description", content: "Private pregnancy notebook. Share a clear summary with your care team when you need it." },
+      {
+        name: "twitter:description",
+        content:
+          "Private pregnancy notebook. Share a clear summary with your care team when you need it.",
+      },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
+      },
     ],
   }),
   component: Welcome,
@@ -65,18 +80,19 @@ function Hero() {
       <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[45fr_55fr] gap-8 lg:gap-14 items-center">
         {/* Copy column */}
         <div className="text-left max-w-[560px] mx-auto lg:mx-0 w-full lg:py-6">
-
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blush-soft border border-border text-[12px] font-medium text-ink">
             <Lock className="size-3.5 text-primary" /> Private by default
           </span>
 
           <h1 className="mt-5 font-serif text-[34px] sm:text-[44px] lg:text-[56px] font-semibold leading-[1.05] tracking-tight text-balance text-ink">
-            Everything about your pregnancy.<br className="hidden sm:block" />{" "}
+            Everything about your pregnancy.
+            <br className="hidden sm:block" />{" "}
             <span className="text-primary">Ready when you need it.</span>
           </h1>
 
           <p className="mt-5 text-[15.5px] sm:text-lg text-ink-soft leading-[1.7] max-w-[520px]">
-            Record what matters to you throughout your pregnancy. Create clear summaries whenever you need them, helping you communicate clearly and confidently with your maternity team.
+            Record what matters to you throughout your pregnancy. Create clear summaries whenever
+            you need them, helping you communicate clearly and confidently with your maternity team.
           </p>
 
           <Link
@@ -113,7 +129,8 @@ function EmpowermentSection() {
           Every woman deserves to feel confident speaking about her pregnancy.
         </h2>
         <p className="mt-4 text-[15px] sm:text-base text-ink-soft leading-relaxed">
-          BumpNotes helps you keep your experiences together, so when the conversation matters, you're ready.
+          BumpNotes helps you keep your experiences together, so when the conversation matters,
+          you're ready.
         </p>
       </div>
     </section>
@@ -137,7 +154,8 @@ function ReassuranceCards() {
             If things become more complicated...
           </h3>
           <p className="mt-2.5 text-sm sm:text-[15px] text-ink-soft leading-relaxed">
-            BumpNotes helps you keep a clear record of your experiences, so when the conversation matters, you're ready.
+            BumpNotes helps you keep a clear record of your experiences, so when the conversation
+            matters, you're ready.
           </p>
         </div>
       </div>
@@ -163,7 +181,11 @@ function SummaryShowcase() {
     if (!demo) return;
     const el = scrollerRef.current;
     if (!el) return;
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    )
+      return;
 
     let raf = 0;
     const DELAY = 1200;
@@ -187,7 +209,10 @@ function SummaryShowcase() {
       if (cancelled || !el) return;
       if (startTs === null) startTs = now;
       const elapsed = now - startTs;
-      if (elapsed < DELAY) { raf = requestAnimationFrame(tick); return; }
+      if (elapsed < DELAY) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       const max = Math.max(0, el.scrollHeight - el.clientHeight);
       if (max <= 0) return;
       const reveal = Math.min(max, 220);
@@ -206,12 +231,18 @@ function SummaryShowcase() {
       if (p < 1) raf = requestAnimationFrame(tick);
     }
     raf = requestAnimationFrame(tick);
-    return () => { cancelled = true; cancelAnimationFrame(raf); };
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+    };
   }, [demo]);
 
   return (
     <div className="relative mx-auto w-full max-w-[560px] lg:max-w-none">
-      <div className="pointer-events-none absolute -inset-10 sm:-inset-16 -z-10 rounded-[60px] bg-[radial-gradient(ellipse_at_center,rgba(255,214,220,0.55)_0%,rgba(255,214,220,0.25)_35%,rgba(255,214,220,0.08)_60%,transparent_80%)]" aria-hidden />
+      <div
+        className="pointer-events-none absolute -inset-10 sm:-inset-16 -z-10 rounded-[60px] bg-[radial-gradient(ellipse_at_center,rgba(255,214,220,0.55)_0%,rgba(255,214,220,0.25)_35%,rgba(255,214,220,0.08)_60%,transparent_80%)]"
+        aria-hidden
+      />
       <div className="relative rounded-[28px] bg-white shadow-[0_30px_80px_-30px_rgba(36,27,27,0.25),0_10px_30px_-15px_rgba(246,95,124,0.25)] ring-1 ring-border overflow-hidden transition-transform duration-500 will-change-transform lg:rotate-[2deg] lg:hover:rotate-0">
         <FauxBrowserChrome />
         <div
@@ -230,12 +261,14 @@ function SummaryShowcase() {
           )}
         </div>
         {/* Soft fade hinting at more content below */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent" aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent"
+          aria-hidden
+        />
       </div>
     </div>
   );
 }
-
 
 function FauxBrowserChrome() {
   return (
@@ -243,7 +276,9 @@ function FauxBrowserChrome() {
       <span className="size-2.5 rounded-full bg-coral-soft" />
       <span className="size-2.5 rounded-full bg-butter-soft" />
       <span className="size-2.5 rounded-full bg-mint-soft" />
-      <span className="ml-3 text-[11px] font-mono uppercase tracking-widest text-ink-soft">Pregnancy Summary</span>
+      <span className="ml-3 text-[11px] font-mono uppercase tracking-widest text-ink-soft">
+        Pregnancy Summary
+      </span>
     </div>
   );
 }

@@ -27,10 +27,12 @@ export function BottomNav() {
           const active = matchExact ? location.pathname === to : location.pathname.startsWith(to);
           return (
             <li key={to} className="flex-1">
-              <Link to={to}
+              <Link
+                to={to}
                 className={`flex flex-col items-center gap-1 py-1.5 rounded-2xl transition-colors ${
                   active ? "text-primary" : "text-ink-soft hover:text-ink"
-                }`}>
+                }`}
+              >
                 <Icon className={`size-5 ${active ? "stroke-[2.4]" : "stroke-[1.8]"}`} />
                 <span className="text-[9px] font-semibold uppercase tracking-wider">{label}</span>
               </Link>

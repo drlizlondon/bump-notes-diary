@@ -10,48 +10,89 @@ import { trackEvent } from "@/lib/analytics";
 type Tone = "coral" | "blush" | "mint" | "butter" | "lavender" | "primary";
 
 const tonemap: Record<Tone, { bg: string; chip: string; ring: string; dot: string }> = {
-  coral:    { bg: "bg-coral-soft",     chip: "bg-coral/15",    ring: "ring-coral/30",    dot: "bg-coral" },
-  blush:    { bg: "bg-blush-soft",     chip: "bg-blush/40",    ring: "ring-coral/20",    dot: "bg-coral" },
-  mint:     { bg: "bg-mint-soft",      chip: "bg-mint/40",     ring: "ring-mint/40",     dot: "bg-mint" },
-  butter:   { bg: "bg-butter-soft",    chip: "bg-butter/40",   ring: "ring-butter/40",   dot: "bg-butter" },
-  lavender: { bg: "bg-lavender-soft",  chip: "bg-lavender/40", ring: "ring-lavender/40", dot: "bg-lavender" },
-  primary:  { bg: "bg-primary/10",     chip: "bg-primary/15",  ring: "ring-primary/25",  dot: "bg-primary" },
+  coral: { bg: "bg-coral-soft", chip: "bg-coral/15", ring: "ring-coral/30", dot: "bg-coral" },
+  blush: { bg: "bg-blush-soft", chip: "bg-blush/40", ring: "ring-coral/20", dot: "bg-coral" },
+  mint: { bg: "bg-mint-soft", chip: "bg-mint/40", ring: "ring-mint/40", dot: "bg-mint" },
+  butter: { bg: "bg-butter-soft", chip: "bg-butter/40", ring: "ring-butter/40", dot: "bg-butter" },
+  lavender: {
+    bg: "bg-lavender-soft",
+    chip: "bg-lavender/40",
+    ring: "ring-lavender/40",
+    dot: "bg-lavender",
+  },
+  primary: {
+    bg: "bg-primary/10",
+    chip: "bg-primary/15",
+    ring: "ring-primary/25",
+    dot: "bg-primary",
+  },
 };
 
 export function ActionCard({
-  label, helper, tone, open, onToggle, icon, children,
+  label,
+  helper,
+  tone,
+  open,
+  onToggle,
+  icon,
+  children,
 }: {
-  label: string; helper?: string; tone: Tone; open: boolean;
-  onToggle: () => void; icon: ReactNode; children: ReactNode;
+  label: string;
+  helper?: string;
+  tone: Tone;
+  open: boolean;
+  onToggle: () => void;
+  icon: ReactNode;
+  children: ReactNode;
 }) {
   const tn = tonemap[tone];
   return (
-    <div className={`surface-card overflow-hidden transition-all ${open ? "ring-1 " + tn.ring : ""}`}>
-      <button onClick={onToggle} className="w-full flex items-center gap-3 px-3.5 py-3 sm:px-4 sm:py-3.5 text-left">
+    <div
+      className={`surface-card overflow-hidden transition-all ${open ? "ring-1 " + tn.ring : ""}`}
+    >
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 px-3.5 py-3 sm:px-4 sm:py-3.5 text-left"
+      >
         <span className={`size-10 shrink-0 rounded-2xl grid place-items-center ${tn.bg}`}>
           <span className="text-ink">{icon}</span>
         </span>
         <span className="flex-1 min-w-0">
           <span className="block font-semibold text-[14.5px] leading-tight text-ink">{label}</span>
-          {helper && <span className="block text-[12px] text-ink-soft mt-0.5 truncate">{helper}</span>}
+          {helper && (
+            <span className="block text-[12px] text-ink-soft mt-0.5 truncate">{helper}</span>
+          )}
         </span>
-        <ChevronDown className={`size-5 text-ink-soft transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown
+          className={`size-5 text-ink-soft transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </button>
-      {open && <div className="px-3.5 sm:px-4 pb-3 pt-1 sm:pb-4 border-t border-border">{children}</div>}
+      {open && (
+        <div className="px-3.5 sm:px-4 pb-3 pt-1 sm:pb-4 border-t border-border">{children}</div>
+      )}
     </div>
   );
 }
 
 export function Chip({
-  active, onClick, children, size = "md",
-}: { active?: boolean; onClick?: () => void; children: ReactNode; size?: "sm" | "md" }) {
+  active,
+  onClick,
+  children,
+  size = "md",
+}: {
+  active?: boolean;
+  onClick?: () => void;
+  children: ReactNode;
+  size?: "sm" | "md";
+}) {
   const pad = size === "sm" ? "px-2.5 py-1 text-[12.5px]" : "px-3 py-1.5 text-[13.5px]";
   return (
     <button
       onClick={onClick}
       className={`${pad} rounded-full font-medium border transition-all ${
-        active ? "bg-primary text-primary-foreground border-primary"
-               : "bg-white text-ink border-border hover:border-primary/40"
+        active
+          ? "bg-primary text-primary-foreground border-primary"
+          : "bg-white text-ink border-border hover:border-primary/40"
       }`}
     >
       {children}
@@ -63,9 +104,12 @@ function loggedToast(label: string) {
   toast.success(label, { icon: <Check className="size-4 text-mint" />, duration: 2200 });
 }
 
-const inputClass = "w-full px-3.5 py-2.5 sm:py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60";
-const primaryBtn = "w-full py-2.5 sm:py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50";
-const secondaryBtn = "flex-1 py-2.5 sm:py-3 rounded-full bg-white border border-border text-sm font-medium";
+const inputClass =
+  "w-full px-3.5 py-2.5 sm:py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60";
+const primaryBtn =
+  "w-full py-2.5 sm:py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50";
+const secondaryBtn =
+  "flex-1 py-2.5 sm:py-3 rounded-full bg-white border border-border text-sm font-medium";
 const uploadAccept = "image/*,.pdf,.doc,.docx,.txt,.rtf,.heic,.heif";
 
 function isImageDataUrl(dataUrl: string) {
@@ -128,7 +172,10 @@ export function SymptomPanelBody() {
   function record(symptom: string) {
     // Re-tapping the same chip is a no-op
     if (selected === symptom && entryId) return;
-    const e = store.addEntry({ type: "symptom", symptom } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+    const e = store.addEntry({ type: "symptom", symptom } as Omit<
+      Entry,
+      "id" | "createdAt" | "weekDay"
+    >);
     setEntryId(e.id);
     setSelected(symptom);
     setSeverity(null);
@@ -140,7 +187,11 @@ export function SymptomPanelBody() {
 
   function undo() {
     if (entryId) store.hardDelete(entryId);
-    setEntryId(null); setSelected(null); setSeverity(null); setQuantifier(null); setNote("");
+    setEntryId(null);
+    setSelected(null);
+    setSeverity(null);
+    setQuantifier(null);
+    setNote("");
     toast.dismiss();
   }
 
@@ -152,35 +203,48 @@ export function SymptomPanelBody() {
   const def = selected ? SYMPTOMS.find((s) => s.key === selected) : undefined;
   const qtyOptions: { key: string; label: string }[] = (() => {
     if (!def) return [];
-    if (def.qty === "severity") return [
-      { key: "Mild", label: t("qty.mild") },
-      { key: "Moderate", label: t("qty.moderate") },
-      { key: "Severe", label: t("qty.severe") },
-    ];
-    if (def.qty === "bleeding") return [
-      { key: "Spotting", label: t("qty.spotting") },
-      { key: "Light", label: t("qty.light") },
-      { key: "Moderate", label: t("qty.moderate") },
-      { key: "Heavy", label: t("qty.heavy") },
-    ];
-    if (def.qty === "movement") return [
-      { key: "Less than usual", label: t("qty.lessThanUsual") },
-      { key: "Usual", label: t("qty.usual") },
-      { key: "More than usual", label: t("qty.moreThanUsual") },
-    ];
+    if (def.qty === "severity")
+      return [
+        { key: "Mild", label: t("qty.mild") },
+        { key: "Moderate", label: t("qty.moderate") },
+        { key: "Severe", label: t("qty.severe") },
+      ];
+    if (def.qty === "bleeding")
+      return [
+        { key: "Spotting", label: t("qty.spotting") },
+        { key: "Light", label: t("qty.light") },
+        { key: "Moderate", label: t("qty.moderate") },
+        { key: "Heavy", label: t("qty.heavy") },
+      ];
+    if (def.qty === "movement")
+      return [
+        { key: "Less than usual", label: t("qty.lessThanUsual") },
+        { key: "Usual", label: t("qty.usual") },
+        { key: "More than usual", label: t("qty.moreThanUsual") },
+      ];
     return [];
   })();
 
   function commitNote(value: string) {
     if (noteTimer.current) clearTimeout(noteTimer.current);
-    noteTimer.current = setTimeout(() => patch({ note: value || undefined } as Partial<Entry>), 300);
+    noteTimer.current = setTimeout(
+      () => patch({ note: value || undefined } as Partial<Entry>),
+      300,
+    );
   }
 
-  useEffect(() => () => { if (noteTimer.current) clearTimeout(noteTimer.current); }, []);
+  useEffect(
+    () => () => {
+      if (noteTimer.current) clearTimeout(noteTimer.current);
+    },
+    [],
+  );
 
   return (
     <div className="space-y-2.5 pt-3">
-      <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">{t("sym.prompt")}</p>
+      <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold">
+        {t("sym.prompt")}
+      </p>
       <div className="flex flex-wrap gap-1.5">
         {SYMPTOMS.map((s) => (
           <Chip key={s.key} size="sm" active={selected === s.key} onClick={() => record(s.key)}>
@@ -197,7 +261,9 @@ export function SymptomPanelBody() {
 
           {qtyOptions.length > 0 && (
             <div>
-              <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold mb-1.5">{t("sym.quantifier")}</p>
+              <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold mb-1.5">
+                {t("sym.quantifier")}
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {qtyOptions.map((q) => (
                   <Chip
@@ -218,12 +284,17 @@ export function SymptomPanelBody() {
           )}
           {PAIN_LIKE.has(selected) && (
             <div>
-              <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold mb-1.5">{t("sym.severity")}</p>
+              <p className="text-[11px] uppercase tracking-widest text-ink-soft font-semibold mb-1.5">
+                {t("sym.severity")}
+              </p>
               <div className="grid grid-cols-10 gap-1">
                 {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                   <button
                     key={n}
-                    onClick={() => { setSeverity(n); patch({ severity: n } as Partial<Entry>); }}
+                    onClick={() => {
+                      setSeverity(n);
+                      patch({ severity: n } as Partial<Entry>);
+                    }}
                     className={`h-8 rounded-lg text-xs font-semibold border ${severity === n ? "bg-primary text-primary-foreground border-primary" : "bg-white border-border"}`}
                   >
                     {n}
@@ -234,7 +305,10 @@ export function SymptomPanelBody() {
           )}
           <textarea
             value={note}
-            onChange={(e) => { setNote(e.target.value); commitNote(e.target.value); }}
+            onChange={(e) => {
+              setNote(e.target.value);
+              commitNote(e.target.value);
+            }}
             onBlur={() => patch({ note: note || undefined } as Partial<Entry>)}
             placeholder={t("common.notes")}
             rows={2}
@@ -242,7 +316,14 @@ export function SymptomPanelBody() {
           />
           <button
             type="button"
-            onClick={() => { setEntryId(null); setSelected(null); setSeverity(null); setQuantifier(null); setNote(""); setShowUndo(false); }}
+            onClick={() => {
+              setEntryId(null);
+              setSelected(null);
+              setSeverity(null);
+              setQuantifier(null);
+              setNote("");
+              setShowUndo(false);
+            }}
             className="text-xs text-ink-soft underline"
           >
             Done
@@ -256,8 +337,12 @@ export function SymptomPanelBody() {
 /* -------------------------------- QUESTION ------------------------------- */
 
 const COMMON_PROMPTS = [
-  "prompt.result", "prompt.why", "prompt.options",
-  "prompt.time", "prompt.contact", "prompt.lookout",
+  "prompt.result",
+  "prompt.why",
+  "prompt.options",
+  "prompt.time",
+  "prompt.contact",
+  "prompt.lookout",
 ];
 
 export function QuestionPanelBody() {
@@ -266,17 +351,37 @@ export function QuestionPanelBody() {
   const [context, setContext] = useState("");
   function save(q: string, ctx?: string) {
     if (!q.trim()) return;
-    store.addEntry({ type: "question", text: q.trim(), context: ctx?.trim() || undefined } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+    store.addEntry({ type: "question", text: q.trim(), context: ctx?.trim() || undefined } as Omit<
+      Entry,
+      "id" | "createdAt" | "weekDay"
+    >);
     loggedToast(t("q.saved"));
-    setText(""); setContext("");
+    setText("");
+    setContext("");
   }
   return (
     <div className="space-y-2.5 pt-3">
-      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t("q.placeholder")} rows={2} className={inputClass + " resize-none"} />
-      <textarea value={context} onChange={(e) => setContext(e.target.value)} placeholder={t("q.context")} rows={2} className={inputClass + " resize-none"} />
-      <button onClick={() => save(text, context)} disabled={!text.trim()} className={primaryBtn}>{t("q.save")}</button>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder={t("q.placeholder")}
+        rows={2}
+        className={inputClass + " resize-none"}
+      />
+      <textarea
+        value={context}
+        onChange={(e) => setContext(e.target.value)}
+        placeholder={t("q.context")}
+        rows={2}
+        className={inputClass + " resize-none"}
+      />
+      <button onClick={() => save(text, context)} disabled={!text.trim()} className={primaryBtn}>
+        {t("q.save")}
+      </button>
       <div>
-        <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2">{t("q.common")}</p>
+        <p className="text-xs uppercase tracking-widest text-ink-soft font-semibold mb-2">
+          {t("q.common")}
+        </p>
         <div className="flex flex-wrap gap-2">
           {COMMON_PROMPTS.map((k) => (
             <button
@@ -294,15 +399,24 @@ export function QuestionPanelBody() {
   );
 }
 
-
 /* ------------------------------ PEOPLE & CARE ----------------------------- */
 
-const ROLE_KEYS = ["role.midwife","role.obstetrician","role.sonographer","role.gp","role.nurse","role.healthVisitor","role.doula","role.triage","role.other"];
+const ROLE_KEYS = [
+  "role.midwife",
+  "role.obstetrician",
+  "role.sonographer",
+  "role.gp",
+  "role.nurse",
+  "role.healthVisitor",
+  "role.doula",
+  "role.triage",
+  "role.other",
+];
 
 function toLocalInput(iso: string) {
   const d = new Date(iso);
   const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export function PeopleCarePanelBody() {
@@ -335,31 +449,76 @@ export function PeopleCarePanelBody() {
       createdAt: iso,
     } as Omit<Entry, "id" | "createdAt" | "weekDay"> & { createdAt: string });
     loggedToast(t("p.saved"));
-    setName(""); setDiscussed(""); setAdvised(""); setNote(""); setDataUrl(null);
+    setName("");
+    setDiscussed("");
+    setAdvised("");
+    setNote("");
+    setDataUrl(null);
   }
 
   return (
     <div className="space-y-2.5 pt-3">
       <label className="block">
-        <span className="text-xs uppercase tracking-widest text-ink-soft font-semibold">{t("p.dt")}</span>
-        <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className={inputClass + " mt-1"} />
+        <span className="text-xs uppercase tracking-widest text-ink-soft font-semibold">
+          {t("p.dt")}
+        </span>
+        <input
+          type="datetime-local"
+          value={when}
+          onChange={(e) => setWhen(e.target.value)}
+          className={inputClass + " mt-1"}
+        />
       </label>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("p.name")} className={inputClass} />
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={t("p.name")}
+        className={inputClass}
+      />
       <div className="flex flex-wrap gap-2">
-        {ROLE_KEYS.map((r) => <Chip key={r} active={role === r} onClick={() => setRole(r)}>{t(r)}</Chip>)}
+        {ROLE_KEYS.map((r) => (
+          <Chip key={r} active={role === r} onClick={() => setRole(r)}>
+            {t(r)}
+          </Chip>
+        ))}
       </div>
-      <textarea value={discussed} onChange={(e) => setDiscussed(e.target.value)} placeholder={t("p.discussed")} rows={2} className={inputClass + " resize-none"} />
-      <textarea value={advised} onChange={(e) => setAdvised(e.target.value)} placeholder={t("p.advised")} rows={2} className={inputClass + " resize-none"} />
-      <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("common.notes")} rows={2} className={inputClass + " resize-none"} />
+      <textarea
+        value={discussed}
+        onChange={(e) => setDiscussed(e.target.value)}
+        placeholder={t("p.discussed")}
+        rows={2}
+        className={inputClass + " resize-none"}
+      />
+      <textarea
+        value={advised}
+        onChange={(e) => setAdvised(e.target.value)}
+        placeholder={t("p.advised")}
+        rows={2}
+        className={inputClass + " resize-none"}
+      />
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder={t("common.notes")}
+        rows={2}
+        className={inputClass + " resize-none"}
+      />
       {dataUrl ? (
         <UploadPreview dataUrl={dataUrl} />
       ) : (
         <label className="block w-full py-3 rounded-xl bg-white border border-dashed border-border text-center text-sm text-ink-soft cursor-pointer">
           {t("p.attach")}
-          <input type="file" accept={uploadAccept} className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+          <input
+            type="file"
+            accept={uploadAccept}
+            className="hidden"
+            onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+          />
         </label>
       )}
-      <button onClick={save} className={primaryBtn}>{t("common.save")}</button>
+      <button onClick={save} className={primaryBtn}>
+        {t("common.save")}
+      </button>
     </div>
   );
 }
@@ -387,14 +546,20 @@ export function MeasurementPanelBody() {
   const [note, setNote] = useState("");
 
   function reset() {
-    setSystolic(""); setDiastolic(""); setPulse(""); setValue(""); setUnit(""); setNote(""); setCustomLabel("");
+    setSystolic("");
+    setDiastolic("");
+    setPulse("");
+    setValue("");
+    setUnit("");
+    setNote("");
+    setCustomLabel("");
   }
 
   function save() {
     const base = {
       type: "measurement" as const,
       kind,
-      customLabel: kind === "custom" ? (customLabel || undefined) : undefined,
+      customLabel: kind === "custom" ? customLabel || undefined : undefined,
       note: note || undefined,
     };
     if (kind === "blood_pressure") {
@@ -423,30 +588,81 @@ export function MeasurementPanelBody() {
     <div className="space-y-2.5 pt-3">
       <div className="flex flex-wrap gap-2">
         {MEASUREMENT_KINDS.map((m) => (
-          <Chip key={m.key} active={kind === m.key} onClick={() => { setKind(m.key); reset(); }}>{t(m.tKey)}</Chip>
+          <Chip
+            key={m.key}
+            active={kind === m.key}
+            onClick={() => {
+              setKind(m.key);
+              reset();
+            }}
+          >
+            {t(m.tKey)}
+          </Chip>
         ))}
       </div>
 
       {kind === "custom" && (
-        <input value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} placeholder={t("m.customLabel")} className={inputClass} />
+        <input
+          value={customLabel}
+          onChange={(e) => setCustomLabel(e.target.value)}
+          placeholder={t("m.customLabel")}
+          className={inputClass}
+        />
       )}
 
       {kind === "blood_pressure" ? (
         <div className="grid grid-cols-3 gap-2 w-full">
-          <input inputMode="numeric" value={systolic} onChange={(e) => setSystolic(e.target.value)} placeholder={t("m.systolic")} className={inputClass + " min-w-0"} />
-          <input inputMode="numeric" value={diastolic} onChange={(e) => setDiastolic(e.target.value)} placeholder={t("m.diastolic")} className={inputClass + " min-w-0"} />
-          <input inputMode="numeric" value={pulse} onChange={(e) => setPulse(e.target.value)} placeholder={t("m.pulse")} className={inputClass + " min-w-0"} />
+          <input
+            inputMode="numeric"
+            value={systolic}
+            onChange={(e) => setSystolic(e.target.value)}
+            placeholder={t("m.systolic")}
+            className={inputClass + " min-w-0"}
+          />
+          <input
+            inputMode="numeric"
+            value={diastolic}
+            onChange={(e) => setDiastolic(e.target.value)}
+            placeholder={t("m.diastolic")}
+            className={inputClass + " min-w-0"}
+          />
+          <input
+            inputMode="numeric"
+            value={pulse}
+            onChange={(e) => setPulse(e.target.value)}
+            placeholder={t("m.pulse")}
+            className={inputClass + " min-w-0"}
+          />
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2 w-full">
-          <input inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} placeholder={t("m.value")} className={inputClass + " min-w-0"} />
-          <input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder={preset?.unit || t("m.unit")} className={inputClass + " min-w-0"} />
+          <input
+            inputMode="decimal"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={t("m.value")}
+            className={inputClass + " min-w-0"}
+          />
+          <input
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            placeholder={preset?.unit || t("m.unit")}
+            className={inputClass + " min-w-0"}
+          />
         </div>
       )}
 
-      <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("common.notes")} rows={2} className={inputClass + " resize-none"} />
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder={t("common.notes")}
+        rows={2}
+        className={inputClass + " resize-none"}
+      />
       <p className="text-[11px] text-ink-soft">{t("m.disclaimer")}</p>
-      <button onClick={save} className={primaryBtn}>{t("m.save")}</button>
+      <button onClick={save} className={primaryBtn}>
+        {t("m.save")}
+      </button>
     </div>
   );
 }
@@ -476,28 +692,51 @@ export function PhotoPanelBody() {
 
   function save() {
     if (!dataUrl) return;
-    store.addEntry({ type: "photo", tag, dataUrl, note: note || undefined } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+    store.addEntry({ type: "photo", tag, dataUrl, note: note || undefined } as Omit<
+      Entry,
+      "id" | "createdAt" | "weekDay"
+    >);
     loggedToast(t("ph.saved"));
-    setDataUrl(null); setNote("");
+    setDataUrl(null);
+    setNote("");
   }
 
   return (
     <div className="space-y-2.5 pt-3">
       <div className="flex flex-wrap gap-2">
-        {PHOTO_TAGS.map((p) => <Chip key={p.key} active={tag === p.key} onClick={() => setTag(p.key)}>{t(p.tKey)}</Chip>)}
+        {PHOTO_TAGS.map((p) => (
+          <Chip key={p.key} active={tag === p.key} onClick={() => setTag(p.key)}>
+            {t(p.tKey)}
+          </Chip>
+        ))}
       </div>
       {dataUrl ? (
-        <div className={isImageDataUrl(dataUrl) ? "[&_img]:aspect-square [&_img]:object-cover" : ""}>
+        <div
+          className={isImageDataUrl(dataUrl) ? "[&_img]:aspect-square [&_img]:object-cover" : ""}
+        >
           <UploadPreview dataUrl={dataUrl} alt={tag} />
         </div>
       ) : (
         <label className="block w-full aspect-[16/10] rounded-xl bg-white border border-dashed border-border grid place-items-center text-sm text-ink-soft cursor-pointer">
           {t("ph.choose")}
-          <input type="file" accept={uploadAccept} className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+          <input
+            type="file"
+            accept={uploadAccept}
+            className="hidden"
+            onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+          />
         </label>
       )}
-      <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("ph.optionalNote")} rows={2} className={inputClass + " resize-none"} />
-      <button onClick={save} disabled={!dataUrl} className={primaryBtn}>{t("ph.save")}</button>
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder={t("ph.optionalNote")}
+        rows={2}
+        className={inputClass + " resize-none"}
+      />
+      <button onClick={save} disabled={!dataUrl} className={primaryBtn}>
+        {t("ph.save")}
+      </button>
     </div>
   );
 }
@@ -505,11 +744,16 @@ export function PhotoPanelBody() {
 /* -------------------------------- FEELING -------------------------------- */
 
 const FEELINGS = [
-  { key: "Calm", tKey: "f.calm" }, { key: "Happy", tKey: "f.happy" },
-  { key: "Excited", tKey: "f.excited" }, { key: "Tired", tKey: "f.tired" },
-  { key: "Anxious", tKey: "f.anxious" }, { key: "Worried", tKey: "f.worried" },
-  { key: "Overwhelmed", tKey: "f.overwhelmed" }, { key: "Frustrated", tKey: "f.frustrated" },
-  { key: "Sad", tKey: "f.sad" }, { key: "Other", tKey: "f.other" },
+  { key: "Calm", tKey: "f.calm" },
+  { key: "Happy", tKey: "f.happy" },
+  { key: "Excited", tKey: "f.excited" },
+  { key: "Tired", tKey: "f.tired" },
+  { key: "Anxious", tKey: "f.anxious" },
+  { key: "Worried", tKey: "f.worried" },
+  { key: "Overwhelmed", tKey: "f.overwhelmed" },
+  { key: "Frustrated", tKey: "f.frustrated" },
+  { key: "Sad", tKey: "f.sad" },
+  { key: "Other", tKey: "f.other" },
 ];
 
 export function FeelingPanelBody() {
@@ -518,18 +762,36 @@ export function FeelingPanelBody() {
   const [note, setNote] = useState("");
   function save() {
     if (!selected) return;
-    store.addEntry({ type: "feeling", feeling: selected, note: note || undefined, privateOnly: true } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+    store.addEntry({
+      type: "feeling",
+      feeling: selected,
+      note: note || undefined,
+      privateOnly: true,
+    } as Omit<Entry, "id" | "createdAt" | "weekDay">);
     loggedToast(`${t("type.feeling")}: ${selected}`);
-    setSelected(null); setNote("");
+    setSelected(null);
+    setNote("");
   }
   return (
     <div className="space-y-2.5 pt-3">
       <p className="text-xs text-ink-soft">{t("f.note")}</p>
       <div className="flex flex-wrap gap-2">
-        {FEELINGS.map((f) => <Chip key={f.key} active={selected === f.key} onClick={() => setSelected(f.key)}>{t(f.tKey)}</Chip>)}
+        {FEELINGS.map((f) => (
+          <Chip key={f.key} active={selected === f.key} onClick={() => setSelected(f.key)}>
+            {t(f.tKey)}
+          </Chip>
+        ))}
       </div>
-      <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("ph.optionalNote")} rows={2} className={inputClass + " resize-none"} />
-      <button onClick={save} disabled={!selected} className={primaryBtn}>{t("f.save")}</button>
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder={t("ph.optionalNote")}
+        rows={2}
+        className={inputClass + " resize-none"}
+      />
+      <button onClick={save} disabled={!selected} className={primaryBtn}>
+        {t("f.save")}
+      </button>
     </div>
   );
 }
@@ -541,15 +803,26 @@ export function NotePanelBody() {
   const [text, setText] = useState("");
   function save() {
     if (!text.trim()) return;
-    store.addEntry({ type: "note", text: text.trim() } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+    store.addEntry({ type: "note", text: text.trim() } as Omit<
+      Entry,
+      "id" | "createdAt" | "weekDay"
+    >);
     trackEvent("note_created");
     loggedToast(t("n.saved"));
     setText("");
   }
   return (
     <div className="space-y-2.5 pt-3">
-      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t("n.placeholder")} rows={3} className={inputClass + " resize-none"} />
-      <button onClick={save} disabled={!text.trim()} className={primaryBtn}>{t("n.save")}</button>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder={t("n.placeholder")}
+        rows={3}
+        className={inputClass + " resize-none"}
+      />
+      <button onClick={save} disabled={!text.trim()} className={primaryBtn}>
+        {t("n.save")}
+      </button>
     </div>
   );
 }

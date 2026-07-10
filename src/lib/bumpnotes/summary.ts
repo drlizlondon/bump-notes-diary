@@ -14,7 +14,10 @@ export function summariseEntry(e: Entry): { headline: string; detail?: string } 
       return { headline: `${t("type.symptom")}: ${head}`, detail: parts.join(" · ") || undefined };
     }
     case "question":
-      return { headline: t("type.question"), detail: `"${e.text}"${e.context ? ` · ${e.context}` : ""}` };
+      return {
+        headline: t("type.question"),
+        detail: `"${e.text}"${e.context ? ` · ${e.context}` : ""}`,
+      };
     case "appointment": {
       const parts = [
         e.whoSeen && `Who: ${e.whoSeen}`,
@@ -35,9 +38,15 @@ export function summariseEntry(e: Entry): { headline: string; detail?: string } 
       return { headline: t("type.person"), detail: parts.join(" · ") || undefined };
     }
     case "measurement":
-      return { headline: `${t("type.measurement")}: ${measurementLabel(e)}`, detail: measurementValue(e) };
+      return {
+        headline: `${t("type.measurement")}: ${measurementLabel(e)}`,
+        detail: measurementValue(e),
+      };
     case "photo":
-      return { headline: `${t("type.photo")}: ${e.tag}`, detail: e.note ? `"${e.note}"` : undefined };
+      return {
+        headline: `${t("type.photo")}: ${e.tag}`,
+        detail: e.note ? `"${e.note}"` : undefined,
+      };
     case "labour":
       return { headline: `Labour: ${e.event}`, detail: e.note };
     case "labour_event":
@@ -67,12 +76,18 @@ export function formatDuration(sec: number): string {
 
 export function measurementLabel(e: MeasurementEntry): string {
   switch (e.kind) {
-    case "blood_pressure": return t("m.bp");
-    case "weight": return t("m.weight");
-    case "blood_sugar": return t("m.bloodSugar");
-    case "movements": return t("m.movements");
-    case "temperature": return t("m.temp");
-    case "custom": return e.customLabel || t("m.custom");
+    case "blood_pressure":
+      return t("m.bp");
+    case "weight":
+      return t("m.weight");
+    case "blood_sugar":
+      return t("m.bloodSugar");
+    case "movements":
+      return t("m.movements");
+    case "temperature":
+      return t("m.temp");
+    case "custom":
+      return e.customLabel || t("m.custom");
   }
 }
 
@@ -90,11 +105,16 @@ export function measurementValue(e: MeasurementEntry): string {
 
 function defaultUnit(k: MeasurementEntry["kind"]): string {
   switch (k) {
-    case "weight": return "kg";
-    case "blood_sugar": return "mmol/L";
-    case "temperature": return "°C";
-    case "movements": return "movements";
-    default: return "";
+    case "weight":
+      return "kg";
+    case "blood_sugar":
+      return "mmol/L";
+    case "temperature":
+      return "°C";
+    case "movements":
+      return "movements";
+    default:
+      return "";
   }
 }
 
