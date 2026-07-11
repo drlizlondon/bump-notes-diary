@@ -424,7 +424,7 @@ Every task independently completable and committable; dependencies noted as `[af
 **Phase 0 — Hygiene**
 - [x] 0.1 Script-verify unused `components/ui/*`; delete them, `BottomNav.tsx`, `SilhouetteIllustration.tsx`, `example.functions.ts`, `bun.lock`.
 - [x] 0.2 Fix `__root.tsx` meta (title/OG/author → BumpNotes; OG image into `public/`).
-- [ ] 0.3 Extract shared `EntryEditDialog` + `getEditableText` into `components/bumpnotes/EntryEditDialog.tsx`; use from `timeline.tsx` and `pack.tsx`.
+- [x] 0.3 Extract shared `EntryEditDialog` + `getEditableText` into `components/bumpnotes/EntryEditDialog.tsx`; use from `timeline.tsx` and `pack.tsx`.
 
 **Phase 1 — Labour removal**
 - [ ] 1.1 Delete `routes/labour.tsx`; remove nav item (`AppShell.useNavItems`) and `LabourLinkCard` (`index.tsx`). Add labour → home redirect route.
