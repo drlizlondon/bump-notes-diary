@@ -154,7 +154,6 @@ function Index() {
             >
               <NotePanelBody />
             </ActionCard>
-            <LabourLinkCard label={t("cap.labour")} helper={t("cap.labour.helper")} />
             <ActionCard
               label={t("cap.feelings")}
               helper={t("cap.feelings.helper")}
@@ -170,21 +169,6 @@ function Index() {
         </section>
       </AppShell>
     </>
-  );
-}
-
-function LabourLinkCard({ label, helper }: { label: string; helper: string }) {
-  return (
-    <Link to="/labour" className="surface-card flex items-center gap-4 px-4 py-4 text-left">
-      <span className="size-11 shrink-0 rounded-2xl grid place-items-center bg-coral-soft">
-        <Heart className="size-5 text-ink" />
-      </span>
-      <span className="flex-1 min-w-0">
-        <span className="block font-semibold text-[15px] leading-tight text-ink">{label}</span>
-        <span className="block text-[12.5px] text-ink-soft mt-0.5 truncate">{helper}</span>
-      </span>
-      <span className="text-ink-soft text-lg">›</span>
-    </Link>
   );
 }
 

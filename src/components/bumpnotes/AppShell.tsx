@@ -4,7 +4,6 @@ import {
   Home,
   ClipboardList,
   FileText,
-  Heart,
   Baby,
   Settings as SettingsIcon,
   X,
@@ -89,7 +88,6 @@ function useNavItems() {
     { to: homeTo, label: t("nav.home"), Icon: Home, matchExact: true },
     { to: "/timeline" as const, label: t("nav.timeline"), Icon: ClipboardList, matchExact: false },
     { to: "/pack" as const, label: t("nav.summary"), Icon: FileText, matchExact: false },
-    { to: "/labour" as const, label: t("nav.labour"), Icon: Heart, matchExact: false },
     { to: "/details" as const, label: t("nav.baby"), Icon: Baby, matchExact: false },
     { to: "/settings" as const, label: t("nav.settings"), Icon: SettingsIcon, matchExact: false },
   ];

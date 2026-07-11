@@ -427,7 +427,7 @@ Every task independently completable and committable; dependencies noted as `[af
 - [x] 0.3 Extract shared `EntryEditDialog` + `getEditableText` into `components/bumpnotes/EntryEditDialog.tsx`; use from `timeline.tsx` and `pack.tsx`.
 
 **Phase 1 — Labour removal**
-- [ ] 1.1 Delete `routes/labour.tsx`; remove nav item (`AppShell.useNavItems`) and `LabourLinkCard` (`index.tsx`). Add labour → home redirect route.
+- [x] 1.1 Delete `routes/labour.tsx`; remove nav item (`AppShell.useNavItems`) and `LabourLinkCard` (`index.tsx`). Add labour → home redirect route.
 - [ ] 1.2 Remove labour rendering from `timeline.tsx` (filter, episode cards, episode grouping) and labour branches from `summary.ts`, `pregnancy-summary.ts`, `pdf.ts`, `PregnancySummaryPreview.tsx`, `pack.tsx` defaults.
 - [ ] 1.3 Remove labour store methods; keep blob *reading* tolerant of labour data (verify unknown-type fallthrough in `summariseEntry`, timeline, summary builder).
 - [ ] 1.4 Prune `lab.*` i18n keys; update `features.tsx`/`welcome.tsx` copy.
