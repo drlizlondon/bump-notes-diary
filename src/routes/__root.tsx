@@ -80,14 +80,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
+      { title: "BumpNotes" },
       {
         name: "description",
         content:
           "A private pregnancy journal for recording symptoms, questions, appointments, and uploads.",
       },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
+      { name: "author", content: "BumpNotes" },
+      { property: "og:title", content: "BumpNotes" },
       {
         property: "og:description",
         content:
@@ -95,23 +95,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Lovable App" },
+      { name: "twitter:title", content: "BumpNotes" },
       {
         name: "twitter:description",
         content:
           "A private pregnancy journal for recording symptoms, questions, appointments, and uploads.",
       },
-      {
-        property: "og:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e61807bd-d697-4fae-ae73-ba62d1f71b6b/id-preview-cc83fd69--44388220-081e-4c28-ae93-42a8c5742597.lovable.app-1780533246630.png",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e61807bd-d697-4fae-ae73-ba62d1f71b6b/id-preview-cc83fd69--44388220-081e-4c28-ae93-42a8c5742597.lovable.app-1780533246630.png",
-      },
+      { property: "og:image", content: "/bumpnotes-wordmark.png" },
+      { name: "twitter:image", content: "/bumpnotes-wordmark.png" },
     ],
     links: [
       {
