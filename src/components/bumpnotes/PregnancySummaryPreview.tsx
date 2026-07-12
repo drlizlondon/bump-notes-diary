@@ -12,7 +12,7 @@ import {
   type PregnancySummarySection,
   type SymptomSummaryItem,
 } from "@/lib/bumpnotes/pregnancy-summary";
-import type { Entry, LabourPlan, Profile } from "@/lib/bumpnotes/types";
+import type { Entry, Profile } from "@/lib/bumpnotes/types";
 import { useT } from "@/lib/bumpnotes/i18n";
 
 /**
@@ -22,7 +22,6 @@ import { useT } from "@/lib/bumpnotes/i18n";
 export function PregnancySummaryPreview({
   profile,
   entries,
-  labourPlan,
   hiddenItemKeys,
   onHideItem,
   onUnhideItem,
@@ -31,14 +30,13 @@ export function PregnancySummaryPreview({
   profile: Profile;
   entries: Entry[];
   groupMeasurements: boolean;
-  labourPlan?: LabourPlan;
   hiddenItemKeys?: Set<string>;
   onHideItem?: (key: string) => void;
   onUnhideItem?: (key: string) => void;
   onReviewItem?: (title: string, entryIds: string[]) => void;
 }) {
   const t = useT();
-  const weeks = buildPregnancySummaryWeeks(profile, entries, labourPlan, { hiddenItemKeys });
+  const weeks = buildPregnancySummaryWeeks(entries, { hiddenItemKeys });
   return (
     <div
       className="surface-card p-4 sm:p-5 print:shadow-none print:border-0 overflow-hidden"
@@ -110,15 +108,6 @@ export function PregnancySummaryPreview({
   );
 }
 
-export function hasLabourData(plan: LabourPlan, entries: Entry[]): boolean {
-  if (plan.recordingStartISO) return true;
-  if ((plan.episodes?.length ?? 0) > 0) return true;
-  return entries.some(
-    (entry) =>
-      entry.type === "contraction" || entry.type === "labour_event" || entry.type === "labour",
-  );
-}
-
 function SummarySection({
   section,
   onHideItem,
@@ -155,9 +144,6 @@ function SummarySection({
         />
       )}
       {section.type === "notes" && (
-        <BulletList items={section.items} onHideItem={onHideItem} onReviewItem={onReviewItem} />
-      )}
-      {section.type === "labour" && (
         <BulletList items={section.items} onHideItem={onHideItem} onReviewItem={onReviewItem} />
       )}
     </div>

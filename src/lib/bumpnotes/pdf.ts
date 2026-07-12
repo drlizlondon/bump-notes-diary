@@ -1,5 +1,5 @@
 import jsPDF from "jspdf";
-import type { Entry, LabourPlan, Profile } from "./types";
+import type { Entry, Profile } from "./types";
 import {
   formatGestation,
   formatUKDateLong,
@@ -13,7 +13,6 @@ type PdfOptions = {
   profile: Profile;
   entries: Entry[];
   groupMeasurements: boolean;
-  labourPlan?: LabourPlan;
   hiddenItemKeys?: Set<string>;
 };
 
@@ -66,7 +65,7 @@ export function downloadSummaryPdf(opts: PdfOptions) {
   y = MARGIN_TOP + 24;
   rule();
 
-  buildPregnancySummaryWeeks(opts.profile, opts.entries, opts.labourPlan, {
+  buildPregnancySummaryWeeks(opts.entries, {
     hiddenItemKeys: opts.hiddenItemKeys,
   }).forEach((week) => {
     const estimatedWeekHeight =

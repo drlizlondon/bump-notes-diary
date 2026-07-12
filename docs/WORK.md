@@ -52,8 +52,8 @@ The one sentence that settles product disputes without escalation: **"BumpNotes 
 |---|---|
 | Working branch | `staging` (PRs target `main`) |
 | Current phase | **Phase 1 — Labour removal** (in progress) |
-| Next task | 1.2 |
-| Last completed task | 1.1 |
+| Next task | 1.3 |
+| Last completed task | 1.2 |
 | Migration strategy | Lazy per-user blob→V2 backfill (PLAN §5.8); blob becomes read-only archive at Phase 2; old store deleted end of Phase 3 |
 | Notes / open escalations | **ESCALATION (pre-Phase-2): Liz confirmed on 11 Jul 2026 that BumpNotes is moving from Supabase to Azure for easier NHS compliance.** PLAN Phases 2–3+ are written entirely against Supabase (schema migrations, Storage buckets, RLS, service-role backfill) and must be revised before task 2.1 starts. Phases 0–1 are platform-agnostic and proceed unchanged; work stops for a check-in before Phase 2 as agreed. Open questions: which Azure services (Postgres? Blob Storage? auth provider?), who revises the PLAN, and whether the Supabase→Azure move happens before, during, or instead of the blob→tables migration. — Also: no production domain exists in the repo, so 0.2's `og:image`/`twitter:image` use a root-relative path (`/bumpnotes-wordmark.png`); some scrapers require absolute URLs — swap to the canonical domain when one is decided. — Earlier: `npm run lint` had never passed on `staging` (1412 pre-existing prettier/lint problems) before Phase 0 could start, contradicting WORK.md §3.3's "never commit red" gate. Resolved via an unplanned mechanical `eslint --fix` commit (fbb52c1) ahead of 0.1, confirmed with the user before landing. Task 0.1 (dead `components/ui/*`, `BottomNav.tsx`, `SilhouetteIllustration.tsx`, `example.functions.ts`, `bun.lock`) landed clean on top of it; `calendar.tsx`/`popover.tsx`/`button.tsx` kept (only ones imported, transitively via `Onboarding.tsx`) and verified working in `npm run dev` (due-date picker flow). |
 

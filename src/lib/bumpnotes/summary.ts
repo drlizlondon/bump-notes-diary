@@ -47,15 +47,6 @@ export function summariseEntry(e: Entry): { headline: string; detail?: string } 
         headline: `${t("type.photo")}: ${e.tag}`,
         detail: e.note ? `"${e.note}"` : undefined,
       };
-    case "labour":
-      return { headline: `Labour: ${e.event}`, detail: e.note };
-    case "labour_event":
-      return { headline: `${t("type.labour_event")}: ${e.event}`, detail: e.note };
-    case "contraction":
-      return {
-        headline: `${t("type.contraction")}`,
-        detail: `${formatDuration(e.durationSec)}${e.note ? ` · ${e.note}` : ""}`,
-      };
     case "feeling":
       return { headline: `${t("type.feeling")}: ${e.feeling}`, detail: e.note };
     case "note":
@@ -65,13 +56,6 @@ export function summariseEntry(e: Entry): { headline: string; detail?: string } 
     default:
       return { headline: "Entry" };
   }
-}
-
-export function formatDuration(sec: number): string {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  if (m === 0) return `${s}s`;
-  return `${m}m ${s}s`;
 }
 
 export function measurementLabel(e: MeasurementEntry): string {

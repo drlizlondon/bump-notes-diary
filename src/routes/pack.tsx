@@ -19,12 +19,9 @@ import {
   buildPregnancySummaryWeeks,
   type PregnancySummarySection,
 } from "@/lib/bumpnotes/pregnancy-summary";
-import type { Entry, EntryType, Profile, LabourPlan } from "@/lib/bumpnotes/types";
+import type { Entry, EntryType, Profile } from "@/lib/bumpnotes/types";
 import { downloadSummaryPdf } from "@/lib/bumpnotes/pdf";
-import {
-  PregnancySummaryPreview,
-  hasLabourData,
-} from "@/components/bumpnotes/PregnancySummaryPreview";
+import { PregnancySummaryPreview } from "@/components/bumpnotes/PregnancySummaryPreview";
 
 export const Route = createFileRoute("/pack")({
   head: () => ({ meta: [{ title: "Pregnancy Summary · BumpNotes" }] }),
@@ -40,9 +37,9 @@ function typeLabels(): Record<EntryType, string> {
     measurement: tFn("type.measurement"),
     photo: tFn("type.photo"),
     note: tFn("type.note"),
-    labour: tFn("sum.labour.title"),
-    labour_event: tFn("sum.labour.title"),
-    contraction: tFn("type.contraction"),
+    labour: "Labour",
+    labour_event: "Labour",
+    contraction: "Labour",
     feeling: tFn("type.feeling"),
     concern: "Concerns",
   };
@@ -57,15 +54,16 @@ function defaultIncluded(): Record<EntryType, boolean> {
     measurement: true,
     photo: true,
     note: true,
-    labour: true,
-    labour_event: true,
-    contraction: true,
+    labour: false,
+    labour_event: false,
+    contraction: false,
     concern: true,
     feeling: false,
   };
 }
 
-function isLabourSummaryEntry(entry: Entry): boolean {
+// Labour entry types survive in old blobs but have no UI; never include them.
+function isLabourEntry(entry: Entry): boolean {
   return entry.type === "labour" || entry.type === "labour_event" || entry.type === "contraction";
 }
 
@@ -73,7 +71,7 @@ type Step = 1 | 2 | 3;
 type ReviewTarget = { title: string; entryIds: string[] };
 
 function SummaryPage() {
-  const { profile, entries, labourPlan } = useAppState();
+  const { profile, entries } = useAppState();
   const t = useT();
   const [step, setStep] = useState<Step>(1);
   const [selectedWeeks, setSelectedWeeks] = useState<Set<number>>(new Set());
@@ -95,7 +93,7 @@ function SummaryPage() {
   const selected = useMemo(() => {
     return liveEntries
       .filter((e) => activeWeeks.has(e.weekDay.weeks))
-      .filter((e) => (isLabourSummaryEntry(e) ? included.labour : included[e.type]))
+      .filter((e) => !isLabourEntry(e) && included[e.type])
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }, [liveEntries, activeWeeks, included]);
 
@@ -164,7 +162,6 @@ function SummaryPage() {
               setIncluded={setIncluded}
               groupMeasurements={groupMeasurements}
               setGroupMeasurements={setGroupMeasurements}
-              labourPlan={included.labour ? labourPlan : undefined}
               hiddenItemKeys={hiddenSummaryItems}
               onHideItem={(key) => setHiddenSummaryItems((s) => new Set(s).add(key))}
               onUnhideItem={(key) =>
@@ -185,17 +182,10 @@ function SummaryPage() {
               profile={profile}
               entries={selected}
               groupMeasurements={groupMeasurements}
-              labourPlan={included.labour ? labourPlan : undefined}
               hiddenItemKeys={hiddenSummaryItems}
               onBack={() => setStep(2)}
               onCopy={() => {
-                const txt = buildText(
-                  profile,
-                  selected,
-                  groupMeasurements,
-                  included.labour ? labourPlan : undefined,
-                  hiddenSummaryItems,
-                );
+                const txt = buildText(profile, selected, groupMeasurements, hiddenSummaryItems);
                 navigator.clipboard.writeText(txt).then(() => toast.success(t("sum.copied")));
               }}
               onPrint={() => {
@@ -203,20 +193,11 @@ function SummaryPage() {
                   profile,
                   entries: selected,
                   groupMeasurements,
-                  labourPlan: included.labour ? labourPlan : undefined,
                   hiddenItemKeys: hiddenSummaryItems,
                 });
                 toast.success("PDF downloaded");
               }}
-              onShare={() =>
-                sharePack(
-                  profile,
-                  selected,
-                  groupMeasurements,
-                  included.labour ? labourPlan : undefined,
-                  hiddenSummaryItems,
-                )
-              }
+              onShare={() => sharePack(profile, selected, groupMeasurements, hiddenSummaryItems)}
             />
           )}
         </div>
@@ -329,7 +310,6 @@ function StepReviewCustomise({
   setIncluded,
   groupMeasurements,
   setGroupMeasurements,
-  labourPlan,
   hiddenItemKeys,
   onHideItem,
   onUnhideItem,
@@ -343,7 +323,6 @@ function StepReviewCustomise({
   setIncluded: (r: Record<EntryType, boolean>) => void;
   groupMeasurements: boolean;
   setGroupMeasurements: (b: boolean) => void;
-  labourPlan?: LabourPlan;
   hiddenItemKeys: Set<string>;
   onHideItem: (key: string) => void;
   onUnhideItem: (key: string) => void;
@@ -360,7 +339,6 @@ function StepReviewCustomise({
     "person",
     "measurement",
     "note",
-    "labour",
   ];
   return (
     <div className="space-y-3">
@@ -379,10 +357,6 @@ function StepReviewCustomise({
                 onClick={() => {
                   const next = { ...included, [tp]: !active };
                   if (tp === "person") next.appointment = !active;
-                  if (tp === "labour") {
-                    next.contraction = !active;
-                    next.labour_event = !active;
-                  }
                   setIncluded(next);
                 }}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium border ${
@@ -414,7 +388,6 @@ function StepReviewCustomise({
         profile={profile}
         entries={entries}
         groupMeasurements={groupMeasurements}
-        labourPlan={labourPlan}
         hiddenItemKeys={hiddenItemKeys}
         onHideItem={onHideItem}
         onUnhideItem={onUnhideItem}
@@ -443,7 +416,6 @@ function StepCreate({
   profile,
   entries,
   groupMeasurements,
-  labourPlan,
   hiddenItemKeys,
   onBack,
   onCopy,
@@ -453,7 +425,6 @@ function StepCreate({
   profile: Profile;
   entries: Entry[];
   groupMeasurements: boolean;
-  labourPlan?: LabourPlan;
   hiddenItemKeys: Set<string>;
   onBack: () => void;
   onCopy: () => void;
@@ -467,7 +438,6 @@ function StepCreate({
         profile={profile}
         entries={entries}
         groupMeasurements={groupMeasurements}
-        labourPlan={labourPlan}
         hiddenItemKeys={hiddenItemKeys}
       />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 print:hidden">
@@ -504,7 +474,6 @@ function PreviewCard(props: {
   profile: Profile;
   entries: Entry[];
   groupMeasurements: boolean;
-  labourPlan?: LabourPlan;
   hiddenItemKeys?: Set<string>;
   onHideItem?: (key: string) => void;
   onUnhideItem?: (key: string) => void;
@@ -517,7 +486,6 @@ function buildText(
   profile: Profile,
   entries: Entry[],
   _groupMeasurements: boolean,
-  labourPlan?: LabourPlan,
   hiddenItemKeys?: Set<string>,
 ) {
   const lines: string[] = [];
@@ -533,7 +501,7 @@ function buildText(
   lines.push(`${tFn("sum.field.generated")}: ${formatUKDateTime(new Date())}`);
   lines.push("");
 
-  buildPregnancySummaryWeeks(profile, entries, labourPlan, { hiddenItemKeys }).forEach((week) => {
+  buildPregnancySummaryWeeks(entries, { hiddenItemKeys }).forEach((week) => {
     lines.push(`${tFn("home.week")} ${week.week}`);
     week.sections.forEach((section) => {
       lines.push(section.title);
@@ -599,9 +567,7 @@ function ReviewRecordsModal({
         </div>
         <div className="p-5 overflow-y-auto max-h-[58vh] space-y-3">
           {matching.length === 0 ? (
-            <p className="text-sm text-ink-soft">
-              This item is from Labour Journey setup rather than an individual timeline record.
-            </p>
+            <p className="text-sm text-ink-soft">No individual records found for this item.</p>
           ) : (
             matching.map((entry) => {
               const summary = summariseEntry(entry);
@@ -653,10 +619,9 @@ async function sharePack(
   profile: Profile,
   entries: Entry[],
   groupMeasurements: boolean,
-  labourPlan?: LabourPlan,
   hiddenItemKeys?: Set<string>,
 ) {
-  const text = buildText(profile, entries, groupMeasurements, labourPlan, hiddenItemKeys);
+  const text = buildText(profile, entries, groupMeasurements, hiddenItemKeys);
   if (typeof navigator !== "undefined" && navigator.share) {
     try {
       await navigator.share({ title: tFn("sum.header.title"), text });

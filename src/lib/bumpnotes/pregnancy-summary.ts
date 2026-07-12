@@ -1,18 +1,7 @@
 import { parseISO, format } from "date-fns";
 
-import { formatDuration, measurementLabel, measurementValue } from "./summary";
-import type {
-  AppointmentEntry,
-  ContractionEntry,
-  Entry,
-  LabourEventEntry,
-  LabourPlan,
-  MeasurementEntry,
-  PersonEntry,
-  Profile,
-  SymptomEntry,
-} from "./types";
-import { gestationFromDueDate } from "./gestation";
+import { measurementLabel, measurementValue } from "./summary";
+import type { AppointmentEntry, Entry, MeasurementEntry, PersonEntry, SymptomEntry } from "./types";
 import { t as tFn } from "./i18n";
 
 export type PregnancySummarySection =
@@ -21,8 +10,7 @@ export type PregnancySummarySection =
   | { type: "questions"; title: "Questions"; items: TextSummaryItem[] }
   | { type: "people"; title: "People & Care"; groups: PeopleCareSummaryGroup[] }
   | { type: "measurements"; title: "Measurements"; items: MeasurementSummaryItem[] }
-  | { type: "notes"; title: "Notes"; items: TextSummaryItem[] }
-  | { type: "labour"; title: "Labour Journey"; items: TextSummaryItem[] };
+  | { type: "notes"; title: "Notes"; items: TextSummaryItem[] };
 
 export interface PregnancySummaryWeek {
   week: number;
@@ -64,22 +52,12 @@ export interface MeasurementSummaryItem {
   value: string;
 }
 
-type LabourItem = {
-  key: string;
-  entryIds: string[];
-  week: number;
-  order: string;
-  text: string;
-};
-
 export type PregnancySummaryOptions = {
   hiddenItemKeys?: Set<string>;
 };
 
 export function buildPregnancySummaryWeeks(
-  profile: Profile,
   entries: Entry[],
-  labourPlan?: LabourPlan,
   options: PregnancySummaryOptions = {},
 ): PregnancySummaryWeek[] {
   const weeks = new Map<number, Entry[]>();
@@ -89,22 +67,13 @@ export function buildPregnancySummaryWeeks(
     weeks.get(week)!.push(entry);
   }
 
-  const labourItems = buildLabourItems(profile, entries, labourPlan);
-  for (const item of labourItems) {
-    if (!weeks.has(item.week)) weeks.set(item.week, []);
-  }
-
   return Array.from(weeks.entries())
     .sort(([a], [b]) => a - b)
     .map(([week, weekEntries]) => {
       const sortedEntries = weekEntries.slice().sort(compareEntries);
       return {
         week,
-        sections: buildWeekSections(
-          sortedEntries,
-          labourItems.filter((item) => item.week === week),
-          options.hiddenItemKeys ?? new Set(),
-        ),
+        sections: buildWeekSections(sortedEntries, options.hiddenItemKeys ?? new Set()),
       };
     })
     .filter((week) => week.sections.length > 0);
@@ -112,7 +81,6 @@ export function buildPregnancySummaryWeeks(
 
 function buildWeekSections(
   entries: Entry[],
-  labourItems: LabourItem[],
   hiddenItemKeys: Set<string>,
 ): PregnancySummarySection[] {
   const sections: PregnancySummarySection[] = [];
@@ -142,12 +110,6 @@ function buildWeekSections(
     .map((entry) => ({ key: `note:${entry.id}`, entryIds: [entry.id], text: entry.text }))
     .filter((item) => !hiddenItemKeys.has(item.key));
   if (notes.length) sections.push({ type: "notes", title: "Notes", items: notes });
-
-  const labour = labourItems
-    .sort((a, b) => a.order.localeCompare(b.order))
-    .map((item) => ({ key: item.key, entryIds: item.entryIds, text: item.text }))
-    .filter((item) => !hiddenItemKeys.has(item.key));
-  if (labour.length) sections.push({ type: "labour", title: "Labour Journey", items: labour });
 
   return sections;
 }
@@ -323,106 +285,6 @@ function measurementRange(items: MeasurementEntry[]): string {
   const suffix = unit ? ` ${unit}` : "";
   return min === max ? `${min}${suffix}` : `${min}${suffix} to ${max}${suffix}`;
 }
-
-function buildLabourItems(
-  profile: Profile,
-  entries: Entry[],
-  labourPlan?: LabourPlan,
-): LabourItem[] {
-  const items: LabourItem[] = [];
-  for (const entry of entries) {
-    if (entry.type === "labour") {
-      items.push({
-        key: `labour:${entry.id}`,
-        entryIds: [entry.id],
-        week: entry.weekDay.weeks,
-        order: entry.createdAt,
-        text: joinParts([entry.event, entry.note]),
-      });
-    }
-    if (entry.type === "labour_event") {
-      items.push({
-        key: `labour:${entry.id}`,
-        entryIds: [entry.id],
-        week: entry.weekDay.weeks,
-        order: entry.createdAt,
-        text: joinParts([entry.event, entry.note]),
-      });
-    }
-    if (entry.type === "contraction") {
-      items.push({
-        key: `labour:${entry.id}`,
-        entryIds: [entry.id],
-        week: entry.weekDay.weeks,
-        order: entry.createdAt,
-        text: joinParts(["Contraction", formatDuration(entry.durationSec), entry.note]),
-      });
-    }
-  }
-
-  if (!labourPlan) return items;
-  if (labourPlan.recordingStartISO) {
-    items.push({
-      key: `labour-recording-active:${labourPlan.recordingStartISO}`,
-      entryIds: labourEntryIdsForEpisode(entries, labourPlan.recordingStartISO),
-      week: gestationFromDueDate(profile.dueDateISO, parseISO(labourPlan.recordingStartISO)).weeks,
-      order: labourPlan.recordingStartISO,
-      text: "Labour recording started",
-    });
-  }
-  for (const episode of labourPlan.episodes ?? []) {
-    const episodeEntryIds = labourEntryIdsForEpisode(entries, episode.startISO, episode.endISO);
-    items.push({
-      key: `labour-episode-start:${episode.id}`,
-      entryIds: episodeEntryIds,
-      week: gestationFromDueDate(profile.dueDateISO, parseISO(episode.startISO)).weeks,
-      order: episode.startISO,
-      text: "Labour recording started",
-    });
-    if (episode.endISO) {
-      items.push({
-        key: `labour-episode-end:${episode.id}`,
-        entryIds: episodeEntryIds,
-        week: gestationFromDueDate(profile.dueDateISO, parseISO(episode.endISO)).weeks,
-        order: episode.endISO,
-        text: "Labour recording ended",
-      });
-    }
-    const outcome = labourOutcomeLabel(episode.outcome);
-    if (outcome) {
-      items.push({
-        key: `labour-episode-outcome:${episode.id}`,
-        entryIds: episodeEntryIds,
-        week: gestationFromDueDate(profile.dueDateISO, parseISO(episode.endISO ?? episode.startISO))
-          .weeks,
-        order: episode.endISO ?? episode.startISO,
-        text: joinParts([outcome, episode.outcome === "other" ? episode.outcomeNote : undefined]),
-      });
-    }
-  }
-  return items;
-}
-
-function labourEntryIdsForEpisode(entries: Entry[], startISO: string, endISO?: string): string[] {
-  return entries
-    .filter(
-      (entry) =>
-        (entry.type === "contraction" ||
-          entry.type === "labour_event" ||
-          entry.type === "labour") &&
-        entry.createdAt >= startISO &&
-        (!endISO || entry.createdAt <= endISO),
-    )
-    .map((entry) => entry.id);
-}
-
-function labourOutcomeLabel(outcome?: "baby" | "settled" | "other"): string | undefined {
-  if (outcome === "baby") return tFn("lab.outcome.baby");
-  if (outcome === "settled") return tFn("lab.outcome.settled");
-  if (outcome === "other") return tFn("lab.outcome.other");
-  return undefined;
-}
-
 function compareEntries(a: Entry, b: Entry) {
   return a.createdAt.localeCompare(b.createdAt);
 }
