@@ -4,6 +4,7 @@ Read this at the start of every session, together with:
 
 - `docs/BUMPNOTES_V2_ARCHITECTURE.md` — **ARCH** — what the product is and why
 - `docs/BUMPNOTES_V2_IMPLEMENTATION_PLAN.md` — **PLAN** — what to build and in what order
+- `docs/BUMPNOTES_AZURE_MIGRATION_PLAN.md` — **AZURE** — supersedes PLAN §10 Phases 2–3, amends 4–8; where AZURE and PLAN disagree, AZURE wins
 
 This document defines **how to work**. It contains no product or architecture decisions.
 
@@ -20,9 +21,10 @@ You are executing decisions, not making them. The thinking has been done; your j
 Precedence when anything disagrees:
 
 1. **ARCH** — product behaviour, principles, scope
-2. **PLAN** — schema, phasing, task order, engineering decisions (marked DECISION)
-3. **WORK.md** — process
-4. **Existing code** — evidence of current behaviour only; never a justification for target behaviour
+2. **AZURE** — infrastructure target, Supabase→Azure phasing (overrides PLAN where they conflict)
+3. **PLAN** — schema, phasing, task order, engineering decisions (marked DECISION)
+4. **WORK.md** — process
+5. **Existing code** — evidence of current behaviour only; never a justification for target behaviour
 
 Existing code never overrides the documents. If the code does something the documents forbid, the code is wrong. If the documents are silent and the choice is not obvious from them, escalate (§8) — do not infer product intent from V1 code.
 
@@ -41,8 +43,8 @@ The one sentence that settles product disputes without escalation: **"BumpNotes 
 9. **Verify by using the app,** not by reading the diff. Every task's verification (§7) includes exercising the changed flow in the dev server.
 10. **Update the ledger.** After finishing a task: tick its checkbox in PLAN §10 and refresh WORK.md §4. These edits belong in the same commit as the task.
 11. **Generated files are generated.** Never hand-edit `src/routeTree.gen.ts` or `src/integrations/supabase/types.ts`; regenerate them.
-12. **Applied Supabase migrations are immutable.** New timestamped files in `supabase/migrations/` only; never edit an existing one.
-13. **Secrets and config:** never commit credentials; never modify `.env`/Supabase project settings as part of a code task.
+12. **Applied migrations are immutable** — Supabase (`supabase/migrations/`) and Azure (`azure/migrations/`) alike. New timestamped files only; never edit an existing one.
+13. **Secrets and config:** never commit credentials, connection strings, tenant/client secrets, or SAS tokens; never modify `.env`, Supabase project settings, or Azure resources as part of a code task (see AZURE §7).
 
 ## 4. Current State
 
@@ -51,13 +53,13 @@ The one sentence that settles product disputes without escalation: **"BumpNotes 
 | Field | Value |
 |---|---|
 | Working branch | `staging` (PRs target `main`) |
-| Current phase | **Phase 1 — Labour removal** (complete; staging deploy + journey walk pending per §7 phase-done) |
-| Next task | 2.1 — **STOP: pre-Phase-2 check-in required** (Azure decision, see Notes) |
-| Last completed task | 1.4 |
-| Migration strategy | Lazy per-user blob→V2 backfill (PLAN §5.8); blob becomes read-only archive at Phase 2; old store deleted end of Phase 3 |
-| Notes / open escalations | **ESCALATION (pre-Phase-2): Liz confirmed on 11 Jul 2026 that BumpNotes is moving from Supabase to Azure for easier NHS compliance.** PLAN Phases 2–3+ are written entirely against Supabase (schema migrations, Storage buckets, RLS, service-role backfill) and must be revised before task 2.1 starts. Phases 0–1 are platform-agnostic and proceed unchanged; work stops for a check-in before Phase 2 as agreed. Open questions: which Azure services (Postgres? Blob Storage? auth provider?), who revises the PLAN, and whether the Supabase→Azure move happens before, during, or instead of the blob→tables migration. — Also: no production domain exists in the repo, so 0.2's `og:image`/`twitter:image` use a root-relative path (`/bumpnotes-wordmark.png`); some scrapers require absolute URLs — swap to the canonical domain when one is decided. — Earlier: `npm run lint` had never passed on `staging` (1412 pre-existing prettier/lint problems) before Phase 0 could start, contradicting WORK.md §3.3's "never commit red" gate. Resolved via an unplanned mechanical `eslint --fix` commit (fbb52c1) ahead of 0.1, confirmed with the user before landing. Task 0.1 (dead `components/ui/*`, `BottomNav.tsx`, `SilhouetteIllustration.tsx`, `example.functions.ts`, `bun.lock`) landed clean on top of it; `calendar.tsx`/`popover.tsx`/`button.tsx` kept (only ones imported, transitively via `Onboarding.tsx`) and verified working in `npm run dev` (due-date picker flow). |
+| Current phase | **AZURE Phase 2 — Azure foundation** (not started; blocked on provisioning) |
+| Next task | AZURE 2.1 — **[LIZ/OPS] provision Azure resources per AZURE §6**; first model-executable task is AZURE 2.2 (may start in parallel: scaffolding needs no live Azure) |
+| Last completed task | 1.4 (Phases 0–1 complete) |
+| Migration strategy | **Azure-first (Liz, 12 Jul 2026):** V2 persistence built directly on Azure PG + Blob behind the BumpNotes API; Supabase V2 schema never built (PLAN §10 Phases 2–3 superseded by AZURE §3). Lazy per-user blob→V2 backfill (PLAN §5.8 mapping unchanged) runs inside Azure after a one-time archive copy at cutover; identity moves to Entra External ID in AZURE Phase I (after data, before onboarding V2). |
+| Notes / open escalations | **Azure escalation resolved 12 Jul 2026:** Liz supplied the target architecture (PG Flexible Server / Blob Storage / Entra External ID / App Service / Key Vault / App Insights) and chose Azure-first sequencing. Written up as `docs/BUMPNOTES_AZURE_MIGRATION_PLAN.md`; PLAN §10 Phases 2–3 marked superseded. **Open items awaiting Liz (AZURE §5):** (1) provisioning per AZURE §6 — blocks AZURE 2.3+; (2) Prisma-vs-plain-SQL veto window before AZURE 2.3; (3) identity-cutover comms/copy sign-off before I.3; (4) cutover window approval before 3.8; (5) consent/audit scope if compliance review needs more than `audit_events`. — Also: no production domain exists in the repo, so 0.2's `og:image`/`twitter:image` use a root-relative path (`/bumpnotes-wordmark.png`); some scrapers require absolute URLs — swap to the canonical domain when one is decided. — Earlier: `npm run lint` had never passed on `staging` (1412 pre-existing prettier/lint problems); resolved via mechanical `eslint --fix` commit (fbb52c1) ahead of 0.1, user-confirmed. |
 
-Phase progress: `0 ☑ · 1 ☑ · 2 ☐ · 3 ☐ · 4 ☐ · 5 ☐ · 6 ☐ · 7 ☐ · 8 ☐`
+Phase progress: `0 ☑ · 1 ☑ · A2 ☐ · A3 ☐ · I ☐ · 4 ☐ · 5 ☐ · 6 ☐ · 7 ☐ · 8 ☐` (A2/A3/I execute from AZURE §3; 4–8 from PLAN §10 with AZURE §4 amendments)
 
 Small follow-ups (not blocking): home "This week" stats card counts hidden labour-type entries from legacy blobs (index.tsx ThisWeekCard doesn't filter HIDDEN types) — fold into the 3.9 home cutover. `det.labourWardPhone` i18n key deliberately kept (used by details.tsx until Phase 5). 1.4 found `features.tsx`/`welcome.tsx` already free of labour copy (cleaned by pre-migration commits after the PLAN audit).
 

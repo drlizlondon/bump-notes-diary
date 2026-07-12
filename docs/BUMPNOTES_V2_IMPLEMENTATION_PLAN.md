@@ -5,6 +5,8 @@
 **Intended executor:** Claude Sonnet, working phase by phase. Every decision needed to implement is made in this document; where a judgement call was possible, it has been made and marked **DECISION**.
 **Date:** 10 July 2026 · Audited at commit `9602e2b` on `staging`
 
+> **⚠ Azure supersession notice (12 July 2026):** BumpNotes is moving from Supabase to Azure for NHS-compliance posture. `docs/BUMPNOTES_AZURE_MIGRATION_PLAN.md` **supersedes §10 Phases 2–3 of this document** (they stay unticked forever) and amends Phases 4–8. Everything else here — domain model, §5.8 blob mapping, phase content for 4–8, audit, decisions not touching Supabase infrastructure — remains authoritative. Where the two documents disagree, the Azure plan wins.
+
 ---
 
 # 1. Executive Summary
@@ -432,14 +434,14 @@ Every task independently completable and committable; dependencies noted as `[af
 - [x] 1.3 Remove labour store methods; keep blob *reading* tolerant of labour data (verify unknown-type fallthrough in `summariseEntry`, timeline, summary builder).
 - [x] 1.4 Prune `lab.*` i18n keys; update `features.tsx`/`welcome.tsx` copy.
 
-**Phase 2 — Schema + Storage** `[after 1.x]`
+**Phase 2 — Schema + Storage** `[after 1.x]` — **SUPERSEDED by `BUMPNOTES_AZURE_MIGRATION_PLAN.md` §3 Phase 2. Do not execute. Boxes stay unticked.**
 - [ ] 2.1 Migration: `pregnancies`, `people`, `health_items`, `previous_pregnancy_notes`, `preferences` + RLS + triggers + indexes (§5.3, §5.6).
 - [ ] 2.2 Migration: `entries`, `attachments`, `summaries` (no UPDATE policy on `summaries`) + RLS + indexes.
 - [ ] 2.3 Migration: `profiles` new columns (incl. `v2_notice_dismissed_at`); `bumpnotes_state` archive lock (revoke client writes; add `migrated_at`, `migration_checksum`).
 - [ ] 2.4 Buckets `attachments`, `summary-pdfs` + path-prefix RLS policies.
 - [ ] 2.5 Regenerate `integrations/supabase/types.ts`; commit.
 
-**Phase 3 — Data layer + cutover** `[after 2.x]`
+**Phase 3 — Data layer + cutover** `[after 2.x]` — **SUPERSEDED by `BUMPNOTES_AZURE_MIGRATION_PLAN.md` §3 Phase 3 (task content largely carried over; targets the BumpNotes API on Azure, not supabase-repo). Do not execute from here. Boxes stay unticked.**
 - [ ] 3.1 `lib/domain/types.ts` (V2 entities, zod schemas for payloads + snapshot skeleton).
 - [ ] 3.2 `lib/data/repository.ts` interface + `supabase-repo.ts` (CRUD, camelCase mapping, soft delete, purge).
 - [ ] 3.3 `lib/data/outbox.ts` + IndexedDB attachment staging + connectivity flusher.
