@@ -54,9 +54,9 @@ The one sentence that settles product disputes without escalation: **"BumpNotes 
 | Field | Value |
 |---|---|
 | Working branch | `staging` (PRs target `main`) |
-| Current phase | **AZURE Phase 2 — Azure foundation** (not started; blocked on provisioning) |
-| Next task | AZURE 2.1 — **[LIZ/OPS] provision Azure resources per AZURE §6**; first model-executable task is AZURE 2.2 (may start in parallel: scaffolding needs no live Azure) |
-| Last completed task | 1.4 (Phases 0–1 complete) |
+| Current phase | **AZURE Phase 2 — Azure foundation** (2.2 done; 2.1 provisioning still outstanding) |
+| Next task | AZURE 2.3 (migration 001 — SQL can be *authored* without live Azure, but **applying** it needs 2.1 provisioning; Prisma veto window closes when 2.3 starts). AZURE 2.1 remains **[LIZ/OPS]**. |
+| Last completed task | AZURE 2.2 (runner tested end-to-end against a throwaway local PG 16: apply, idempotent re-run, status, filename validation, checksum-drift abort, transactional rollback all verified) |
 | Migration strategy | **Azure-first (Liz, 12 Jul 2026):** V2 persistence built directly on Azure PG + Blob behind the BumpNotes API; Supabase V2 schema never built (PLAN §10 Phases 2–3 superseded by AZURE §3). Lazy per-user blob→V2 backfill (PLAN §5.8 mapping unchanged) runs inside Azure after a one-time archive copy at cutover; identity moves to Entra External ID in AZURE Phase I (after data, before onboarding V2). |
 | Notes / open escalations | **Azure escalation resolved 12 Jul 2026:** Liz supplied the target architecture (PG Flexible Server / Blob Storage / Entra External ID / App Service / Key Vault / App Insights) and chose Azure-first sequencing. Written up as `docs/BUMPNOTES_AZURE_MIGRATION_PLAN.md`; PLAN §10 Phases 2–3 marked superseded. **Open items awaiting Liz (AZURE §5):** (1) provisioning per AZURE §6 — blocks AZURE 2.3+; (2) Prisma-vs-plain-SQL veto window before AZURE 2.3; (3) identity-cutover comms/copy sign-off before I.3; (4) cutover window approval before 3.8; (5) consent/audit scope if compliance review needs more than `audit_events`. — Also: no production domain exists in the repo, so 0.2's `og:image`/`twitter:image` use a root-relative path (`/bumpnotes-wordmark.png`); some scrapers require absolute URLs — swap to the canonical domain when one is decided. — Earlier: `npm run lint` had never passed on `staging` (1412 pre-existing prettier/lint problems); resolved via mechanical `eslint --fix` commit (fbb52c1) ahead of 0.1, user-confirmed. |
 

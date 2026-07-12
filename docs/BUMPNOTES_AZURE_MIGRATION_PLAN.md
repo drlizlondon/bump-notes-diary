@@ -44,7 +44,7 @@ Phases 0–1 are complete on `staging`. This section **replaces** PLAN §10 Phas
 
 **Phase 2 — Azure foundation** *(app behaviour unchanged; production stays on current hosting + Supabase)*
 - [ ] 2.1 **[LIZ/OPS — blocks all of 2.3+]** Provision per checklist §6: resource group (UK South), PG Flexible Server 17, GPv2 storage account + 4 private containers, Key Vault, App Insights, App Service plan, Entra External ID external tenant + app registrations (SPA + API audience), workforce-tenant admin registration. Deliver endpoints/ids as env config (never committed).
-- [ ] 2.2 `azure/migrations/` scaffolding + runner script (`pg`); documented apply procedure; CI-free for now.
+- [x] 2.2 `azure/migrations/` scaffolding + runner script (`pg`); documented apply procedure; CI-free for now.
 - [ ] 2.3 Migration 001: `users` (internal UUID, `external_identity_id` nullable unique, `supabase_user_id` nullable unique for the bridge window, email, status, timestamps), `profiles`, `pregnancies`, `people`, `health_items`, `previous_pregnancy_notes`, `preferences` — PLAN §5.3 shapes with `user_id` → internal UUID.
 - [ ] 2.4 Migration 002: `entries`, `attachments` (blob metadata per §2), `summaries` (+ immutability trigger), `audit_events`, `bumpnotes_state_archive` (empty until 3.8), indexes per PLAN §5.6.
 - [ ] 2.5 Azure deploy target: nitro `node-server` preset build + App Service deployment (staging slot only); Key Vault/managed identity wiring; App Insights; health endpoint. Production traffic untouched.
