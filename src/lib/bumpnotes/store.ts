@@ -1,22 +1,9 @@
 import { useSyncExternalStore } from "react";
-import type { AppState, Entry, Profile, LabourPlan, BagItem } from "./types";
+import type { AppState, Entry, Profile } from "./types";
 import { gestationFromDueDate } from "./gestation";
-import { t } from "./i18n";
 
 const KEY = "bumpnotes:v1";
 const DEMO_KEY = "bumpnotes:demo:v1";
-
-function defaultBag(): BagItem[] {
-  const labels = [
-    t("lab.bag.defaults.notes"),
-    t("lab.bag.defaults.phone"),
-    t("lab.bag.defaults.clothes"),
-    t("lab.bag.defaults.nappies"),
-    t("lab.bag.defaults.toilet"),
-    t("lab.bag.defaults.snacks"),
-  ];
-  return labels.map((label) => ({ id: crypto.randomUUID(), label, packed: false }));
-}
 
 const initial: AppState = { profile: null, entries: [] };
 
@@ -196,36 +183,5 @@ export const store = {
 
   exportAll() {
     return JSON.stringify(state, null, 2);
-  },
-
-  // Labour
-  getLabourPlan(): LabourPlan {
-    if (state.labourPlan) return state.labourPlan;
-    return { bag: defaultBag() };
-  },
-  updateLabourPlan(patch: Partial<LabourPlan>) {
-    const current = state.labourPlan ?? { bag: defaultBag() };
-    setState({ ...state, labourPlan: { ...current, ...patch } });
-  },
-  setBag(bag: BagItem[]) {
-    const current = state.labourPlan ?? { bag };
-    setState({ ...state, labourPlan: { ...current, bag } });
-  },
-  startLabourRecording() {
-    const current = state.labourPlan ?? { bag: defaultBag() };
-    const startISO = new Date().toISOString();
-    const episodes = [...(current.episodes ?? []), { id: crypto.randomUUID(), startISO }];
-    setState({ ...state, labourPlan: { ...current, recordingStartISO: startISO, episodes } });
-  },
-  endLabourRecording(opts?: { outcome?: "baby" | "settled" | "other"; outcomeNote?: string }) {
-    if (!state.labourPlan) return;
-    const endISO = new Date().toISOString();
-    const episodes = (state.labourPlan.episodes ?? []).map((ep) =>
-      ep.endISO ? ep : { ...ep, endISO, outcome: opts?.outcome, outcomeNote: opts?.outcomeNote },
-    );
-    setState({
-      ...state,
-      labourPlan: { ...state.labourPlan, recordingStartISO: undefined, episodes },
-    });
   },
 };
