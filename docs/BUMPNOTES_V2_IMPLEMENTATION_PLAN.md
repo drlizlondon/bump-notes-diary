@@ -430,7 +430,7 @@ Every task independently completable and committable; dependencies noted as `[af
 - [x] 1.1 Delete `routes/labour.tsx`; remove nav item (`AppShell.useNavItems`) and `LabourLinkCard` (`index.tsx`). Add labour → home redirect route.
 - [x] 1.2 Remove labour rendering from `timeline.tsx` (filter, episode cards, episode grouping) and labour branches from `summary.ts`, `pregnancy-summary.ts`, `pdf.ts`, `PregnancySummaryPreview.tsx`, `pack.tsx` defaults.
 - [x] 1.3 Remove labour store methods; keep blob *reading* tolerant of labour data (verify unknown-type fallthrough in `summariseEntry`, timeline, summary builder).
-- [ ] 1.4 Prune `lab.*` i18n keys; update `features.tsx`/`welcome.tsx` copy.
+- [x] 1.4 Prune `lab.*` i18n keys; update `features.tsx`/`welcome.tsx` copy.
 
 **Phase 2 — Schema + Storage** `[after 1.x]`
 - [ ] 2.1 Migration: `pregnancies`, `people`, `health_items`, `previous_pregnancy_notes`, `preferences` + RLS + triggers + indexes (§5.3, §5.6).
