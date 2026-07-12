@@ -45,6 +45,7 @@ The one sentence that settles product disputes without escalation: **"BumpNotes 
 11. **Generated files are generated.** Never hand-edit `src/routeTree.gen.ts` or `src/integrations/supabase/types.ts`; regenerate them.
 12. **Applied migrations are immutable** — Supabase (`supabase/migrations/`) and Azure (`azure/migrations/`) alike. New timestamped files only; never edit an existing one.
 13. **Secrets and config:** never commit credentials, connection strings, tenant/client secrets, or SAS tokens; never modify `.env`, Supabase project settings, or Azure resources as part of a code task (see AZURE §7).
+14. **DTAC readiness is a parallel workstream** (Liz, 12 Jul 2026). Every architectural or implementation decision is made with eventual NHS DTAC submission in mind. A task whose decisions materially affect compliance (auth, storage, audit, retention, deletion, telemetry, accessibility, clinical-boundary) updates `docs/DTAC_READINESS.md` in the same commit — minimum documentation alongside the code, never reconstructed later. Record assumptions, risks and future evidence needs as they arise; cross-reference rather than duplicate. This is evidence accumulation, not a mandate to implement DTAC requirements early.
 
 ## 4. Current State
 
