@@ -12,4 +12,12 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // AZURE §2 DECISION: the API lives in this app, deployed to App Service via
+  // nitro's node-server preset (AZURE plan task 2.5). Per the config comment
+  // above, this override is forced back to cloudflare inside a Lovable build —
+  // it only takes effect in a real deploy build (e.g. Azure CI), which is the
+  // point: Lovable's own sandbox/preview is untouched.
+  nitro: {
+    preset: "node-server",
+  },
 });

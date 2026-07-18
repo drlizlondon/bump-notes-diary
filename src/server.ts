@@ -37,8 +37,20 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   });
 }
 
+// App Service health probe (AZURE plan task 2.5). Answered before SSR/auth/DB
+// so it stays cheap and never depends on anything App Service is checking for.
+function isHealthCheck(request: Request): boolean {
+  return new URL(request.url).pathname === "/api/health";
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    if (isHealthCheck(request)) {
+      return new Response(JSON.stringify({ status: "ok" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
