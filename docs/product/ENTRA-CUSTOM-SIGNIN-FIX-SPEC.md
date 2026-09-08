@@ -8,7 +8,9 @@
 - **(A) Branded Entra-hosted pages (quick).** The BumpNotes sign-in buttons trigger an Entra **redirect** to a login page styled with **company branding** (logo, colours, background) so it reads as BumpNotes. Least build; standard CIAM pattern. Trade-off: it's a redirect to Entra's page, not the exact embedded form on `signin.tsx`.
 - **(B) This exact embedded form, Entra native authentication (more build) — the founder's actual ask.** Keep `signin.tsx` as-is visually; wire its fields to Entra External ID **native authentication** (custom auth API / MSAL custom-auth SDK) so credential entry stays on BumpNotes' own page. Bigger build; verify the native-auth capability is enabled on the tenant.
 
-**Recommendation:** confirm (B) is the goal (it is, per the ask). Consider shipping (A) as an on-brand interim if a fast cut is wanted, then move to (B).
+**DECISION (founder, 2026-09-08): (B) — our own branded form, Entra as the engine (native auth).** De-risked: **Entra External ID native authentication for JS SPAs is Generally Available** (GA March 2026), incl. email/SMS OTP MFA, social IdPs, SSO. It's a supported path — **MSAL for JavaScript + the native-authentication extensions** — not a bet. Build it as a **reusable login package** (config-driven module + themeable form) so every future company inherits it (the "identity" pillar of `~/NightMode/UK-HEALTHTECH-FOUNDATION-PLAYBOOK.md §3`). NOT "roll our own auth" — Entra remains the identity engine; we only own the UI. Refs: devblogs.microsoft.com/identity native-auth GA posts.
+
+**Reusable-package shape:** `entra-native.ts` = config-driven flows (start sign-up/in, submit password, submit email OTP, reset) with authority/clientId/scope from env; a themeable `<SignInForm>` component (brand = a theme, not a fork). Company #2 = new Entra tenant + native-auth enabled + swap env + apply brand theme. Extract the shared package properly at the *second* use (don't pre-abstract).
 
 ## Option → Entra mapping (both approaches)
 - **Email + password** → Entra user flow email+password (already built: `SignUpSignIn`).
