@@ -1,0 +1,78 @@
+# Azure App Service deploy for BumpNotes (AZURE plan task 2.5).
+#
+# MANUAL ONLY (workflow_dispatch) — never auto-runs on push, so it cannot
+# interfere with the Cloudflare Pages production build (which serves `main`).
+# You pick the branch to deploy from when you run it.
+#
+# Auth is OIDC (federated credential) — NO publish profile, NO stored secret,
+# consistent with the "managed identity, no account keys" posture. The three
+# values below are non-secret identifiers, supplied as repo *variables*
+# (Settings → Secrets and variables → Actions → Variables):
+#   AZURE_DEPLOY_CLIENT_ID   — client id of the deploy app registration / user-assigned MI
+#   AZURE_TENANT_ID          — 9bbda104-86c1-4e6d-b72b-4739fa5a81fe (Default Directory)
+#   AZURE_SUBSCRIPTION_ID    — 5358e296-e900-4806-8180-2e6676f19178
+# See docs/clinical-safety/.. no — see the one-time setup guide handed over with this workflow.
+
+name: Deploy to Azure App Service (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm you intend to deploy to the bumpnotes-api App Service'
+        required: true
+        default: ''
+
+permissions:
+  id-token: write   # required for OIDC federated login
+  contents: read
+
+concurrency:
+  group: azure-deploy
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    if: ${{ inputs.confirm == 'deploy' }}
+    runs-on: ubuntu-latest
+    environment: azure-app-service   # add a protection rule here for a manual approval gate
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (nitro node-server preset)
+        run: npm run build
+
+      - name: Verify node-server artifact exists
+        run: |
+          test -f .output/server/index.mjs || { echo "::error::.output/server/index.mjs missing — build did not produce the node-server preset"; exit 1; }
+          echo "node-server artifact present"
+
+      - name: Azure login (OIDC, no secrets)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy .output to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: bumpnotes-api
+          package: .output
+
+      - name: Smoke-test /api/health over the internet
+        run: |
+          for i in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' https://bumpnotes-api-cvhqc8bydscregf7.ukwest-01.azurewebsites.net/api/health || true)
+            if [ "$code" = "200" ]; then echo "health OK (200)"; exit 0; fi
+            echo "attempt $i: got $code, retrying"; sleep 6
+          done
+          echo "::error::/api/health did not return 200 after deploy"; exit 1
