@@ -22,6 +22,8 @@ Existing risk-reduction evidence:
 
 **DCB0129 scaffolds started 8 Sep 2026** (`docs/clinical-safety/`): [CRMP](clinical-safety/CLINICAL_RISK_MANAGEMENT_PLAN.md), [Hazard Log](clinical-safety/HAZARD_LOG.md) (H-01…H-09 seeded from ARCH §2.1/§6.4/§10/§12.5/§13 + safeguarding), [CSCR skeleton](clinical-safety/CLINICAL_SAFETY_CASE_REPORT.md) — **all marked DRAFT, not valid until a CSO signs them.** These are living manufacturer scaffolds so evidence accumulates; they are not compliance.
 
+**Planned non-device safety feature (founder ruling 2026-09-08):** an **Education section** ("When to get further help") presenting generic pregnancy red-flag information (NICE/NHS default; per-tenant override) — deliberately **non-personalised, not triggered by user data**, to stay outside SaMD. Spec + mechanical non-device guardrails: `docs/product/EDUCATION-RED-FLAGS-SPEC.md`. Adds Hazard-Log candidates H-10 (false reassurance / mistaken for personal triage) and H-11 (stale/locally-wrong content). **The CSO confirms this specific execution is non-device before launch.** A *future* personalised-triage ambition is explicitly a separate SaMD decision (Class IIa/IIb) — scoped with Assuric, not built under this feature.
+
 **Outstanding:** **named Clinical Safety Officer (the blocking dependency — the documents are only valid signed by them; fractional-CSO route under evaluation: Assuric)**; CSO ratification of the risk matrix + all Hazard-Log scores; completion & sign-off of the CSCR (sequences ≈ Phase 6 when the feature set is stable); safeguarding design pass with domestic-abuse charities (H-05, ARCH §13.4, pre-launch requirement); MHRA non-medical-device positioning confirmation.
 
 ## 2. Security (organisational)
