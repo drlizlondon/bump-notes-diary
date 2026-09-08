@@ -4,17 +4,25 @@
 // operation here is ownership-checked against the internal `users.id` from
 // requireApiAuth (2.6) and either streams through this server or issues a
 // short-lived SAS URL. No permanent public URLs, no account keys handed out.
+//
+// AZURE §1.2 non-negotiable — NO account keys. The client authenticates with
+// `DefaultAzureCredential` (the App Service system-assigned managed identity,
+// granted Storage Blob Data Contributor), and download SAS URLs are signed with
+// a short-lived *user-delegation key* obtained via that identity — not a shared
+// account key. Nothing here reads an account key or connection string.
 
+import { DefaultAzureCredential } from "@azure/identity";
 import {
   BlobSASPermissions,
   BlobServiceClient,
   generateBlobSASQueryParameters,
-  StorageSharedKeyCredential,
+  SASProtocol,
 } from "@azure/storage-blob";
 import type pg from "pg";
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB (AZURE plan task 2.7)
 export const SAS_TTL_SECONDS = 300; // short-lived, per AZURE §1.2
+const SAS_CLOCK_SKEW_SECONDS = 300; // allow modest clock skew on the SAS start time
 
 export type AttachmentContainer =
   | "user-uploads"
@@ -23,26 +31,22 @@ export type AttachmentContainer =
   | "exports";
 
 let blobServiceClient: BlobServiceClient | undefined;
-let sharedKeyCredential: StorageSharedKeyCredential | undefined;
 
-function getCredential(): StorageSharedKeyCredential {
-  if (sharedKeyCredential) return sharedKeyCredential;
-  const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME;
-  const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY;
-  if (!accountName || !accountKey) {
-    throw new Error("AZURE_STORAGE_ACCOUNT_NAME / AZURE_STORAGE_ACCOUNT_KEY are not set.");
+/** The storage account name (e.g. "bumpnotesproduks"); no key, ever (AZURE §1.2). */
+function getAccountName(): string {
+  const accountName = process.env.AZURE_STORAGE_ACCOUNT;
+  if (!accountName) {
+    throw new Error("AZURE_STORAGE_ACCOUNT is not set; cannot reach Blob Storage.");
   }
-  sharedKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
-  return sharedKeyCredential;
+  return accountName;
 }
 
 export function getBlobServiceClient(): BlobServiceClient {
   if (blobServiceClient) return blobServiceClient;
-  const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
-  if (!connectionString) {
-    throw new Error("AZURE_STORAGE_CONNECTION_STRING is not set.");
-  }
-  blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  blobServiceClient = new BlobServiceClient(
+    `https://${getAccountName()}.blob.core.windows.net`,
+    new DefaultAzureCredential(),
+  );
   return blobServiceClient;
 }
 
@@ -112,28 +116,40 @@ async function loadOwnedAttachment(
   return row;
 }
 
-/** Issues a short-lived, read-only SAS URL for an attachment the caller owns. */
+/**
+ * Issues a short-lived, read-only, HTTPS-only SAS URL for an attachment the
+ * caller owns. Signed with a user-delegation key from the managed identity
+ * (AZURE §1.2) — never a shared account key.
+ */
 export async function issueDownloadSas(
   pool: Pick<pg.Pool, "query">,
   userId: string,
   attachmentId: string,
 ): Promise<{ url: string; expiresAt: Date }> {
   const { container, blob_path } = await loadOwnedAttachment(pool, userId, attachmentId);
-  const credential = getCredential();
-  const expiresOn = new Date(Date.now() + SAS_TTL_SECONDS * 1000);
+  const client = getBlobServiceClient();
+  const now = Date.now();
+  const startsOn = new Date(now - SAS_CLOCK_SKEW_SECONDS * 1000);
+  const expiresOn = new Date(now + SAS_TTL_SECONDS * 1000);
+
+  // The user-delegation key is itself obtained via the managed identity; it
+  // carries the same short lifetime and cannot outlive the identity's grant.
+  const userDelegationKey = await client.getUserDelegationKey(startsOn, expiresOn);
 
   const sas = generateBlobSASQueryParameters(
     {
       containerName: container,
       blobName: blob_path,
       permissions: BlobSASPermissions.parse("r"),
+      protocol: SASProtocol.Https,
+      startsOn,
       expiresOn,
     },
-    credential,
+    userDelegationKey,
+    getAccountName(),
   ).toString();
 
-  const containerClient = getBlobServiceClient().getContainerClient(container);
-  const blobUrl = containerClient.getBlockBlobClient(blob_path).url;
+  const blobUrl = client.getContainerClient(container).getBlockBlobClient(blob_path).url;
   return { url: `${blobUrl}?${sas}`, expiresAt: expiresOn };
 }
 
