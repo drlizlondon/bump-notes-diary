@@ -20,7 +20,9 @@ Existing risk-reduction evidence:
 
 **Assumptions (to validate before submission):** the non-medical-device positioning holds under MHRA guidance for the final feature set; the DTAC route is as a non-clinical personal health record tool, which still requires DCB0129 compliance evidence proportionate to risk.
 
-**Outstanding:** named Clinical Safety Officer; DCB0129 clinical safety case report; hazard log (seed it from ARCH §13's risk table — items 4, 6 are hazards in DCB0129 terms); safeguarding design pass with domestic-abuse charities (ARCH §13.4, pre-launch requirement).
+**DCB0129 scaffolds started 8 Sep 2026** (`docs/clinical-safety/`): [CRMP](clinical-safety/CLINICAL_RISK_MANAGEMENT_PLAN.md), [Hazard Log](clinical-safety/HAZARD_LOG.md) (H-01…H-09 seeded from ARCH §2.1/§6.4/§10/§12.5/§13 + safeguarding), [CSCR skeleton](clinical-safety/CLINICAL_SAFETY_CASE_REPORT.md) — **all marked DRAFT, not valid until a CSO signs them.** These are living manufacturer scaffolds so evidence accumulates; they are not compliance.
+
+**Outstanding:** **named Clinical Safety Officer (the blocking dependency — the documents are only valid signed by them; fractional-CSO route under evaluation: Assuric)**; CSO ratification of the risk matrix + all Hazard-Log scores; completion & sign-off of the CSCR (sequences ≈ Phase 6 when the feature set is stable); safeguarding design pass with domestic-abuse charities (H-05, ARCH §13.4, pre-launch requirement); MHRA non-medical-device positioning confirmation.
 
 ## 2. Security (organisational)
 
