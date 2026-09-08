@@ -39,3 +39,25 @@ Built the native-auth module against the real SDK types (`@azure/msal-browser/cu
 
 ## Out of scope for the fix
 The full identity cutover (Entra-only for everyone, Supabase decommission — I.3/I.4) and the surface cutover onto the repository (Phase 3.9+). This fix makes the *sign-in* Entra-native while keeping BumpNotes' UI; the rest follows.
+
+## BUILD DONE — 8 Sep 2026 (evening) — (B) native auth, built and half-proven
+Commit `43743b6` on `staging`. Build green, tsc clean, lint clean; `custom-auth` SDK confirmed absent from the server bundle (dynamic import held, unlike the App Insights attempt).
+
+**The proxy question is resolved — cheaply.** The CORS proxy native auth requires is NOT extra infrastructure for us: because BumpNotes is server-rendered, it's a single same-origin route in `src/server.ts` (`/api/ciam`, forwarding to the CIAM native-auth API, reusable via `AZURE_CIAM_PROXY_TARGET`). No Azure Front Door, no separate service to run/maintain. This substantially dissolves the main cost that reopened the A/B decision — (B)'s ongoing cost is now essentially just owning the form UI, which is exactly what the founder asked for.
+
+**Proven live (local built server, 8 Sep):** POST `/api/ciam/oauth2/v2.0/initiate` forwards correctly to Microsoft CIAM (real ESTS response + headers, CORS injected, path-strip correct). So the proxy + routing are proven end-to-end against the real Microsoft endpoint.
+
+**Blocker surfaced by that probe (founder portal action):** CIAM returned `AADSTS550022: Confidential Client is not supported in Native Authentication API flow`. Two portal settings on the **external tenant** are needed before native sign-in completes:
+1. **Enable native authentication** on the BumpNotes external tenant (Entra admin center → External Identities settings).
+2. Make the **SPA app registration (`3180eb1a-…`) a public client** for native auth — enable "Allow public client flows"; it must not be treated as confidential (no client secret expected on the native flow).
+These are Lizzie's to click; I can't and shouldn't do portal/tenant changes.
+
+**What's built (all flag-gated by `VITE_ENTRA_NATIVE`, default OFF — live Supabase login untouched):**
+- `src/server.ts` — same-origin CIAM CORS proxy.
+- `src/lib/azure/entra-native.ts` — reusable, config-driven native-auth engine (email+password, email OTP, password reset) exposed as an SDK-free normalized surface (closures per next-step) so the form never touches SDK types. Documents the `this is this & {state}` guard collapse + the `flags()` workaround for the next product.
+- `src/routes/entra.tsx` — the `/entra` surface is now BumpNotes' own branded native sign-in form (same visual language as `/signin`) + the Azure-API→Postgres profile round-trip proof.
+- `entra-auth-attacher.ts` — prefers the native token when the native path is on.
+
+**Honest sequencing — login proven ≠ live front door yet.** The live app's session and data are still Supabase-backed (`useSyncSnapshot` reads `supabase.auth.getSession()`; app state comes from `pullFromCloud`/`pushToCloud` on Supabase tables). So a successful Entra native sign-in cannot yet land a user in the working app — that requires the **Phase 3 surface cutover** (app state onto the Azure repository). We therefore prove the login on `/entra` and deliberately do NOT rewire the live `/signin` yet; flipping `/signin` to native rides *with* the Phase 3 cutover so users land somewhere that works. This is the load-bearing "don't build breadth before the loop closes" call.
+
+**Next steps (in order):** (1) Lizzie enables native auth + public-client on the tenant/app; (2) rebuild+deploy staging with `VITE_ENTRA_NATIVE=true` (founder-gated); (3) verify the full round-trip on `/entra` (sign in with our form → token → Azure API → Postgres profile); (4) then plan the Phase 3 surface cutover that lets native sign-in become the real `/signin`.
