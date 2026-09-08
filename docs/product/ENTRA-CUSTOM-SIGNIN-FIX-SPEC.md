@@ -12,6 +12,17 @@
 
 **Reusable-package shape:** `entra-native.ts` = config-driven flows (start sign-up/in, submit password, submit email OTP, reset) with authority/clientId/scope from env; a themeable `<SignInForm>` component (brand = a theme, not a fork). Company #2 = new Entra tenant + native-auth enabled + swap env + apply brand theme. Extract the shared package properly at the *second* use (don't pre-abstract).
 
+## FINDINGS from the build spike (8 Sep 2026) — the decision is genuinely reopened
+Built the native-auth module against the real SDK types (`@azure/msal-browser/custom-auth`, `CustomAuthPublicClientApplication`; API confirmed: `create()`, `signIn({username,password,scopes})`, `signUp()`, `resetPassword()`, `getCurrentAccount()`, state machine `isCompleted()/isPasswordRequired()/isCodeRequired()/isFailed()` + `state.submitPassword()/submitCode()/resendCode()`, account via `CustomAuthAccountData.getAccessToken()`). Two real costs surfaced:
+1. **`customAuth.authApiProxyUrl` is REQUIRED** — native auth needs a **CORS proxy** for the CIAM native-auth API. That's **extra infrastructure to run and maintain per product** (a proxy endpoint), which cuts against the "just a browser SDK" premise and the playbook's low-maintenance goal.
+2. **Sign-up ≠ signed-in** — sign-up and sign-in are separate multi-step flows (sign-up completes, then you sign in); the UI/module must handle both, not one form.
+- Also noted: the SDK's `this is X & {state}` type guards don't negative-narrow cleanly (build against them with explicit per-branch handling).
+
+**Reopened decision (founder to weigh):**
+- **(A) Branded Entra-hosted redirect** — Entra's page, company-branded (logo/colours/background), redirect flow. **Zero extra infra, low maintenance, standard.** Not the pixel-exact embedded form.
+- **(B) Native auth (your exact form)** — embedded form, but **you run a CORS proxy** + own the sign-up/in/reset flows + maintain the UI.
+**Coordinator recommendation: (A) branded redirect** — the proxy + flow-maintenance of (B) is real ongoing cost for a login screen, and restraint says spend that on the product, not auth chrome. If the embedded form genuinely matters, (B) is viable (GA) — just go in eyes-open about the proxy. The reusable Entra *core* (`entra-config`/`entra-auth`/token attacher) already landed serves BOTH.
+
 ## Option → Entra mapping (both approaches)
 - **Email + password** → Entra user flow email+password (already built: `SignUpSignIn`).
 - **"Email me a magic link"** → Entra **email one-time passcode (OTP)** — a code, not a link. Same passwordless feel; relabel to "Email me a code".
