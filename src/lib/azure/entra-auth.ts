@@ -16,11 +16,26 @@ export async function handleEntraRedirect(): Promise<void> {
   }
 }
 
-/** Start the Entra email+password sign-up/sign-in (redirect flow). */
+/**
+ * Start the Entra email+password sign-up/sign-in (REDIRECT flow — production).
+ * NOTE: the app root currently redirects any `?code=` to the Supabase
+ * `/auth/callback`, so production redirect use needs a dedicated Entra callback
+ * route that bypasses that. Until then, prefer `signInEntraPopup` (no `?code=`
+ * on the app URL, no collision).
+ */
 export async function signInEntra(): Promise<void> {
   const msal = await getMsal();
   if (!msal) return;
   await msal.loginRedirect(loginRequest);
+}
+
+/** Start sign-in via POPUP — self-contained, no app-URL redirect (used to verify). */
+export async function signInEntraPopup(): Promise<boolean> {
+  const msal = await getMsal();
+  if (!msal) return false;
+  const result = await msal.loginPopup(loginRequest);
+  if (result.account) msal.setActiveAccount(result.account);
+  return !!result.account;
 }
 
 export async function signOutEntra(): Promise<void> {
