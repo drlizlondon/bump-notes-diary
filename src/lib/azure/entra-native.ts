@@ -22,6 +22,14 @@ import type {
   SignInPasswordRequiredState,
   ResetPasswordCodeRequiredState,
   ResetPasswordPasswordRequiredState,
+  ResetPasswordCompletedState,
+  SignUpResult,
+  SignUpSubmitCodeResult,
+  SignUpSubmitPasswordResult,
+  SignUpCodeRequiredState,
+  SignUpPasswordRequiredState,
+  SignUpCompletedState,
+  SignInContinuationState,
 } from "@azure/msal-browser/custom-auth";
 
 /** Build-time flag. The native sign-in path is inert unless this is exactly "true". */
@@ -31,8 +39,13 @@ const CLIENT_ID = import.meta.env.VITE_ENTRA_CLIENT_ID as string | undefined;
 const AUTHORITY = import.meta.env.VITE_ENTRA_AUTHORITY as string | undefined; // https://<sub>.ciamlogin.com/<tenantId>
 const API_SCOPE = import.meta.env.VITE_ENTRA_API_SCOPE as string | undefined; // api://<apiClientId>/access_as_user
 
-/** openid/offline_access get us an id-token + refresh token; API_SCOPE gets the access token for our API. */
-const SCOPES = ["openid", "offline_access", ...(API_SCOPE ? [API_SCOPE] : [])];
+// Sign IN for the app's own tokens only (openid/offline_access). Requesting a
+// cross-resource API scope (api://<apiApp>/…) during native sign-in makes CIAM
+// return the token WITHOUT `client_info`, and MSAL then refuses to cache the
+// account ("client_info_missing") even though the token is valid. So we sign in
+// for the client, get client_info + the account, then acquire the API access
+// token separately and silently via getAccessToken([API_SCOPE]).
+const SIGNIN_SCOPES = ["openid", "offline_access"];
 
 function isConfigured(): boolean {
   return ENTRA_NATIVE_ENABLED && !!CLIENT_ID && !!AUTHORITY && typeof window !== "undefined";
@@ -122,6 +135,7 @@ type ResultFlags = {
   isFailed(): boolean;
   isPasswordRequired(): boolean;
   isCodeRequired(): boolean;
+  isAttributesRequired(): boolean;
 };
 function flags(result: object): ResultFlags {
   const r = result as Partial<ResultFlags>;
@@ -130,6 +144,7 @@ function flags(result: object): ResultFlags {
     isFailed: () => r.isFailed?.() ?? false,
     isPasswordRequired: () => r.isPasswordRequired?.() ?? false,
     isCodeRequired: () => r.isCodeRequired?.() ?? false,
+    isAttributesRequired: () => r.isAttributesRequired?.() ?? false,
   };
 }
 
@@ -224,28 +239,132 @@ export async function nativeSignIn(email: string, password?: string): Promise<Na
   const app = await getNativeApp();
   if (!app) return { status: "error", message: "Sign-in is unavailable right now." };
   try {
-    const result = await app.signIn({ username: email, password, scopes: SCOPES });
+    const result = await app.signIn({ username: email, password, scopes: SIGNIN_SCOPES });
     return normalizeSignIn(result, password);
   } catch (error) {
     return { status: "error", message: error instanceof Error ? error.message : "Sign-in failed." };
   }
 }
 
-/** Start a password reset for this email. Returns a code-collecting step or an error. */
+// --- Sign-up (create account) ------------------------------------------------
+// Email + password sign-up: create account -> verify email with a one-time code
+// -> (submit password if the flow asks separately) -> on completion, the SDK
+// hands back a continuation state so we sign in immediately without re-entering
+// the password. Reuses the same NativeSignInResult surface as sign-in, so the
+// form renders one code box for both. Attribute-collection user flows are out
+// of scope here (surfaced as an error telling us to simplify the flow).
+
+async function continueFromCompletion(state: SignInContinuationState): Promise<NativeSignInResult> {
+  // Both SignUpCompletedState and ResetPasswordCompletedState extend
+  // SignInContinuationState: sign in with the continuation token, no password
+  // re-entry, and hand back the signed-in account.
+  return normalizeSignIn(await state.signIn({ scopes: SIGNIN_SCOPES }), undefined);
+}
+
+async function normalizeSignUpSubmit(
+  result: SignUpSubmitCodeResult | SignUpSubmitPasswordResult,
+  password: string,
+): Promise<NativeSignInResult> {
+  const state = result.state;
+  const error = result.error;
+  const g = flags(result);
+  if (g.isCompleted()) {
+    return continueFromCompletion(state as SignUpCompletedState);
+  }
+  if (g.isPasswordRequired()) {
+    const pwResult = await (state as SignUpPasswordRequiredState).submitPassword(password);
+    return normalizeSignUpSubmit(pwResult, password);
+  }
+  if (g.isAttributesRequired()) {
+    return {
+      status: "error",
+      message: "This sign-up flow asks for extra profile fields we don't collect here.",
+    };
+  }
+  if (g.isFailed()) {
+    return { status: "error", message: errMessage(error, "Couldn't complete sign-up.") };
+  }
+  return {
+    status: "redirect_required",
+    message: "This sign-up needs an extra step in your browser.",
+  };
+}
+
+async function normalizeSignUp(
+  result: SignUpResult,
+  password: string,
+): Promise<NativeSignInResult> {
+  const state = result.state;
+  const error = result.error;
+  const g = flags(result);
+  if (g.isCodeRequired()) {
+    const codeState = state as SignUpCodeRequiredState;
+    const step = (): Extract<NativeSignInResult, { status: "code_required" }> => ({
+      status: "code_required",
+      codeLength: codeState.getCodeLength(),
+      submitCode: async (code: string) =>
+        normalizeSignUpSubmit(await codeState.submitCode(code), password),
+      resendCode: async () => {
+        await codeState.resendCode();
+        return step();
+      },
+    });
+    return step();
+  }
+  if (g.isPasswordRequired()) {
+    const pwResult = await (state as SignUpPasswordRequiredState).submitPassword(password);
+    return normalizeSignUpSubmit(pwResult, password);
+  }
+  if (g.isAttributesRequired()) {
+    return {
+      status: "error",
+      message: "This sign-up flow asks for extra profile fields we don't collect here.",
+    };
+  }
+  if (g.isFailed()) {
+    return { status: "error", message: errMessage(error, "Couldn't start sign-up.") };
+  }
+  return {
+    status: "redirect_required",
+    message: "This sign-up needs an extra step in your browser.",
+  };
+}
+
+/**
+ * Create an account with BumpNotes' own form (email + password). Returns the
+ * same normalized surface as sign-in: usually `code_required` first (verify the
+ * email), then `signed_in` once verification completes.
+ */
+export async function nativeSignUp(email: string, password: string): Promise<NativeSignInResult> {
+  const app = await getNativeApp();
+  if (!app) return { status: "error", message: "Sign-up is unavailable right now." };
+  try {
+    const result = await app.signUp({ username: email, password });
+    return normalizeSignUp(result, password);
+  } catch (error) {
+    return { status: "error", message: error instanceof Error ? error.message : "Sign-up failed." };
+  }
+}
+
+/**
+ * Password reset ("Forgot password?"). Start it, collect the emailed code, then
+ * set a new password. On success we continue straight into sign-in (the SDK's
+ * completed state is a sign-in continuation), so the user lands signed-in — the
+ * result is the shared NativeSignInResult, same as sign-in/sign-up.
+ */
 export type NativeResetResult =
   | {
       status: "code_required";
       codeLength: number;
-      submitCode: (code: string) => Promise<NativeResetStep>;
+      submitCode: (code: string) => Promise<NativeResetPwStep>;
     }
   | { status: "error"; message: string };
 
-export type NativeResetStep =
+export type NativeResetPwStep =
   | {
       status: "password_required";
-      submitPassword: (newPassword: string) => Promise<NativeResetStep>;
+      submitNewPassword: (newPassword: string) => Promise<NativeSignInResult>;
     }
-  | { status: "completed" }
   | { status: "error"; message: string };
 
 export async function nativeStartPasswordReset(email: string): Promise<NativeResetResult> {
@@ -281,11 +400,16 @@ export async function nativeStartPasswordReset(email: string): Promise<NativeRes
           return { status: "error", message: "Couldn't continue the password reset." };
         }
         const pwState = afterState as ResetPasswordPasswordRequiredState;
-        const submitNewPassword = async (newPassword: string): Promise<NativeResetStep> => {
+        const submitNewPassword = async (newPassword: string): Promise<NativeSignInResult> => {
           const done = await pwState.submitNewPassword(newPassword);
+          const doneState = done.state;
           const doneError = done.error;
           const doneFlags = flags(done);
-          if (doneFlags.isCompleted()) return { status: "completed" };
+          if (doneFlags.isCompleted()) {
+            // Completed state is a sign-in continuation: sign in with the new
+            // password, no re-entry, and return the signed-in account.
+            return continueFromCompletion(doneState as ResetPasswordCompletedState);
+          }
           if (doneFlags.isFailed()) {
             return {
               status: "error",
@@ -294,7 +418,7 @@ export async function nativeStartPasswordReset(email: string): Promise<NativeRes
           }
           return { status: "error", message: "Couldn't complete the password reset." };
         };
-        return { status: "password_required", submitPassword: submitNewPassword };
+        return { status: "password_required", submitNewPassword };
       },
     };
   } catch (error) {

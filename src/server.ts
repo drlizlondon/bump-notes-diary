@@ -115,12 +115,26 @@ async function proxyCiam(request: Request): Promise<Response> {
   });
 
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
+  const isToken = tail.startsWith("oauth2/v2.0/token");
+  let reqBuf = hasBody ? await request.arrayBuffer() : undefined;
+
+  // Ask CIAM to include client_info in the token response (idempotent). CIAM's
+  // native-auth token endpoint ignores this today (see synthesizeClientInfo
+  // below), but it costs nothing and is correct if that ever changes. NB: never
+  // log this body — it carries the password on the sign-in grant.
+  if (isToken && reqBuf) {
+    const body = new TextDecoder().decode(reqBuf);
+    if (!/(^|&)client_info=/.test(body)) {
+      reqBuf = new TextEncoder().encode(`${body}${body.length ? "&" : ""}client_info=1`).buffer;
+    }
+  }
+
   let upstream: Response;
   try {
     upstream = await fetch(targetUrl.toString(), {
       method: request.method,
       headers,
-      body: hasBody ? await request.arrayBuffer() : undefined,
+      body: reqBuf,
       redirect: "manual",
     });
   } catch (error) {
@@ -136,11 +150,60 @@ async function proxyCiam(request: Request): Promise<Response> {
     if (!STRIP_RESPONSE_HEADERS.has(key.toLowerCase())) outHeaders.set(key, value);
   });
 
+  // CIAM's native-auth token endpoint returns a valid token but omits the
+  // `client_info` field, and its id_token lacks `oid` — so MSAL can't build the
+  // account and throws "client_info_missing". We synthesize client_info from the
+  // token's own oid+tid so MSAL can cache the account. Only touches successful
+  // token responses that are missing the field.
+  if (isToken && upstream.status === 200) {
+    const bodyText = await upstream.text();
+    const patched = injectClientInfo(bodyText);
+    outHeaders.delete("content-length");
+    return new Response(patched, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: outHeaders,
+    });
+  }
+
   return new Response(upstream.body, {
     status: upstream.status,
     statusText: upstream.statusText,
     headers: outHeaders,
   });
+}
+
+/** base64url-decode a JWT segment to its JSON claims (no verification — read-only). */
+function jwtClaims(jwt: string): Record<string, unknown> | null {
+  try {
+    const payload = jwt.split(".")[1];
+    if (!payload) return null;
+    return JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * If a token response lacks `client_info`, add one built from the access/id
+ * token's `oid` (user object id) and `tid` (tenant id) — the same {uid, utid}
+ * MSAL would have read from a real client_info. Returns the body unchanged when
+ * client_info is already present or the claims can't be read.
+ */
+function injectClientInfo(bodyText: string): string {
+  let json: Record<string, unknown>;
+  try {
+    json = JSON.parse(bodyText);
+  } catch {
+    return bodyText;
+  }
+  if (json.client_info || typeof json.access_token !== "string") return bodyText;
+  const claims = jwtClaims(json.access_token) ?? jwtClaims(String(json.id_token ?? ""));
+  const uid = claims?.oid;
+  const utid = claims?.tid;
+  if (typeof uid !== "string" || typeof utid !== "string") return bodyText;
+  json.client_info = Buffer.from(JSON.stringify({ uid, utid }), "utf8").toString("base64url");
+  return JSON.stringify(json);
 }
 
 export default {

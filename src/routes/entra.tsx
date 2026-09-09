@@ -21,9 +21,13 @@ import {
   ENTRA_NATIVE_ENABLED,
   getNativeAccount,
   nativeSignIn,
+  nativeSignUp,
   nativeSignOut,
+  nativeStartPasswordReset,
   type NativeAccount,
   type NativeSignInResult,
+  type NativeResetResult,
+  type NativeResetPwStep,
 } from "@/lib/azure/entra-native";
 import { useProfile, useUpsertProfile } from "@/lib/data/hooks";
 
@@ -33,6 +37,8 @@ export const Route = createFileRoute("/entra")({
 });
 
 type CodeStep = Extract<NativeSignInResult, { status: "code_required" }>;
+type ResetCodeStep = Extract<NativeResetResult, { status: "code_required" }>;
+type ResetPwStep = Extract<NativeResetPwStep, { status: "password_required" }>;
 
 function EntraNativeSignIn() {
   const [account, setAccount] = useState<NativeAccount | null>(null);
@@ -45,6 +51,12 @@ function EntraNativeSignIn() {
   const [codeStep, setCodeStep] = useState<CodeStep | null>(null);
   const [code, setCode] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  // Password-reset ("Forgot password?") flow — its own code + new-password steps.
+  const [resetCodeStep, setResetCodeStep] = useState<ResetCodeStep | null>(null);
+  const [resetPwStep, setResetPwStep] = useState<ResetPwStep | null>(null);
+  const [resetCode, setResetCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
 
   const profile = useProfile();
   const upsert = useUpsertProfile();
@@ -89,7 +101,11 @@ function EntraNativeSignIn() {
     setNotice(null);
     setBusy(true);
     try {
-      applyResult(await nativeSignIn(email, password));
+      applyResult(
+        mode === "signup"
+          ? await nativeSignUp(email, password)
+          : await nativeSignIn(email, password),
+      );
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
     } finally {
@@ -142,12 +158,90 @@ function EntraNativeSignIn() {
     }
   }
 
+  function exitReset() {
+    setResetCodeStep(null);
+    setResetPwStep(null);
+    setResetCode("");
+    setNewPassword("");
+    setErr(null);
+    setNotice(null);
+  }
+
+  async function onForgotPassword() {
+    if (!email) {
+      setErr("Enter your email above first.");
+      return;
+    }
+    setErr(null);
+    setNotice(null);
+    setBusy(true);
+    try {
+      const result = await nativeStartPasswordReset(email);
+      if (result.status === "code_required") {
+        setResetCodeStep(result);
+        setNotice(`We've emailed you a ${result.codeLength}-digit reset code. Enter it below.`);
+      } else {
+        setErr(result.message);
+      }
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : String(e2));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onResetSubmitCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!resetCodeStep || !resetCode) return;
+    setErr(null);
+    setNotice(null);
+    setBusy(true);
+    try {
+      const step = await resetCodeStep.submitCode(resetCode);
+      if (step.status === "password_required") {
+        setResetPwStep(step);
+        setNotice("Code accepted. Choose a new password.");
+      } else {
+        setErr(step.message);
+      }
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : String(e2));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onResetSubmitNewPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!resetPwStep || !newPassword) return;
+    setErr(null);
+    setNotice(null);
+    setBusy(true);
+    try {
+      const result = await resetPwStep.submitNewPassword(newPassword);
+      if (result.status === "signed_in") {
+        exitReset();
+        applyResult(result); // completes straight into signed-in
+      } else {
+        // e.g. AADSTS399249 "password banned" — stay on this step so a stronger
+        // password can be entered without restarting the emailed-code flow.
+        setNewPassword("");
+        setErr(result.status === "error" ? result.message : "Please choose a different password.");
+      }
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : String(e2));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onSignOut() {
     await nativeSignOut();
     setAccount(null);
     setCodeStep(null);
     setCode("");
     setPassword("");
+    exitReset();
   }
 
   async function onSaveProfile() {
@@ -178,15 +272,19 @@ function EntraNativeSignIn() {
       <div className="w-full max-w-sm space-y-5">
         <div className="text-center">
           <LogoWordmark className="h-20 w-auto mx-auto" />
-          <h1 className="font-serif text-2xl font-semibold mt-4">Welcome back</h1>
+          <h1 className="font-serif text-2xl font-semibold mt-4">
+            {mode === "signup" ? "Create your account" : "Welcome back"}
+          </h1>
           <p className="text-sm text-ink-soft mt-2 leading-relaxed">
-            Sign in to access your pregnancy record.
+            {mode === "signup"
+              ? "Start your pregnancy record."
+              : "Sign in to access your pregnancy record."}
           </p>
         </div>
 
         {!checked && <p className="text-center text-sm text-ink-soft">Checking sign-in…</p>}
 
-        {checked && !account && !codeStep && (
+        {checked && !account && !codeStep && !resetCodeStep && !resetPwStep && (
           <div className="surface-card p-5 space-y-4">
             <form onSubmit={onPasswordSignIn} className="space-y-3">
               <input
@@ -199,9 +297,9 @@ function EntraNativeSignIn() {
                 className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
               />
               <PasswordInput
-                autoComplete="current-password"
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 required
-                minLength={6}
+                minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
@@ -211,17 +309,49 @@ function EntraNativeSignIn() {
                 type="submit"
                 className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
               >
-                {busy ? "Signing in…" : "Sign in"}
+                {busy
+                  ? mode === "signup"
+                    ? "Creating…"
+                    : "Signing in…"
+                  : mode === "signup"
+                    ? "Create account"
+                    : "Sign in"}
               </button>
             </form>
 
+            {mode === "signin" && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => void onEmailCode()}
+                  disabled={busy}
+                  className="w-full py-3 rounded-full bg-white border border-border text-sm font-medium disabled:opacity-60"
+                >
+                  Email me a code
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void onForgotPassword()}
+                  disabled={busy}
+                  className="block mx-auto text-xs text-ink-soft underline underline-offset-2"
+                >
+                  Forgot password?
+                </button>
+              </>
+            )}
+
             <button
               type="button"
-              onClick={() => void onEmailCode()}
-              disabled={busy}
-              className="w-full py-3 rounded-full bg-white border border-border text-sm font-medium disabled:opacity-60"
+              onClick={() => {
+                setErr(null);
+                setNotice(null);
+                setMode(mode === "signup" ? "signin" : "signup");
+              }}
+              className="block mx-auto text-xs text-ink-soft underline underline-offset-2"
             >
-              Email me a code
+              {mode === "signup"
+                ? "Already have an account? Sign in"
+                : "New to BumpNotes? Create an account"}
             </button>
           </div>
         )}
@@ -257,10 +387,71 @@ function EntraNativeSignIn() {
           </div>
         )}
 
+        {checked && !account && resetCodeStep && !resetPwStep && (
+          <div className="surface-card p-5 space-y-4">
+            <p className="text-sm text-ink-soft">Reset your password</p>
+            <form onSubmit={onResetSubmitCode} className="space-y-3">
+              <input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                required
+                value={resetCode}
+                onChange={(e) => setResetCode(e.target.value)}
+                placeholder={`${resetCodeStep.codeLength}-digit reset code`}
+                className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm tracking-widest text-center focus:outline-none focus:border-primary/60"
+              />
+              <button
+                disabled={busy}
+                type="submit"
+                className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
+              >
+                {busy ? "Verifying…" : "Verify code"}
+              </button>
+            </form>
+            <button
+              type="button"
+              onClick={exitReset}
+              className="block mx-auto text-xs text-ink-soft underline underline-offset-2"
+            >
+              Back to sign in
+            </button>
+          </div>
+        )}
+
+        {checked && !account && resetPwStep && (
+          <div className="surface-card p-5 space-y-4">
+            <p className="text-sm text-ink-soft">Choose a new password</p>
+            <form onSubmit={onResetSubmitNewPassword} className="space-y-3">
+              <PasswordInput
+                autoComplete="new-password"
+                required
+                minLength={8}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password"
+              />
+              <button
+                disabled={busy}
+                type="submit"
+                className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
+              >
+                {busy ? "Saving…" : "Set new password & sign in"}
+              </button>
+            </form>
+            <button
+              type="button"
+              onClick={exitReset}
+              className="block mx-auto text-xs text-ink-soft underline underline-offset-2"
+            >
+              Back to sign in
+            </button>
+          </div>
+        )}
+
         {account && (
           <div className="surface-card p-5 space-y-3">
             <p className="text-sm">
-              ✅ Signed in with Entra as <strong>{account.username}</strong>
+              ✅ Signed in with Entra as <strong>{account.username || email}</strong>
             </p>
             <button
               type="button"
