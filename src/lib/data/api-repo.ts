@@ -1,24 +1,45 @@
 // ApiRepository (AZURE Phase 3, task 3.2) — the Repository over the Azure API.
 //
-// Calls the TanStack Start server functions; the browser attaches the Supabase
-// bearer token to every RPC via the global `attachSupabaseAuth` middleware, and
-// `requireApiAuth` (2.6) resolves the internal user id server-side. This slice
-// implements Profile; the remaining methods throw until their slices land
-// (keeps the interface honest rather than silently returning empty data).
+// Calls the TanStack Start server functions; the browser attaches the auth
+// bearer token to every RPC via the global auth middleware (Supabase bridge or
+// Entra native), and `requireApiAuth` (2.6) resolves the internal user id
+// server-side — never a client id. Every entity is now wired to its Azure
+// server functions (Phase 3A).
 
-import { getProfile as getProfileFn, upsertProfile as upsertProfileFn } from "../azure/profile.functions";
+import {
+  getProfile as getProfileFn,
+  upsertProfile as upsertProfileFn,
+} from "../azure/profile.functions";
+import {
+  createPregnancy as createPregnancyFn,
+  getActivePregnancy as getActivePregnancyFn,
+  listPregnancies as listPregnanciesFn,
+} from "../azure/pregnancy.functions";
+import {
+  createEntry as createEntryFn,
+  listEntries as listEntriesFn,
+  softDeleteEntry as softDeleteEntryFn,
+} from "../azure/entry.functions";
+import {
+  listPeople as listPeopleFn,
+  upsertPerson as upsertPersonFn,
+} from "../azure/people.functions";
+import {
+  listHealthItems as listHealthItemsFn,
+  upsertHealthItem as upsertHealthItemFn,
+} from "../azure/health-items.functions";
+import {
+  getPreferences as getPreferencesFn,
+  upsertPreferences as upsertPreferencesFn,
+} from "../azure/preferences.functions";
 import type { Entry, HealthItem, Person, Preferences, Pregnancy, Profile } from "../domain/types";
 import type { CreateEntryInput, ListEntriesParams, Repository } from "./repository";
 
-function notYet(method: string): never {
-  throw new Error(`ApiRepository.${method} is not implemented yet (Phase 3 — later slice).`);
-}
-
 export class ApiRepository implements Repository {
+  // --- Profile ---
   async getProfile(): Promise<Profile | null> {
     return getProfileFn();
   }
-
   async upsertProfile(
     patch: Partial<Omit<Profile, "userId" | "createdAt" | "updatedAt">>,
   ): Promise<Profile> {
@@ -34,42 +55,75 @@ export class ApiRepository implements Repository {
     });
   }
 
-  // --- Not yet implemented (later Phase 3 slices) ---
+  // --- Pregnancies ---
   async listPregnancies(): Promise<Pregnancy[]> {
-    return notYet("listPregnancies");
+    return listPregnanciesFn();
   }
   async getActivePregnancy(): Promise<Pregnancy | null> {
-    return notYet("getActivePregnancy");
+    return getActivePregnancyFn();
   }
-  async createPregnancy(): Promise<Pregnancy> {
-    return notYet("createPregnancy");
+  async createPregnancy(
+    input: Pick<Pregnancy, "edd"> & Partial<Pick<Pregnancy, "lmp" | "nickname" | "birthPlace">>,
+  ): Promise<Pregnancy> {
+    return createPregnancyFn({
+      data: {
+        edd: input.edd,
+        lmp: input.lmp,
+        nickname: input.nickname,
+        birthPlace: input.birthPlace,
+      },
+    });
   }
-  async listEntries(_params: ListEntriesParams): Promise<Entry[]> {
-    return notYet("listEntries");
+
+  // --- Entries ---
+  async listEntries(params: ListEntriesParams): Promise<Entry[]> {
+    return listEntriesFn({ data: params });
   }
-  async createEntry(_input: CreateEntryInput): Promise<Entry> {
-    return notYet("createEntry");
+  async createEntry(input: CreateEntryInput): Promise<Entry> {
+    return createEntryFn({ data: input });
   }
-  async softDeleteEntry(_id: string): Promise<void> {
-    return notYet("softDeleteEntry");
+  async softDeleteEntry(id: string): Promise<void> {
+    await softDeleteEntryFn({ data: { id } });
   }
+
+  // --- People ---
   async listPeople(): Promise<Person[]> {
-    return notYet("listPeople");
+    return listPeopleFn();
   }
-  async upsertPerson(): Promise<Person> {
-    return notYet("upsertPerson");
+  async upsertPerson(input: Partial<Person> & Pick<Person, "name" | "role">): Promise<Person> {
+    return upsertPersonFn({
+      data: {
+        id: input.id,
+        name: input.name,
+        role: input.role,
+        contactDetails: input.contactDetails,
+        archivedAt: input.archivedAt,
+      },
+    });
   }
+
+  // --- Health items ---
   async listHealthItems(): Promise<HealthItem[]> {
-    return notYet("listHealthItems");
+    return listHealthItemsFn();
   }
-  async upsertHealthItem(): Promise<HealthItem> {
-    return notYet("upsertHealthItem");
+  async upsertHealthItem(
+    input: Partial<HealthItem> & Pick<HealthItem, "kind" | "text">,
+  ): Promise<HealthItem> {
+    return upsertHealthItemFn({
+      data: { id: input.id, kind: input.kind, text: input.text, active: input.active },
+    });
   }
+
+  // --- Preferences ---
   async getPreferences(): Promise<Preferences | null> {
-    return notYet("getPreferences");
+    return getPreferencesFn();
   }
-  async upsertPreferences(): Promise<Preferences> {
-    return notYet("upsertPreferences");
+  async upsertPreferences(
+    patch: Partial<Pick<Preferences, "items" | "anythingElse">>,
+  ): Promise<Preferences> {
+    return upsertPreferencesFn({
+      data: { items: patch.items, anythingElse: patch.anythingElse },
+    });
   }
 }
 
