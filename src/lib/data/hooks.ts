@@ -1,187 +1,205 @@
-// Query hooks (AZURE Phase 3, task 3.6 partial) — the read/write surface the UI
-// consumes, over the Repository. Reads via TanStack Query keyed per PLAN §4.6;
-// writes via mutations that update/invalidate the cache. Covers every entity.
-// The outbox/optimistic + mode-factory wiring (ApiRepository vs LocalRepository)
-// arrives with tasks 3.3/3.6 — for now the authed ApiRepository is used
-// directly. Additive + unwired (no surface uses it yet — the cutover is 3.9+).
+// Query hooks (AZURE Phase 3, task 3.6) — the read/write surface the UI consumes
+// over the Repository. Reads via TanStack Query; writes via cache-updating
+// mutations. The repository (and cache namespace) come from `useRepository()`,
+// so the SAME hooks serve authed (ApiRepository), demo and tester (LocalRepository)
+// modes — keys are prefixed with the mode so their caches never collide. With no
+// provider mounted the default authed ApiRepository is used (pre-cutover surfaces
+// keep working). Optimistic/outbox layering can wrap these later (task 3.3).
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { HealthItem, Person, Preferences, Pregnancy, Profile } from "../domain/types";
-import { apiRepository } from "./api-repo";
+import { useRepository, type RepositoryMode } from "./repository-context";
 import type { CreateEntryInput, ListEntriesParams, UploadAttachmentInput } from "./repository";
 
 const STALE = 60_000; // single-writer data (PLAN §4.6)
 
-export const queryKeys = {
-  profile: ["profile"] as const,
-  pregnancies: ["pregnancies"] as const,
-  activePregnancy: ["pregnancies", "active"] as const,
-  entries: (params: ListEntriesParams) => ["entries", params] as const,
-  people: ["people"] as const,
-  healthItems: ["healthItems"] as const,
-  preferences: ["preferences"] as const,
-  attachments: (entryId: string) => ["attachments", entryId] as const,
+// Keys are namespaced by mode so demo/tester/api caches stay separate.
+const keys = {
+  profile: (m: RepositoryMode) => [m, "profile"] as const,
+  pregnancies: (m: RepositoryMode) => [m, "pregnancies"] as const,
+  activePregnancy: (m: RepositoryMode) => [m, "pregnancies", "active"] as const,
+  entries: (m: RepositoryMode, params: ListEntriesParams) => [m, "entries", params] as const,
+  entriesAll: (m: RepositoryMode) => [m, "entries"] as const,
+  people: (m: RepositoryMode) => [m, "people"] as const,
+  healthItems: (m: RepositoryMode) => [m, "healthItems"] as const,
+  preferences: (m: RepositoryMode) => [m, "preferences"] as const,
+  attachments: (m: RepositoryMode, entryId: string) => [m, "attachments", entryId] as const,
 };
 
 // --- Profile ---------------------------------------------------------------
 export function useProfile() {
+  const { repository, mode } = useRepository();
   return useQuery({
-    queryKey: queryKeys.profile,
-    queryFn: () => apiRepository.getProfile(),
+    queryKey: keys.profile(mode),
+    queryFn: () => repository.getProfile(),
     staleTime: STALE,
   });
 }
 
 export function useUpsertProfile() {
+  const { repository, mode } = useRepository();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (patch: Partial<Omit<Profile, "userId" | "createdAt" | "updatedAt">>) =>
-      apiRepository.upsertProfile(patch),
-    onSuccess: (profile) => qc.setQueryData(queryKeys.profile, profile),
+      repository.upsertProfile(patch),
+    onSuccess: (profile) => qc.setQueryData(keys.profile(mode), profile),
   });
 }
 
 // --- Pregnancies -----------------------------------------------------------
 export function usePregnancies() {
+  const { repository, mode } = useRepository();
   return useQuery({
-    queryKey: queryKeys.pregnancies,
-    queryFn: () => apiRepository.listPregnancies(),
+    queryKey: keys.pregnancies(mode),
+    queryFn: () => repository.listPregnancies(),
     staleTime: STALE,
   });
 }
 
 export function useActivePregnancy() {
+  const { repository, mode } = useRepository();
   return useQuery({
-    queryKey: queryKeys.activePregnancy,
-    queryFn: () => apiRepository.getActivePregnancy(),
+    queryKey: keys.activePregnancy(mode),
+    queryFn: () => repository.getActivePregnancy(),
     staleTime: STALE,
   });
 }
 
 export function useCreatePregnancy() {
+  const { repository, mode } = useRepository();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (
       input: Pick<Pregnancy, "edd"> & Partial<Pick<Pregnancy, "lmp" | "nickname" | "birthPlace">>,
-    ) => apiRepository.createPregnancy(input),
+    ) => repository.createPregnancy(input),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: queryKeys.pregnancies });
-      void qc.invalidateQueries({ queryKey: queryKeys.activePregnancy });
+      void qc.invalidateQueries({ queryKey: keys.pregnancies(mode) });
     },
   });
 }
 
 // --- Entries ---------------------------------------------------------------
 export function useEntries(params: ListEntriesParams) {
+  const { repository, mode } = useRepository();
   return useQuery({
-    queryKey: queryKeys.entries(params),
-    queryFn: () => apiRepository.listEntries(params),
+    queryKey: keys.entries(mode, params),
+    queryFn: () => repository.listEntries(params),
     staleTime: STALE,
   });
 }
 
 export function useCreateEntry() {
+  const { repository, mode } = useRepository();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateEntryInput) => apiRepository.createEntry(input),
-    onSuccess: (entry) => {
-      void qc.invalidateQueries({ queryKey: ["entries", { pregnancyId: entry.pregnancyId }] });
-      void qc.invalidateQueries({ queryKey: ["entries"] });
-    },
+    mutationFn: (input: CreateEntryInput) => repository.createEntry(input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: keys.entriesAll(mode) }),
   });
 }
 
 export function useSoftDeleteEntry() {
+  const { repository, mode } = useRepository();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => apiRepository.softDeleteEntry(id),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["entries"] }),
+    mutationFn: (id: string) => repository.softDeleteEntry(id),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: keys.entriesAll(mode) }),
   });
 }
 
 // --- People ----------------------------------------------------------------
 export function usePeople() {
+  const { repository, mode } = useRepository();
   return useQuery({
-    queryKey: queryKeys.people,
-    queryFn: () => apiRepository.listPeople(),
+    queryKey: keys.people(mode),
+    queryFn: () => repository.listPeople(),
     staleTime: STALE,
   });
 }
 
 export function useUpsertPerson() {
+  const { repository, mode } = useRepository();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: Partial<Person> & Pick<Person, "name" | "role">) =>
-      apiRepository.upsertPerson(input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: queryKeys.people }),
+      repository.upsertPerson(input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: keys.people(mode) }),
   });
 }
 
 // --- Health items ----------------------------------------------------------
 export function useHealthItems() {
+  const { repository, mode } = useRepository();
   return useQuery({
-    queryKey: queryKeys.healthItems,
-    queryFn: () => apiRepository.listHealthItems(),
+    queryKey: keys.healthItems(mode),
+    queryFn: () => repository.listHealthItems(),
     staleTime: STALE,
   });
 }
 
 export function useUpsertHealthItem() {
+  const { repository, mode } = useRepository();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: Partial<HealthItem> & Pick<HealthItem, "kind" | "text">) =>
-      apiRepository.upsertHealthItem(input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: queryKeys.healthItems }),
+      repository.upsertHealthItem(input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: keys.healthItems(mode) }),
   });
 }
 
 // --- Preferences -----------------------------------------------------------
 export function usePreferences() {
+  const { repository, mode } = useRepository();
   return useQuery({
-    queryKey: queryKeys.preferences,
-    queryFn: () => apiRepository.getPreferences(),
+    queryKey: keys.preferences(mode),
+    queryFn: () => repository.getPreferences(),
     staleTime: STALE,
   });
 }
 
 export function useUpsertPreferences() {
+  const { repository, mode } = useRepository();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (patch: Partial<Pick<Preferences, "items" | "anythingElse">>) =>
-      apiRepository.upsertPreferences(patch),
-    onSuccess: (prefs) => qc.setQueryData(queryKeys.preferences, prefs),
+      repository.upsertPreferences(patch),
+    onSuccess: (prefs) => qc.setQueryData(keys.preferences(mode), prefs),
   });
 }
 
 // --- Attachments -----------------------------------------------------------
 export function useAttachments(entryId: string, enabled = true) {
+  const { repository, mode } = useRepository();
   return useQuery({
-    queryKey: queryKeys.attachments(entryId),
-    queryFn: () => apiRepository.listAttachments(entryId),
+    queryKey: keys.attachments(mode, entryId),
+    queryFn: () => repository.listAttachments(entryId),
     enabled: enabled && !!entryId,
     staleTime: STALE,
   });
 }
 
 export function useUploadAttachment() {
+  const { repository, mode } = useRepository();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: UploadAttachmentInput) => apiRepository.uploadAttachment(input),
-    onSuccess: (att) => void qc.invalidateQueries({ queryKey: queryKeys.attachments(att.entryId) }),
+    mutationFn: (input: UploadAttachmentInput) => repository.uploadAttachment(input),
+    onSuccess: (att) =>
+      void qc.invalidateQueries({ queryKey: keys.attachments(mode, att.entryId) }),
   });
 }
 
 export function useDeleteAttachment(entryId: string) {
+  const { repository, mode } = useRepository();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (attachmentId: string) => apiRepository.deleteAttachment(attachmentId),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: queryKeys.attachments(entryId) }),
+    mutationFn: (attachmentId: string) => repository.deleteAttachment(attachmentId),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: keys.attachments(mode, entryId) }),
   });
 }
 
 /** Fetch a short-lived download URL on demand (not cached; SAS URLs expire). */
 export function useAttachmentUrl() {
+  const { repository } = useRepository();
   return useMutation({
-    mutationFn: (attachmentId: string) => apiRepository.getAttachmentUrl(attachmentId),
+    mutationFn: (attachmentId: string) => repository.getAttachmentUrl(attachmentId),
   });
 }
