@@ -153,6 +153,37 @@ export async function issueDownloadSas(
   return { url: `${blobUrl}?${sas}`, expiresAt: expiresOn };
 }
 
+/** All containers that may hold user-owned blobs, keyed under a `{userId}/` prefix. */
+const USER_BLOB_CONTAINERS: AttachmentContainer[] = [
+  "user-uploads",
+  "profile-images",
+  "generated-summaries",
+  "exports",
+];
+
+/**
+ * Deletes EVERY blob under the user's `{userId}/` prefix across all containers
+ * (GDPR erasure — Art 17). Best-effort per container (a missing/empty container
+ * is skipped); returns the count deleted. Callers own the DB-row deletion.
+ */
+export async function deleteAllUserBlobs(userId: string): Promise<{ deleted: number }> {
+  const client = getBlobServiceClient();
+  const prefix = `${userId}/`;
+  let deleted = 0;
+  for (const container of USER_BLOB_CONTAINERS) {
+    const containerClient = client.getContainerClient(container);
+    try {
+      for await (const blob of containerClient.listBlobsFlat({ prefix })) {
+        await containerClient.getBlockBlobClient(blob.name).deleteIfExists();
+        deleted += 1;
+      }
+    } catch {
+      // container may not exist / be inaccessible — skip, keep erasing the rest
+    }
+  }
+  return { deleted };
+}
+
 /** Deletes an attachment's blob and row; ownership-checked, hard delete (not soft, per Storage semantics). */
 export async function deleteAttachment(
   pool: Pick<pg.Pool, "query">,

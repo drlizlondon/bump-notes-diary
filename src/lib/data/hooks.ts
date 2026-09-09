@@ -10,6 +10,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { HealthItem, Person, Preferences, Pregnancy, Profile } from "../domain/types";
 import { useRepository, type RepositoryMode } from "./repository-context";
 import type { CreateEntryInput, ListEntriesParams, UploadAttachmentInput } from "./repository";
+import { deleteOwnAccount, exportMyData } from "../azure/account.functions";
+import { nativeSignOut } from "../azure/entra-native";
 
 const STALE = 60_000; // single-writer data (PLAN §4.6)
 
@@ -201,5 +203,43 @@ export function useAttachmentUrl() {
   const { repository } = useRepository();
   return useMutation({
     mutationFn: (attachmentId: string) => repository.getAttachmentUrl(attachmentId),
+  });
+}
+
+// --- Account / GDPR (api-only; these act on real data, not demo/tester) -----
+
+/** GDPR-1 export: resolves to the full data copy; the UI turns it into a download. */
+export function useExportMyData() {
+  return useMutation({ mutationFn: () => exportMyData() });
+}
+
+/** Download a JS value as a pretty-printed JSON file (call from the UI on export success). */
+export function downloadJson(filename: string, data: unknown): void {
+  if (typeof document === "undefined") return;
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * GDPR-2 erasure: deletes the account's data, then signs out and clears the
+ * query cache. Irreversible — gate behind an explicit confirmation in the UI.
+ */
+export function useDeleteAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => deleteOwnAccount(),
+    onSuccess: async () => {
+      try {
+        await nativeSignOut();
+      } catch {
+        /* session may already be gone */
+      }
+      qc.clear();
+    },
   });
 }
