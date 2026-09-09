@@ -31,12 +31,12 @@ Written after the B-login + full round-trip was proven live on Azure. This is th
 Ordered. **[GATE]** = needs Liz. The big chunk is the data layer; identity is essentially done.
 
 ### A. Finish the data layer (Phase 3.2–3.6, 3.9–3.11) — the largest remaining work
-The app's screens still read/write **Supabase** (`useSyncSnapshot` → `pullFromCloud`/`pushToCloud`). Only Profile is on Azure. To cut over:
-- [ ] **A1. Server functions for every entity** (like `profile.functions.ts`): Pregnancy, Person, HealthItem, Preferences, Entry (+ payload), Attachment, Summary — each `requireApiAuth` + pg pool + zod, owner-scoped by `context.userId`.
-- [ ] **A2. Wire `api-repo.ts`** to all of them (remove the `notYet` stubs).
-- [ ] **A3. Attachments (3.4):** EXIF-strip re-encode + upload/signed-URL via the 2.7 blob endpoints; wire `attachments.ts`.
-- [ ] **A4. Offline/outbox (3.3) + local/demo repo (3.5) + query hooks + mode factory (3.6)** — per plan (largely carries over; **[SIMPLIFIED]** no migration backfill).
-- [ ] **A5. Cut the screens over (3.9–3.11):** capture panels, home + timeline, settings/demo/tester — from Supabase to the Azure repository.
+The app's screens still read/write **Supabase** (`useSyncSnapshot` → `pullFromCloud`/`pushToCloud`). **The whole data-access layer is now BUILT (A1–A4); only the screen cutover (A5) remains.**
+- [x] **A1. Server functions for every entity** — Pregnancy, Person, HealthItem, Preferences, Entry (per-type payload validation) — each `requireApiAuth` + pg pool + zod, owner-scoped. *(commit 331521c)*
+- [x] **A2. Wire `api-repo.ts`** to all of them (no more `notYet` stubs). *(331521c)*
+- [x] **A3. Attachments (3.4):** server fns on the 2.7 blob helpers (managed-identity upload, user-delegation SAS) + client-side EXIF/GPS strip (`lib/data/attachments.ts`) + hooks. *(4bd8064)*
+- [x] **A4. Query hooks + mode factory + LocalRepository (3.5/3.6):** mode-aware hooks over `useRepository()`; `ApiRepository` (authed) / `LocalRepository` (demo=sessionStorage seeded, tester=localStorage) selected by `<RepositoryProvider>`; caches namespaced by mode. *(26bf458, 155bcfb)* — **Note:** the offline **outbox/optimistic layer (3.3)** is deferred (wrap the hooks later); not required for the authed cutover.
+- [ ] **A5. Cut the screens over (3.9–3.11):** capture panels, home + timeline, settings, and demo/tester — from the old Supabase store (`useAppState`/`useSyncSnapshot`) to these hooks. **This is the remaining Part-A work and the consequential live-UI step.** It runs on the current Supabase session via the 2.6 bridge (no dependency on the identity cutover). Approach: wrap each surface in the right `<RepositoryProvider>` mode, replace store reads/writes with the hooks, screen by screen behind the flag.
 
 ### B. Identity + session cutover (Phase I.1 flip → I.3)
 - [ ] **B1. App session on Entra, not Supabase.** Switch the app's global auth/session (what `useSyncSnapshot().userId` provides) from `supabase.auth.getSession()` to the Entra native account (`getNativeAccount`), so the *whole app* is gated on Entra sign-in — not just `/entra`.
