@@ -8,7 +8,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { HealthItem, Person, Preferences, Pregnancy, Profile } from "../domain/types";
 import { apiRepository } from "./api-repo";
-import type { CreateEntryInput, ListEntriesParams } from "./repository";
+import type { CreateEntryInput, ListEntriesParams, UploadAttachmentInput } from "./repository";
 
 const STALE = 60_000; // single-writer data (PLAN §4.6)
 
@@ -20,6 +20,7 @@ export const queryKeys = {
   people: ["people"] as const,
   healthItems: ["healthItems"] as const,
   preferences: ["preferences"] as const,
+  attachments: (entryId: string) => ["attachments", entryId] as const,
 };
 
 // --- Profile ---------------------------------------------------------------
@@ -149,5 +150,38 @@ export function useUpsertPreferences() {
     mutationFn: (patch: Partial<Pick<Preferences, "items" | "anythingElse">>) =>
       apiRepository.upsertPreferences(patch),
     onSuccess: (prefs) => qc.setQueryData(queryKeys.preferences, prefs),
+  });
+}
+
+// --- Attachments -----------------------------------------------------------
+export function useAttachments(entryId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.attachments(entryId),
+    queryFn: () => apiRepository.listAttachments(entryId),
+    enabled: enabled && !!entryId,
+    staleTime: STALE,
+  });
+}
+
+export function useUploadAttachment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UploadAttachmentInput) => apiRepository.uploadAttachment(input),
+    onSuccess: (att) => void qc.invalidateQueries({ queryKey: queryKeys.attachments(att.entryId) }),
+  });
+}
+
+export function useDeleteAttachment(entryId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (attachmentId: string) => apiRepository.deleteAttachment(attachmentId),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: queryKeys.attachments(entryId) }),
+  });
+}
+
+/** Fetch a short-lived download URL on demand (not cached; SAS URLs expire). */
+export function useAttachmentUrl() {
+  return useMutation({
+    mutationFn: (attachmentId: string) => apiRepository.getAttachmentUrl(attachmentId),
   });
 }

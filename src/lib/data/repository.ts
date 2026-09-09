@@ -11,6 +11,7 @@
 // Additive + unwired — no surface consumes this yet (cutover is 3.9+).
 
 import type {
+  Attachment,
   Entry,
   EntryPayload,
   EntryType,
@@ -39,10 +40,21 @@ export interface ListEntriesParams {
   includeDeleted?: boolean;
 }
 
+export interface UploadAttachmentInput {
+  entryId: string;
+  filename: string;
+  mime: string;
+  /** EXIF-stripped image bytes, base64-encoded (see lib/data/attachments.ts). */
+  dataBase64: string;
+  caption?: string | null;
+}
+
 export interface Repository {
   // --- Profile (person-level identity) ---
   getProfile(): Promise<Profile | null>;
-  upsertProfile(patch: Partial<Omit<Profile, "userId" | "createdAt" | "updatedAt">>): Promise<Profile>;
+  upsertProfile(
+    patch: Partial<Omit<Profile, "userId" | "createdAt" | "updatedAt">>,
+  ): Promise<Profile>;
 
   // --- Pregnancies ---
   listPregnancies(): Promise<Pregnancy[]>;
@@ -62,9 +74,19 @@ export interface Repository {
 
   // --- Health items ---
   listHealthItems(): Promise<HealthItem[]>;
-  upsertHealthItem(input: Partial<HealthItem> & Pick<HealthItem, "kind" | "text">): Promise<HealthItem>;
+  upsertHealthItem(
+    input: Partial<HealthItem> & Pick<HealthItem, "kind" | "text">,
+  ): Promise<HealthItem>;
 
   // --- Preferences (singleton) ---
   getPreferences(): Promise<Preferences | null>;
-  upsertPreferences(patch: Partial<Pick<Preferences, "items" | "anythingElse">>): Promise<Preferences>;
+  upsertPreferences(
+    patch: Partial<Pick<Preferences, "items" | "anythingElse">>,
+  ): Promise<Preferences>;
+
+  // --- Attachments (blob metadata; binary in Blob Storage) ---
+  listAttachments(entryId: string): Promise<Attachment[]>;
+  uploadAttachment(input: UploadAttachmentInput): Promise<Attachment>;
+  getAttachmentUrl(attachmentId: string): Promise<{ url: string; expiresAt: string }>;
+  deleteAttachment(attachmentId: string): Promise<void>;
 }

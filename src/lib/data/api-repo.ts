@@ -32,8 +32,27 @@ import {
   getPreferences as getPreferencesFn,
   upsertPreferences as upsertPreferencesFn,
 } from "../azure/preferences.functions";
-import type { Entry, HealthItem, Person, Preferences, Pregnancy, Profile } from "../domain/types";
-import type { CreateEntryInput, ListEntriesParams, Repository } from "./repository";
+import {
+  deleteAttachment as deleteAttachmentFn,
+  getAttachmentUrl as getAttachmentUrlFn,
+  listAttachments as listAttachmentsFn,
+  uploadAttachment as uploadAttachmentFn,
+} from "../azure/attachment.functions";
+import type {
+  Attachment,
+  Entry,
+  HealthItem,
+  Person,
+  Preferences,
+  Pregnancy,
+  Profile,
+} from "../domain/types";
+import type {
+  CreateEntryInput,
+  ListEntriesParams,
+  Repository,
+  UploadAttachmentInput,
+} from "./repository";
 
 export class ApiRepository implements Repository {
   // --- Profile ---
@@ -124,6 +143,20 @@ export class ApiRepository implements Repository {
     return upsertPreferencesFn({
       data: { items: patch.items, anythingElse: patch.anythingElse },
     });
+  }
+
+  // --- Attachments ---
+  async listAttachments(entryId: string): Promise<Attachment[]> {
+    return listAttachmentsFn({ data: { entryId } });
+  }
+  async uploadAttachment(input: UploadAttachmentInput): Promise<Attachment> {
+    return uploadAttachmentFn({ data: input });
+  }
+  async getAttachmentUrl(attachmentId: string): Promise<{ url: string; expiresAt: string }> {
+    return getAttachmentUrlFn({ data: { attachmentId } });
+  }
+  async deleteAttachment(attachmentId: string): Promise<void> {
+    await deleteAttachmentFn({ data: { attachmentId } });
   }
 }
 
