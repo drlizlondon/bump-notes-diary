@@ -24,11 +24,11 @@ import {
   NotePanelBody,
 } from "@/components/bumpnotes/Panels";
 import { useT } from "@/lib/bumpnotes/i18n";
-import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { useTester, isTester } from "@/lib/bumpnotes/tester";
 import { gestationFromDueDate } from "@/lib/bumpnotes/gestation";
 import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButton";
 import { AppRepository } from "@/lib/data/capture";
+import { useAppSession } from "@/lib/data/session";
 import { useActivePregnancy, useEntries, useProfile } from "@/lib/data/hooks";
 import { storeEntryFromV2, storeProfileFromV2 } from "@/lib/data/entry-adapter";
 import type { Entry as StoreEntry } from "@/lib/bumpnotes/types";
@@ -64,7 +64,7 @@ type PanelKey = "symptom" | "question" | "people" | "measurement" | "photo" | "n
 // "has an active pregnancy?" happens inside AppRepository, so anon users never
 // trigger an API call. (Identity signal is still Supabase-sync until B1/B2.)
 function Index() {
-  const { userId, status } = useSyncSnapshot();
+  const { userId, loading } = useAppSession();
   const tester = useTester();
   const navigate = useNavigate();
   const authorized = !!userId || tester;
@@ -73,8 +73,8 @@ function Index() {
     // Read the tester flag imperatively (client-only) to avoid a hydration race
     // where the reactive snapshot is still false when this effect first fires.
     const authed = !!userId || isTester();
-    if (!authed && status !== "syncing") navigate({ to: "/welcome", replace: true });
-  }, [userId, status, navigate]);
+    if (!authed && !loading) navigate({ to: "/welcome", replace: true });
+  }, [userId, loading, navigate]);
 
   if (!authorized) return null;
 

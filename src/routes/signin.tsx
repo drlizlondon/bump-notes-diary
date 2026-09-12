@@ -7,6 +7,10 @@ import { LogoWordmark } from "@/components/bumpnotes/Logo";
 import { PasswordInput } from "@/components/bumpnotes/PasswordInput";
 import { trackEvent } from "@/lib/analytics";
 import { buildAuthCallbackUrl } from "@/lib/supabase-auth-redirect";
+import { ENTRA_NATIVE_ENABLED } from "@/lib/azure/entra-native";
+import { EntraNativeSignIn } from "@/routes/entra";
+import { useAppSession } from "@/lib/data/session";
+import { refreshNativeSession } from "@/lib/data/session";
 
 type Search = { redirect?: string; admin?: string };
 
@@ -19,7 +23,34 @@ export const Route = createFileRoute("/signin")({
   component: SignInPage,
 });
 
+// Flag decides the front door: native Entra form (identity flip, B2) or the
+// legacy Supabase form. ENTRA_NATIVE_ENABLED is a build constant, so the branch
+// is stable across renders (no hook-order issue).
 function SignInPage() {
+  return ENTRA_NATIVE_ENABLED ? <NativeSignInPage /> : <SupabaseSignInPage />;
+}
+
+function NativeSignInPage() {
+  const navigate = useNavigate();
+  const search = useSearch({ from: "/signin" }) as Search;
+  const { userId } = useAppSession();
+  const redirectTo = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/";
+
+  useEffect(() => {
+    if (userId) navigate({ to: redirectTo, replace: true });
+  }, [userId, navigate, redirectTo]);
+
+  return (
+    <EntraNativeSignIn
+      onSignedIn={() => {
+        refreshNativeSession();
+        navigate({ to: redirectTo, replace: true });
+      }}
+    />
+  );
+}
+
+function SupabaseSignInPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/signin" }) as Search;
   const { userId } = useSyncSnapshot();

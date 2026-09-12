@@ -3,9 +3,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { AppShell, PageHeader, PregnancySummaryAside } from "@/components/bumpnotes/AppShell";
-import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { useTester, isTester } from "@/lib/bumpnotes/tester";
 import { AppRepository, useCapture } from "@/lib/data/capture";
+import { useAppSession } from "@/lib/data/session";
 import { useActivePregnancy, useEntries, useProfile, useSoftDeleteEntry } from "@/lib/data/hooks";
 import { storeEntryFromV2, storeProfileFromV2 } from "@/lib/data/entry-adapter";
 import { EntryEditDialog } from "@/components/bumpnotes/EntryEditDialog";
@@ -78,7 +78,7 @@ type Step = 1 | 2 | 3;
 type ReviewTarget = { title: string; entryIds: string[] };
 
 function SummaryPage() {
-  const { userId } = useSyncSnapshot();
+  const { userId } = useAppSession();
   const tester = useTester();
   const navigate = useNavigate();
   const authorized = !!userId || tester;

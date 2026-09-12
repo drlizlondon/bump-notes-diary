@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
-import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { useTester, isTester } from "@/lib/bumpnotes/tester";
 import { Onboarding } from "@/components/bumpnotes/Onboarding";
+import { useAppSession } from "@/lib/data/session";
 import type { Profile } from "@/lib/bumpnotes/types";
 import { useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/onboarding")({
 // (tester on-device, or signed-in). Anon visitors sign up first (identity flow).
 function OnboardingRoute() {
   const navigate = useNavigate();
-  const { userId } = useSyncSnapshot();
+  const { userId } = useAppSession();
   const tester = useTester();
   const authorized = !!userId || tester;
 

@@ -11,9 +11,9 @@ import { useT } from "@/lib/bumpnotes/i18n";
 import type { Entry } from "@/lib/bumpnotes/types";
 import { isArchivedLabourEntryType } from "@/lib/bumpnotes/archive/labour";
 import { trackEvent } from "@/lib/analytics";
-import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { useTester, isTester } from "@/lib/bumpnotes/tester";
 import { AppRepository, useCapture } from "@/lib/data/capture";
+import { useAppSession } from "@/lib/data/session";
 import { useActivePregnancy, useEntries, useSoftDeleteEntry } from "@/lib/data/hooks";
 import { storeEntryFromV2 } from "@/lib/data/entry-adapter";
 import type { Entry as V2Entry } from "@/lib/domain/types";
@@ -87,15 +87,15 @@ function entryText(e: Entry): string {
 // Auth gate (identity signal still Supabase-sync until B1/B2): only tester or
 // signed-in users load the repository-backed timeline.
 function TimelinePage() {
-  const { userId, status } = useSyncSnapshot();
+  const { userId, loading } = useAppSession();
   const tester = useTester();
   const navigate = useNavigate();
   const authorized = !!userId || tester;
 
   useEffect(() => {
     const authed = !!userId || isTester();
-    if (!authed && status !== "syncing") navigate({ to: "/welcome", replace: true });
-  }, [userId, status, navigate]);
+    if (!authed && !loading) navigate({ to: "/welcome", replace: true });
+  }, [userId, loading, navigate]);
 
   if (!authorized) return null;
 

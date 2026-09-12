@@ -33,14 +33,18 @@ import { useProfile, useUpsertProfile } from "@/lib/data/hooks";
 
 export const Route = createFileRoute("/entra")({
   head: () => ({ meta: [{ title: "Sign in · BumpNotes (Entra)" }] }),
-  component: EntraNativeSignIn,
+  component: EntraRoute,
 });
+
+function EntraRoute() {
+  return <EntraNativeSignIn />;
+}
 
 type CodeStep = Extract<NativeSignInResult, { status: "code_required" }>;
 type ResetCodeStep = Extract<NativeResetResult, { status: "code_required" }>;
 type ResetPwStep = Extract<NativeResetPwStep, { status: "password_required" }>;
 
-function EntraNativeSignIn() {
+export function EntraNativeSignIn({ onSignedIn }: { onSignedIn?: () => void }) {
   const [account, setAccount] = useState<NativeAccount | null>(null);
   const [checked, setChecked] = useState(false);
   const [email, setEmail] = useState("");
@@ -80,6 +84,7 @@ function EntraNativeSignIn() {
       setCodeStep(null);
       setCode("");
       void profile.refetch();
+      onSignedIn?.();
       return;
     }
     if (result.status === "code_required") {

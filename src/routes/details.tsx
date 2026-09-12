@@ -3,9 +3,9 @@ import { Toaster, toast } from "sonner";
 import { useEffect, useState } from "react";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
 import { useT } from "@/lib/bumpnotes/i18n";
-import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { useTester, isTester } from "@/lib/bumpnotes/tester";
 import { AppRepository } from "@/lib/data/capture";
+import { useAppSession } from "@/lib/data/session";
 import {
   useActivePregnancy,
   usePeople,
@@ -31,7 +31,7 @@ const CONTACT_ROLES: { role: PersonRole; tKey: string }[] = [
 ];
 
 function DetailsRoute() {
-  const { userId } = useSyncSnapshot();
+  const { userId } = useAppSession();
   const tester = useTester();
   const navigate = useNavigate();
   const authorized = !!userId || tester;

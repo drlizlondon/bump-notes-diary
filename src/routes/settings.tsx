@@ -5,9 +5,11 @@ import { Toaster, toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
 import { summariseEntry } from "@/lib/bumpnotes/summary";
 import { useT } from "@/lib/bumpnotes/i18n";
-import { useSyncSnapshot, signOut } from "@/lib/bumpnotes/sync";
+import { signOut } from "@/lib/bumpnotes/sync";
 import { useTester, isTester, exitTesterMode } from "@/lib/bumpnotes/tester";
 import { AppRepository } from "@/lib/data/capture";
+import { useAppSession, refreshNativeSession } from "@/lib/data/session";
+import { ENTRA_NATIVE_ENABLED, nativeSignOut } from "@/lib/azure/entra-native";
 import {
   useActivePregnancy,
   useDeleteAccount,
@@ -25,7 +27,7 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsRoute() {
-  const { userId } = useSyncSnapshot();
+  const { userId } = useAppSession();
   const tester = useTester();
   const navigate = useNavigate();
   const authorized = !!userId || tester;
@@ -47,7 +49,7 @@ function SettingsInner() {
   const t = useT();
   const tester = useTester();
   const navigate = useNavigate();
-  const { email, userId } = useSyncSnapshot();
+  const { email, userId } = useAppSession();
   const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
   const [showStored, setShowStored] = useState(false);
 
@@ -138,7 +140,12 @@ function SettingsInner() {
                   </div>
                   <button
                     onClick={async () => {
-                      await signOut();
+                      if (ENTRA_NATIVE_ENABLED) {
+                        await nativeSignOut();
+                        refreshNativeSession();
+                      } else {
+                        await signOut();
+                      }
                       toast.success(t("auth.signedOut"));
                       navigate({ to: "/welcome" });
                     }}

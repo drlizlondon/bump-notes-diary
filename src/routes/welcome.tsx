@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { ArrowRight, Lock } from "lucide-react";
-import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { isTester } from "@/lib/bumpnotes/tester";
+import { useAppSession } from "@/lib/data/session";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 import { PregnancySummaryPreview } from "@/components/bumpnotes/PregnancySummaryPreview";
 import { buildDemoSummary } from "@/lib/bumpnotes/demo-summary";
@@ -46,7 +46,7 @@ export const Route = createFileRoute("/welcome")({
 
 function Welcome() {
   const navigate = useNavigate();
-  const { userId } = useSyncSnapshot();
+  const { userId } = useAppSession();
 
   // Authorized visitors go to the app root, which routes them to their dashboard
   // or onboarding based on whether they have an active pregnancy (repository).
