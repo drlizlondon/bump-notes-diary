@@ -39,12 +39,17 @@ function setSnap(next: NativeSnap) {
   emit();
 }
 
+let loadingNative = false;
 async function loadNative(): Promise<void> {
+  if (loadingNative) return; // dedupe concurrent re-verifies
+  loadingNative = true;
   try {
     const account = await getNativeAccount();
     setSnap({ account, checked: true });
   } catch {
     setSnap(CHECKED_NONE);
+  } finally {
+    loadingNative = false;
   }
 }
 
@@ -67,9 +72,15 @@ export function setNativeSession(account: NativeAccount | null): void {
 
 function subscribeNative(cb: () => void): () => void {
   listeners.add(cb);
-  if (!snap.checked) {
-    if (ENTRA_NATIVE_ENABLED) void loadNative();
-    else setSnap(CHECKED_NONE);
+  if (!ENTRA_NATIVE_ENABLED) {
+    if (!snap.checked) setSnap(CHECKED_NONE);
+  } else {
+    // Re-verify the native session on every mount so a page loaded right after a
+    // sign-in / sign-out / reset self-corrects instead of acting on a stale value
+    // (the "landed on /welcome with a valid session" race). Mark loading (keep any
+    // known account) so gates wait for the fresh check rather than redirecting.
+    if (snap.checked) snap = { account: snap.account, checked: false };
+    void loadNative();
   }
   return () => listeners.delete(cb);
 }
