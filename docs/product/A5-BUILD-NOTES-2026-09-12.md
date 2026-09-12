@@ -111,5 +111,45 @@ Branch-only; no push/deploy/DNS; applied migrations untouched (adapter + note ar
 additive files only); no health data in logs; EXIF-strip preserved (to re-verify
 when the photo panel is cut); the append-only decision surfaced, not improvised.
 
+## 6. STATUS — A5 screen cutover COMPLETE (2026-09-12, end of session)
+
+Founder ruled **append-only** ("uk compliant then easy", DECISIONS-LOG). Every
+app surface is now cut onto the V2 repository via the adapter and **verified in
+tester mode** (against the production build, `node .output/server`): onboarding →
+home → capture → timeline, plus details, pack (summary), settings. Branch
+`a5-screen-cutover-2026-09-12`, 7 commits, **unpushed** (founder-gated), green at
+every commit (`tsc`/`lint`/`build`).
+
+Append-only consequences applied (all defensible; flag for founder awareness):
+- **Symptom capture → compose-then-save** in repository mode (create-once on
+  Save; still one-screen-fast). Legacy instant-save-then-enrich kept only on the
+  now-unused store path.
+- **In-place entry Edit deferred** (timeline + pack review): delete-and-re-add is
+  the correction path. `EntryEditDialog` is now unimported (dead; delete at retire).
+- **Recently-deleted / restore / hard-delete removed** from settings (append-only
+  has no un-delete); the old store-based full "delete pregnancy record" is gone —
+  permanent deletion = account deletion (GDPR-2, wired).
+- **Photo/person attachments: images only** in repository mode for now (non-image
+  uploads = a follow-up); timeline shows an "upload ready" placeholder rather than
+  a blob thumbnail (attachment-URL thumbnails = a follow-up).
+
+`updatePregnancy` was added (repository + server fn + local-repo + hook) so the
+due date / nickname can be corrected — a pregnancy-episode edit, explicitly NOT
+the append-only-covered health entries.
+
+**How it stays safe / how it goes live:** the switch is inert on the deployed
+site until this branch is deployed at the gated cutover. Authed users use the
+ApiRepository (Supabase-bridge auth, 2.6) — launch-fresh, so they land in
+onboarding with an empty Azure record, by design.
+
+### Remaining tail (NOT A5 screen-wiring — sequenced with identity/GDPR/retire)
+1. `auth.tsx` still reads the store (identity signal) — folds into B1/B2 (Entra
+   sign-in flip). Cosmetic staleness only until then.
+2. Full retirement: delete `store.ts` / `sync.ts` / `EntryEditDialog` / the store
+   path in `Panels.tsx` + `@supabase/*` reads — plan 3.12, after cutover.
+3. GDPR-3/4 (consent capture, retention) — governance decision first.
+4. Follow-ups: non-image attachment uploads; timeline attachment thumbnails;
+   optional demo-mode banner (was tied to the retired store demo flag).
+
 ---
 *Document read: ☐ Lizzie — not yet. (Tick to ☑ with the date, or tell any session "read A5-BUILD-NOTES", and it gets recorded.)*
