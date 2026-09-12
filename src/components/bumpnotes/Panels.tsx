@@ -6,6 +6,16 @@ import { toast } from "sonner";
 import { useT } from "@/lib/bumpnotes/i18n";
 import { UndoStrip } from "./UndoStrip";
 import { trackEvent } from "@/lib/analytics";
+import { useCapture } from "@/lib/data/capture";
+import type { CaptureDraft } from "@/lib/data/entry-adapter";
+
+// A5: panels are shared between the live home (store source) and routes cut to
+// the Azure repository (repository source). Each save branches on `cap.source`
+// so the store path stays byte-identical while the repository path writes V2
+// entries create-only (append-only ruling, DECISIONS-LOG 2026-09-12).
+function captureError() {
+  toast.error("Could not save. Please try again.");
+}
 
 type Tone = "coral" | "blush" | "mint" | "butter" | "lavender" | "primary";
 
@@ -161,6 +171,8 @@ const PAIN_LIKE = new Set(["Headache", "Abdominal pain", "Pelvic pain", "Back pa
 
 export function SymptomPanelBody() {
   const t = useT();
+  const cap = useCapture();
+  const repoMode = cap.source === "repository";
   const [entryId, setEntryId] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [severity, setSeverity] = useState<number | null>(null);
@@ -170,7 +182,18 @@ export function SymptomPanelBody() {
   const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function record(symptom: string) {
-    // Re-tapping the same chip is a no-op
+    // Repository (append-only): compose-then-save — selecting a chip only sets
+    // local state; the entry is created once, enriched, on Save.
+    if (repoMode) {
+      if (selected === symptom) return;
+      setSelected(symptom);
+      setSeverity(null);
+      setQuantifier(null);
+      setNote("");
+      setShowUndo(false);
+      return;
+    }
+    // Store (legacy): instant-save-then-enrich (unchanged behaviour).
     if (selected === symptom && entryId) return;
     const e = store.addEntry({ type: "symptom", symptom } as Omit<
       Entry,
@@ -185,8 +208,35 @@ export function SymptomPanelBody() {
     setTimeout(() => setShowUndo(false), 5200);
   }
 
+  function saveRepo() {
+    if (!selected) return;
+    void cap
+      .addEntry({
+        type: "symptom",
+        symptom: selected,
+        severity: severity ?? undefined,
+        quantifier: quantifier ?? undefined,
+        note: note || undefined,
+      })
+      .then(({ id }) => {
+        setEntryId(id);
+        setShowUndo(true);
+        setTimeout(() => setShowUndo(false), 5200);
+        loggedToast(`${t(def?.tKey || "sym.other")} recorded`);
+        setSelected(null);
+        setSeverity(null);
+        setQuantifier(null);
+        setNote("");
+      })
+      .catch(captureError);
+  }
+
   function undo() {
-    if (entryId) store.hardDelete(entryId);
+    if (repoMode) {
+      if (entryId) void cap.removeEntry(entryId).catch(captureError);
+    } else if (entryId) {
+      store.hardDelete(entryId);
+    }
     setEntryId(null);
     setSelected(null);
     setSeverity(null);
@@ -196,7 +246,7 @@ export function SymptomPanelBody() {
   }
 
   function patch(p: Partial<Entry>) {
-    if (!entryId) return;
+    if (repoMode || !entryId) return; // repository composes locally until Save
     store.updateEntry(entryId, p);
   }
 
@@ -253,9 +303,15 @@ export function SymptomPanelBody() {
         ))}
       </div>
 
-      {selected && entryId && (
+      {/* Repository (append-only): the undo strip shows after Save, when the
+          composer has reset, so it lives outside the composer block. */}
+      {repoMode && showUndo && (
+        <UndoStrip label={`${t(def?.tKey || "sym.other")} recorded`} onUndo={undo} />
+      )}
+
+      {selected && (entryId || repoMode) && (
         <div className="space-y-2.5 pt-3 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
-          {showUndo && (
+          {!repoMode && showUndo && (
             <UndoStrip label={`${t(def?.tKey || "sym.other")} recorded`} onUndo={undo} />
           )}
 
@@ -314,20 +370,26 @@ export function SymptomPanelBody() {
             rows={2}
             className={inputClass + " resize-none"}
           />
-          <button
-            type="button"
-            onClick={() => {
-              setEntryId(null);
-              setSelected(null);
-              setSeverity(null);
-              setQuantifier(null);
-              setNote("");
-              setShowUndo(false);
-            }}
-            className="text-xs text-ink-soft underline"
-          >
-            Done
-          </button>
+          {repoMode ? (
+            <button type="button" onClick={saveRepo} className={primaryBtn}>
+              {t("common.save")}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setEntryId(null);
+                setSelected(null);
+                setSeverity(null);
+                setQuantifier(null);
+                setNote("");
+                setShowUndo(false);
+              }}
+              className="text-xs text-ink-soft underline"
+            >
+              Done
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -347,15 +409,21 @@ const COMMON_PROMPTS = [
 
 export function QuestionPanelBody() {
   const t = useT();
+  const cap = useCapture();
   const [text, setText] = useState("");
   const [context, setContext] = useState("");
   function save(q: string, ctx?: string) {
     if (!q.trim()) return;
-    store.addEntry({ type: "question", text: q.trim(), context: ctx?.trim() || undefined } as Omit<
-      Entry,
-      "id" | "createdAt" | "weekDay"
-    >);
-    loggedToast(t("q.saved"));
+    const draft = { type: "question" as const, text: q.trim(), context: ctx?.trim() || undefined };
+    if (cap.source === "repository") {
+      void cap
+        .addEntry(draft)
+        .then(() => loggedToast(t("q.saved")))
+        .catch(captureError);
+    } else {
+      store.addEntry(draft as Omit<Entry, "id" | "createdAt" | "weekDay">);
+      loggedToast(t("q.saved"));
+    }
     setText("");
     setContext("");
   }
@@ -421,6 +489,7 @@ function toLocalInput(iso: string) {
 
 export function PeopleCarePanelBody() {
   const t = useT();
+  const cap = useCapture();
   const [when, setWhen] = useState(toLocalInput(new Date().toISOString()));
   const [name, setName] = useState("");
   const [role, setRole] = useState("role.midwife");
@@ -428,32 +497,56 @@ export function PeopleCarePanelBody() {
   const [advised, setAdvised] = useState("");
   const [note, setNote] = useState("");
   const [dataUrl, setDataUrl] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
-  function onFile(file: File) {
+  function onFile(f: File) {
+    setFile(f);
     const reader = new FileReader();
     reader.onload = () => setDataUrl(reader.result as string);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(f);
   }
 
-  function save() {
-    const iso = new Date(when).toISOString();
-    store.addEntry({
-      type: "person",
-      whenISO: iso,
-      name: name || undefined,
-      role: t(role) || undefined,
-      discussed: discussed || undefined,
-      advised: advised || undefined,
-      note: note || undefined,
-      dataUrl: dataUrl || undefined,
-      createdAt: iso,
-    } as Omit<Entry, "id" | "createdAt" | "weekDay"> & { createdAt: string });
-    loggedToast(t("p.saved"));
+  function reset() {
     setName("");
     setDiscussed("");
     setAdvised("");
     setNote("");
     setDataUrl(null);
+    setFile(null);
+  }
+
+  function save() {
+    const iso = new Date(when).toISOString();
+    if (cap.source === "repository") {
+      // D2: a "who I saw" capture writes a People row + an appointment entry
+      // referencing it. Attachment images only for now (see A5 follow-up).
+      void cap
+        .addPersonVisit({
+          name: name || undefined,
+          roleKey: role,
+          discussed: discussed || undefined,
+          advised: advised || undefined,
+          note: note || undefined,
+          whenISO: iso,
+          file: file && file.type.startsWith("image/") ? file : null,
+        })
+        .then(() => loggedToast(t("p.saved")))
+        .catch(captureError);
+    } else {
+      store.addEntry({
+        type: "person",
+        whenISO: iso,
+        name: name || undefined,
+        role: t(role) || undefined,
+        discussed: discussed || undefined,
+        advised: advised || undefined,
+        note: note || undefined,
+        dataUrl: dataUrl || undefined,
+        createdAt: iso,
+      } as Omit<Entry, "id" | "createdAt" | "weekDay"> & { createdAt: string });
+      loggedToast(t("p.saved"));
+    }
+    reset();
   }
 
   return (
@@ -536,6 +629,7 @@ const MEASUREMENT_KINDS: { key: MeasurementKind; tKey: string; unit?: string }[]
 
 export function MeasurementPanelBody() {
   const t = useT();
+  const cap = useCapture();
   const [kind, setKind] = useState<MeasurementKind>("blood_pressure");
   const [customLabel, setCustomLabel] = useState("");
   const [systolic, setSystolic] = useState("");
@@ -562,23 +656,32 @@ export function MeasurementPanelBody() {
       customLabel: kind === "custom" ? customLabel || undefined : undefined,
       note: note || undefined,
     };
+    let draft: CaptureDraft;
     if (kind === "blood_pressure") {
       if (!systolic || !diastolic) return;
-      store.addEntry({
+      draft = {
         ...base,
         systolic: Number(systolic),
         diastolic: Number(diastolic),
         pulse: pulse ? Number(pulse) : undefined,
-      } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+      };
     } else {
       if (!value) return;
-      store.addEntry({
+      draft = {
         ...base,
         value: Number(value),
         unit: unit || MEASUREMENT_KINDS.find((m) => m.key === kind)?.unit,
-      } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+      };
     }
-    loggedToast(t("m.saved"));
+    if (cap.source === "repository") {
+      void cap
+        .addEntry(draft)
+        .then(() => loggedToast(t("m.saved")))
+        .catch(captureError);
+    } else {
+      store.addEntry(draft as Omit<Entry, "id" | "createdAt" | "weekDay">);
+      loggedToast(t("m.saved"));
+    }
     reset();
   }
 
@@ -680,25 +783,46 @@ const PHOTO_TAGS = [
 
 export function PhotoPanelBody() {
   const t = useT();
+  const cap = useCapture();
   const [tag, setTag] = useState("Bump");
   const [note, setNote] = useState("");
   const [dataUrl, setDataUrl] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
-  function onFile(file: File) {
+  function onFile(f: File) {
+    setFile(f);
     const reader = new FileReader();
     reader.onload = () => setDataUrl(reader.result as string);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(f);
+  }
+
+  function reset() {
+    setDataUrl(null);
+    setFile(null);
+    setNote("");
   }
 
   function save() {
     if (!dataUrl) return;
-    store.addEntry({ type: "photo", tag, dataUrl, note: note || undefined } as Omit<
-      Entry,
-      "id" | "createdAt" | "weekDay"
-    >);
-    loggedToast(t("ph.saved"));
-    setDataUrl(null);
-    setNote("");
+    if (cap.source === "repository") {
+      // Repository: upload entry + EXIF-stripped blob attachment (images only
+      // for now; non-image uploads are a documented A5 follow-up).
+      if (!file || !file.type.startsWith("image/")) {
+        toast.error("Only image files can be attached for now.");
+        return;
+      }
+      void cap
+        .addPhoto({ tag, note: note || undefined, file })
+        .then(() => loggedToast(t("ph.saved")))
+        .catch(captureError);
+    } else {
+      store.addEntry({ type: "photo", tag, dataUrl, note: note || undefined } as Omit<
+        Entry,
+        "id" | "createdAt" | "weekDay"
+      >);
+      loggedToast(t("ph.saved"));
+    }
+    reset();
   }
 
   return (
@@ -758,17 +882,26 @@ const FEELINGS = [
 
 export function FeelingPanelBody() {
   const t = useT();
+  const cap = useCapture();
   const [selected, setSelected] = useState<string | null>(null);
   const [note, setNote] = useState("");
   function save() {
     if (!selected) return;
-    store.addEntry({
-      type: "feeling",
-      feeling: selected,
-      note: note || undefined,
-      privateOnly: true,
-    } as Omit<Entry, "id" | "createdAt" | "weekDay">);
-    loggedToast(`${t("type.feeling")}: ${selected}`);
+    const toastLabel = `${t("type.feeling")}: ${selected}`;
+    if (cap.source === "repository") {
+      void cap
+        .addEntry({ type: "feeling", feeling: selected, note: note || undefined })
+        .then(() => loggedToast(toastLabel))
+        .catch(captureError);
+    } else {
+      store.addEntry({
+        type: "feeling",
+        feeling: selected,
+        note: note || undefined,
+        privateOnly: true,
+      } as Omit<Entry, "id" | "createdAt" | "weekDay">);
+      loggedToast(toastLabel);
+    }
     setSelected(null);
     setNote("");
   }
@@ -800,15 +933,24 @@ export function FeelingPanelBody() {
 
 export function NotePanelBody() {
   const t = useT();
+  const cap = useCapture();
   const [text, setText] = useState("");
   function save() {
     if (!text.trim()) return;
-    store.addEntry({ type: "note", text: text.trim() } as Omit<
-      Entry,
-      "id" | "createdAt" | "weekDay"
-    >);
-    trackEvent("note_created");
-    loggedToast(t("n.saved"));
+    const draft = { type: "note" as const, text: text.trim() };
+    if (cap.source === "repository") {
+      void cap
+        .addEntry(draft)
+        .then(() => {
+          trackEvent("note_created");
+          loggedToast(t("n.saved"));
+        })
+        .catch(captureError);
+    } else {
+      store.addEntry(draft as Omit<Entry, "id" | "createdAt" | "weekDay">);
+      trackEvent("note_created");
+      loggedToast(t("n.saved"));
+    }
     setText("");
   }
   return (

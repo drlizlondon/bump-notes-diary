@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import {
@@ -12,7 +12,6 @@ import {
   Sparkles,
   ArrowLeft,
 } from "lucide-react";
-import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell } from "@/components/bumpnotes/AppShell";
 import { HomeHeader } from "@/components/bumpnotes/HomeHeader";
 import {
@@ -27,7 +26,11 @@ import {
 } from "@/components/bumpnotes/Panels";
 import { useT } from "@/lib/bumpnotes/i18n";
 import { gestationFromDueDate } from "@/lib/bumpnotes/gestation";
-import { buildDemoDashboardState } from "@/lib/bumpnotes/demo-dashboard";
+import { RepositoryProvider } from "@/lib/data/repository-context";
+import { RepositoryCaptureProvider } from "@/lib/data/capture";
+import { useActivePregnancy, useEntries, useProfile } from "@/lib/data/hooks";
+import { storeEntryFromV2, storeProfileFromV2 } from "@/lib/data/entry-adapter";
+import type { Entry as StoreEntry } from "@/lib/bumpnotes/types";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({
@@ -54,20 +57,36 @@ export const Route = createFileRoute("/demo")({
 
 type PanelKey = "symptom" | "question" | "people" | "measurement" | "photo" | "note" | "feeling";
 
+// A5: the demo runs entirely on the on-device LocalRepository (demo mode →
+// sessionStorage, seeded fixtures) via the Repository, proving the V2 read+write
+// path with zero real-data risk. RepositoryCaptureProvider makes the shared
+// capture panels write V2 entries create-only (append-only ruling).
 function Demo() {
-  const { profile } = useAppState();
-  const [open, setOpen] = useState<PanelKey | null>(null);
+  return (
+    <RepositoryProvider mode="demo">
+      <RepositoryCaptureProvider>
+        <DemoInner />
+      </RepositoryCaptureProvider>
+    </RepositoryProvider>
+  );
+}
+
+function DemoInner() {
   const t = useT();
+  const [open, setOpen] = useState<PanelKey | null>(null);
+  const { data: profileV2 } = useProfile();
+  const { data: pregnancy, isLoading } = useActivePregnancy();
 
-  // Enter demo mode on mount. Demo state persists across in-app navigation
-  // via sessionStorage in the store; the user exits via the banner X button.
-  useEffect(() => {
-    if (!store.isDemoMode()) {
-      store.enterDemoMode(buildDemoDashboardState());
-    }
-  }, []);
+  if (isLoading || !pregnancy) {
+    return (
+      <div className="min-h-[100dvh] grid place-items-center p-8">
+        <p className="text-sm text-ink-soft">Loading demo…</p>
+      </div>
+    );
+  }
 
-  if (!profile?.onboarded) {
+  const profile = storeProfileFromV2(profileV2 ?? null, pregnancy);
+  if (!profile) {
     return (
       <div className="min-h-[100dvh] grid place-items-center p-8">
         <p className="text-sm text-ink-soft">Loading demo…</p>
@@ -85,7 +104,7 @@ function Demo() {
       <AppShell>
         <HomeHeader profile={profile} />
 
-        <ThisWeekCard />
+        <ThisWeekCard pregnancyId={pregnancy.id} dueDateISO={profile.dueDateISO} />
 
         <section className="px-4 md:px-0 pb-28 lg:pb-10 mt-5">
           <h2 className="font-serif text-lg md:text-2xl font-semibold mt-1 mb-0.5 px-1">
@@ -191,12 +210,13 @@ function Demo() {
   );
 }
 
-function ThisWeekCard() {
-  const { entries, profile } = useAppState();
-  const { weeks: currentWeek } = useMemo(
-    () => (profile ? gestationFromDueDate(profile.dueDateISO) : { weeks: 0, days: 0 }),
-    [profile],
+function ThisWeekCard({ pregnancyId, dueDateISO }: { pregnancyId: string; dueDateISO: string }) {
+  const { data: v2entries } = useEntries({ pregnancyId });
+  const entries = useMemo<StoreEntry[]>(
+    () => (v2entries ?? []).map(storeEntryFromV2).filter((e): e is StoreEntry => e !== null),
+    [v2entries],
   );
+  const currentWeek = useMemo(() => gestationFromDueDate(dueDateISO).weeks, [dueDateISO]);
 
   const stats = useMemo(() => {
     const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -213,7 +233,7 @@ function ThisWeekCard() {
   const labelMap: Record<string, string> = {
     symptom: "symptoms",
     question: "questions",
-    person: "appointments",
+    appointment: "appointments",
     measurement: "measurements",
     photo: "uploads",
     note: "notes",
