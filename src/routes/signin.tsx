@@ -43,7 +43,12 @@ function NativeSignInPage() {
     <EntraNativeSignIn
       onSignedIn={(account) => {
         setNativeSession(account);
-        navigate({ to: redirectTo, replace: true });
+        // Full page load (not an in-app transition) to the destination: a fresh
+        // boot reads the just-established Entra session reliably and lands on the
+        // dashboard/onboarding, avoiding the client-side store-timing race that
+        // could strand a just-signed-in user on /welcome.
+        if (typeof window !== "undefined") window.location.assign(redirectTo);
+        else navigate({ to: redirectTo, replace: true });
       }}
     />
   );
