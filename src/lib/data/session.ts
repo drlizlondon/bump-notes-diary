@@ -72,15 +72,13 @@ export function setNativeSession(account: NativeAccount | null): void {
 
 function subscribeNative(cb: () => void): () => void {
   listeners.add(cb);
-  if (!ENTRA_NATIVE_ENABLED) {
-    if (!snap.checked) setSnap(CHECKED_NONE);
-  } else {
-    // Re-verify the native session on every mount so a page loaded right after a
-    // sign-in / sign-out / reset self-corrects instead of acting on a stale value
-    // (the "landed on /welcome with a valid session" race). Mark loading (keep any
-    // known account) so gates wait for the fresh check rather than redirecting.
-    if (snap.checked) snap = { account: snap.account, checked: false };
-    void loadNative();
+  // Resolve once per app boot, then cache. Auth transitions refresh it
+  // explicitly: sign-in does a full page load (fresh boot), sign-out calls
+  // refreshNativeSession. Re-verifying on every mount caused a per-navigation
+  // loading flash that made gates bounce to /welcome and back.
+  if (!snap.checked) {
+    if (ENTRA_NATIVE_ENABLED) void loadNative();
+    else setSnap(CHECKED_NONE);
   }
   return () => listeners.delete(cb);
 }

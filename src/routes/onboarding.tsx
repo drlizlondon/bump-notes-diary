@@ -18,16 +18,17 @@ export const Route = createFileRoute("/onboarding")({
 // (tester on-device, or signed-in). Anon visitors sign up first (identity flow).
 function OnboardingRoute() {
   const navigate = useNavigate();
-  const { userId } = useAppSession();
+  const { userId, loading } = useAppSession();
   const tester = useTester();
   const authorized = !!userId || tester;
 
   useEffect(() => {
     const authed = !!userId || isTester();
-    // Signed-out -> the sign-in front door (native or Supabase per the flag).
-    // NOT /auth, whose own "not onboarded -> /onboarding" redirect would loop.
-    if (!authed) navigate({ to: "/signin", replace: true });
-  }, [userId, navigate]);
+    // Wait for the session to resolve before redirecting (else a fresh load
+    // flashes to /signin and back). Signed-out -> the sign-in front door; NOT
+    // /auth, whose own "not onboarded -> /onboarding" redirect would loop.
+    if (!authed && !loading) navigate({ to: "/signin", replace: true });
+  }, [userId, loading, navigate]);
 
   useEffect(() => {
     trackEvent("onboarding_started");

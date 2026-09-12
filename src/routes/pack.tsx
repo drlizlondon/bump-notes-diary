@@ -78,15 +78,15 @@ type Step = 1 | 2 | 3;
 type ReviewTarget = { title: string; entryIds: string[] };
 
 function SummaryPage() {
-  const { userId } = useAppSession();
+  const { userId, loading } = useAppSession();
   const tester = useTester();
   const navigate = useNavigate();
   const authorized = !!userId || tester;
 
   useEffect(() => {
     const authed = !!userId || isTester();
-    if (!authed) navigate({ to: "/welcome", replace: true });
-  }, [userId, navigate]);
+    if (!authed && !loading) navigate({ to: "/welcome", replace: true });
+  }, [userId, loading, navigate]);
 
   if (!authorized) return null;
   return (
