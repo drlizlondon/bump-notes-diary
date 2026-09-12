@@ -111,8 +111,28 @@ export type NativeSignInResult =
   | { status: "redirect_required"; message: string };
 
 function toAccount(data: CustomAuthAccountData): NativeAccount {
-  const info = data.getAccount();
-  return { username: info.username, name: info.name };
+  // Some CIAM id tokens don't emit preferred_username/email, so MSAL leaves
+  // `username` empty. An empty username must NOT read as "signed out": fall back
+  // to an email claim if present, else the stable MSAL account id. The identity
+  // is real (valid tokens are cached) — we just need a non-empty handle.
+  const info = data.getAccount() as {
+    username?: string;
+    name?: string;
+    homeAccountId?: string;
+    localAccountId?: string;
+    idTokenClaims?: Record<string, unknown>;
+  };
+  const claims = info.idTokenClaims ?? {};
+  const claimEmail =
+    (typeof claims.preferred_username === "string" && claims.preferred_username) ||
+    (typeof claims.email === "string" && claims.email) ||
+    (Array.isArray(claims.emails) && typeof claims.emails[0] === "string" && claims.emails[0]) ||
+    "";
+  const stableId = info.homeAccountId || info.localAccountId || "";
+  return {
+    username: info.username || claimEmail || stableId,
+    name: info.name || undefined,
+  };
 }
 
 function errMessage(
