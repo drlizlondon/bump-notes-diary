@@ -27,7 +27,9 @@ export function buildDemoSummary(now: Date = new Date()): { profile: Profile; en
     d.setHours(h, m, 0, 0);
     return d.toISOString();
   }
-  function wd(iso: string) { return gestationFromDueDate(dueDateISO, new Date(iso)); }
+  function wd(iso: string) {
+    return gestationFromDueDate(dueDateISO, new Date(iso));
+  }
   function mk(e: Record<string, unknown> & { createdAt: string }): Entry {
     return { ...e, weekDay: wd(e.createdAt) } as unknown as Entry;
   }
@@ -35,76 +37,129 @@ export function buildDemoSummary(now: Date = new Date()): { profile: Profile; en
   const entries: Entry[] = [
     // ~ Week 22
     mk({
-      id: "d1", type: "symptom", createdAt: at(15, 9, 12),
-      symptom: "Heartburn", quantifier: "Mild", severity: 3,
+      id: "d1",
+      type: "symptom",
+      createdAt: at(15, 9, 12),
+      symptom: "Heartburn",
+      quantifier: "Mild",
+      severity: 3,
       note: "After breakfast.",
     }),
     mk({
-      id: "d2", type: "measurement", createdAt: at(15, 8, 30),
-      kind: "blood_pressure", systolic: 118, diastolic: 74, pulse: 72,
+      id: "d2",
+      type: "measurement",
+      createdAt: at(15, 8, 30),
+      kind: "blood_pressure",
+      systolic: 118,
+      diastolic: 74,
+      pulse: 72,
     }),
     mk({
-      id: "d3", type: "question", createdAt: at(14, 20, 5),
+      id: "d3",
+      type: "question",
+      createdAt: at(14, 20, 5),
       text: "Is it normal to feel dizzy after standing up quickly?",
     }),
     mk({
-      id: "d4", type: "person", createdAt: at(13, 14, 0),
-      whenISO: at(13, 14, 0), name: "Rachel", role: "Midwife",
+      id: "d4",
+      type: "person",
+      createdAt: at(13, 14, 0),
+      whenISO: at(13, 14, 0),
+      name: "Rachel",
+      role: "Midwife",
       discussed: "Routine check, bump measuring well.",
       advised: "Keep iron supplement going.",
     }),
 
     // ~ Week 23
     mk({
-      id: "d5", type: "symptom", createdAt: at(9, 22, 40),
-      symptom: "Lower back ache", quantifier: "Moderate", severity: 5,
+      id: "d5",
+      type: "symptom",
+      createdAt: at(9, 22, 40),
+      symptom: "Lower back ache",
+      quantifier: "Moderate",
+      severity: 5,
       location: "Lower back, both sides",
     }),
     mk({
-      id: "d6", type: "measurement", createdAt: at(8, 8, 10),
-      kind: "weight", value: 68.4, unit: "kg",
+      id: "d6",
+      type: "measurement",
+      createdAt: at(8, 8, 10),
+      kind: "weight",
+      value: 68.4,
+      unit: "kg",
     }),
     mk({
-      id: "d7", type: "feeling", createdAt: at(8, 21, 0),
-      feeling: "Anxious about the next scan", privateOnly: true,
+      id: "d7",
+      type: "feeling",
+      createdAt: at(8, 21, 0),
+      feeling: "Anxious about the next scan",
+      privateOnly: true,
     }),
     mk({
-      id: "d8", type: "question", createdAt: at(7, 19, 30),
+      id: "d8",
+      type: "question",
+      createdAt: at(7, 19, 30),
       text: "Which pain relief is safe for back pain?",
     }),
     mk({
-      id: "d9", type: "measurement", createdAt: at(7, 8, 15),
-      kind: "blood_pressure", systolic: 122, diastolic: 78,
+      id: "d9",
+      type: "measurement",
+      createdAt: at(7, 8, 15),
+      kind: "blood_pressure",
+      systolic: 122,
+      diastolic: 78,
     }),
 
     // ~ Week 24
     mk({
-      id: "d10", type: "symptom", createdAt: at(3, 7, 50),
-      symptom: "Nausea", quantifier: "Mild", severity: 2,
+      id: "d10",
+      type: "symptom",
+      createdAt: at(3, 7, 50),
+      symptom: "Nausea",
+      quantifier: "Mild",
+      severity: 2,
       note: "Improving overall.",
     }),
     mk({
-      id: "d11", type: "measurement", createdAt: at(2, 8, 5),
-      kind: "movements", value: 12, unit: "movements",
+      id: "d11",
+      type: "measurement",
+      createdAt: at(2, 8, 5),
+      kind: "movements",
+      value: 12,
+      unit: "movements",
       note: "Counted over 1 hour after lunch.",
     }),
     mk({
-      id: "d12", type: "note", createdAt: at(2, 22, 15),
+      id: "d12",
+      type: "note",
+      createdAt: at(2, 22, 15),
       text: "Felt baby move strongly during the evening — first really clear kicks.",
     }),
     mk({
-      id: "d13", type: "person", createdAt: at(1, 11, 30),
-      whenISO: at(1, 11, 30), name: "Dr Patel", role: "GP",
+      id: "d13",
+      type: "person",
+      createdAt: at(1, 11, 30),
+      whenISO: at(1, 11, 30),
+      name: "Dr Patel",
+      role: "GP",
       discussed: "Quick check on back pain.",
       advised: "Gentle stretching, warm compress, paracetamol if needed.",
     }),
     mk({
-      id: "d14", type: "question", createdAt: at(0, 9, 0),
+      id: "d14",
+      type: "question",
+      createdAt: at(0, 9, 0),
       text: "When should I start thinking about the hospital bag?",
     }),
     mk({
-      id: "d15", type: "measurement", createdAt: at(0, 8, 0),
-      kind: "blood_pressure", systolic: 120, diastolic: 76, pulse: 70,
+      id: "d15",
+      type: "measurement",
+      createdAt: at(0, 8, 0),
+      kind: "blood_pressure",
+      systolic: 120,
+      diastolic: 76,
+      pulse: 70,
     }),
   ] as Entry[];
 

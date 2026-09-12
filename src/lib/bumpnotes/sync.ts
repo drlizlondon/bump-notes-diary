@@ -15,22 +15,48 @@ let migrationPromptOpen = false;
 let initialised = false;
 
 const listeners = new Set<() => void>();
-function emit() { listeners.forEach((l) => l()); }
-function setStatus(s: SyncStatus) { if (status !== s) { status = s; emit(); } }
-function setUser(u: { id: string | null; email: string | null }) {
-  currentUserId = u.id; currentEmail = u.email; emit();
+function emit() {
+  listeners.forEach((l) => l());
 }
-function setMigrationPrompt(b: boolean) { migrationPromptOpen = b; emit(); }
+function setStatus(s: SyncStatus) {
+  if (status !== s) {
+    status = s;
+    emit();
+  }
+}
+function setUser(u: { id: string | null; email: string | null }) {
+  currentUserId = u.id;
+  currentEmail = u.email;
+  emit();
+}
+function setMigrationPrompt(b: boolean) {
+  migrationPromptOpen = b;
+  emit();
+}
 
-export function getSyncStatus(): SyncStatus { return status; }
-export function getUserId(): string | null { return currentUserId; }
-export function getUserEmail(): string | null { return currentEmail; }
-export function isMigrationPromptOpen(): boolean { return migrationPromptOpen; }
-export function closeMigrationPrompt() { setMigrationPrompt(false); }
+export function getSyncStatus(): SyncStatus {
+  return status;
+}
+export function getUserId(): string | null {
+  return currentUserId;
+}
+export function getUserEmail(): string | null {
+  return currentEmail;
+}
+export function isMigrationPromptOpen(): boolean {
+  return migrationPromptOpen;
+}
+export function closeMigrationPrompt() {
+  setMigrationPrompt(false);
+}
 
 export function useSyncSnapshot() {
-  const subscribe = (cb: () => void) => { listeners.add(cb); return () => listeners.delete(cb); };
-  const getSnap = () => `${status}|${currentUserId ?? ""}|${currentEmail ?? ""}|${migrationPromptOpen ? "1" : "0"}`;
+  const subscribe = (cb: () => void) => {
+    listeners.add(cb);
+    return () => listeners.delete(cb);
+  };
+  const getSnap = () =>
+    `${status}|${currentUserId ?? ""}|${currentEmail ?? ""}|${migrationPromptOpen ? "1" : "0"}`;
   useSyncExternalStore(subscribe, getSnap, () => "local||");
   return { status, userId: currentUserId, email: currentEmail, migrationPromptOpen };
 }
@@ -49,7 +75,11 @@ async function pullFromCloud(userId: string): Promise<AppState | null> {
     .select("state")
     .eq("user_id", userId)
     .maybeSingle();
-  if (error) { console.error("pullFromCloud", error); setStatus("error"); return null; }
+  if (error) {
+    console.error("pullFromCloud", error);
+    setStatus("error");
+    return null;
+  }
   return (data?.state as AppState | undefined) ?? null;
 }
 
@@ -59,7 +89,11 @@ async function pushToCloud(state: AppState) {
   const { error } = await supabase
     .from("bumpnotes_state")
     .upsert({ user_id: currentUserId, state: JSON.parse(JSON.stringify(state)) });
-  if (error) { console.error("pushToCloud", error); setStatus("error"); return; }
+  if (error) {
+    console.error("pushToCloud", error);
+    setStatus("error");
+    return;
+  }
   lastSerialized = JSON.stringify(state);
   setStatus("synced");
 }
@@ -75,7 +109,9 @@ function schedulePush() {
   if (serialized === lastSerialized) return;
   setStatus("syncing");
   if (pushTimer) clearTimeout(pushTimer);
-  pushTimer = setTimeout(() => { void pushToCloud(store.getState()); }, 1200);
+  pushTimer = setTimeout(() => {
+    void pushToCloud(store.getState());
+  }, 1200);
 }
 
 function startWatching() {
@@ -83,8 +119,14 @@ function startWatching() {
   storeUnsub = store.subscribe(schedulePush);
 }
 function stopWatching() {
-  if (storeUnsub) { storeUnsub(); storeUnsub = null; }
-  if (pushTimer) { clearTimeout(pushTimer); pushTimer = null; }
+  if (storeUnsub) {
+    storeUnsub();
+    storeUnsub = null;
+  }
+  if (pushTimer) {
+    clearTimeout(pushTimer);
+    pushTimer = null;
+  }
 }
 
 async function handleSession(user: { id: string; email?: string | null } | null) {
@@ -127,12 +169,19 @@ export async function initSync() {
   initialised = true;
   try {
     const { data } = await supabase.auth.getSession();
-    await handleSession(data.session?.user ? { id: data.session.user.id, email: data.session.user.email } : null);
+    await handleSession(
+      data.session?.user ? { id: data.session.user.id, email: data.session.user.email } : null,
+    );
   } catch (e) {
     console.error("initSync getSession", e);
   }
   supabase.auth.onAuthStateChange((event, session) => {
-    if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED" || event === "INITIAL_SESSION") {
+    if (
+      event === "SIGNED_IN" ||
+      event === "SIGNED_OUT" ||
+      event === "USER_UPDATED" ||
+      event === "INITIAL_SESSION"
+    ) {
       void handleSession(session?.user ? { id: session.user.id, email: session.user.email } : null);
     }
   });

@@ -5,7 +5,9 @@ type Props = { className?: string; alt?: string };
 
 export function LogoIcon({ className = "size-8", alt = "BumpNotes" }: Props) {
   return (
-    <span className={`inline-flex items-center justify-center rounded-full overflow-hidden ${className}`}>
+    <span
+      className={`inline-flex items-center justify-center rounded-full overflow-hidden ${className}`}
+    >
       <img
         src={ICON_URL}
         alt={alt}

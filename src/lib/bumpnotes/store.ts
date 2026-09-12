@@ -1,22 +1,9 @@
 import { useSyncExternalStore } from "react";
-import type { AppState, Entry, Profile, LabourPlan, BagItem } from "./types";
+import type { AppState, Entry, Profile } from "./types";
 import { gestationFromDueDate } from "./gestation";
-import { t } from "./i18n";
 
 const KEY = "bumpnotes:v1";
 const DEMO_KEY = "bumpnotes:demo:v1";
-
-function defaultBag(): BagItem[] {
-  const labels = [
-    t("lab.bag.defaults.notes"),
-    t("lab.bag.defaults.phone"),
-    t("lab.bag.defaults.clothes"),
-    t("lab.bag.defaults.nappies"),
-    t("lab.bag.defaults.toilet"),
-    t("lab.bag.defaults.snacks"),
-  ];
-  return labels.map((label) => ({ id: crypto.randomUUID(), label, packed: false }));
-}
 
 const initial: AppState = { profile: null, entries: [] };
 
@@ -36,7 +23,11 @@ function load(): AppState {
     if (demoRaw) {
       demoMode = true;
       const parsed = JSON.parse(demoRaw) as AppState;
-      return { profile: parsed.profile ?? null, entries: parsed.entries ?? [], labourPlan: parsed.labourPlan };
+      return {
+        profile: parsed.profile ?? null,
+        entries: parsed.entries ?? [],
+        labourPlan: parsed.labourPlan,
+      };
     }
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return initial;
@@ -59,31 +50,56 @@ function persist() {
     } else {
       window.localStorage.setItem(KEY, JSON.stringify(state));
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
-function emit() { listeners.forEach((l) => l()); }
-function setState(next: AppState) { state = next; persist(); emit(); }
+function emit() {
+  listeners.forEach((l) => l());
+}
+function setState(next: AppState) {
+  state = next;
+  persist();
+  emit();
+}
 
 if (typeof window !== "undefined") state = load();
 
-function subscribeStore(cb: () => void) { listeners.add(cb); return () => listeners.delete(cb); }
+function subscribeStore(cb: () => void) {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
 
-export function subscribe(cb: () => void) { return subscribeStore(cb); }
+export function subscribe(cb: () => void) {
+  return subscribeStore(cb);
+}
 
 export function useAppState(): AppState {
-  return useSyncExternalStore(subscribeStore, () => state, () => initial);
+  return useSyncExternalStore(
+    subscribeStore,
+    () => state,
+    () => initial,
+  );
 }
 
 export function useDemoMode(): boolean {
-  return useSyncExternalStore(subscribeStore, () => demoMode, () => false);
+  return useSyncExternalStore(
+    subscribeStore,
+    () => demoMode,
+    () => false,
+  );
 }
 
 export const store = {
   getState: () => state,
   subscribe: subscribeStore,
-  replaceState(next: AppState) { setState(next); },
-  setProfile(p: Profile) { setState({ ...state, profile: p }); },
+  replaceState(next: AppState) {
+    setState(next);
+  },
+  setProfile(p: Profile) {
+    setState({ ...state, profile: p });
+  },
 
   updateProfile(patch: Partial<Profile>) {
     if (!state.profile) return;
@@ -115,7 +131,9 @@ export const store = {
   restore(id: string) {
     setState({
       ...state,
-      entries: state.entries.map((e) => (e.id === id ? ({ ...e, deletedAt: undefined } as Entry) : e)),
+      entries: state.entries.map((e) =>
+        e.id === id ? ({ ...e, deletedAt: undefined } as Entry) : e,
+      ),
     });
   },
   hardDelete(id: string) {
@@ -125,15 +143,24 @@ export const store = {
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
     setState({
       ...state,
-      entries: state.entries.filter((e) => !e.deletedAt || new Date(e.deletedAt).getTime() > cutoff),
+      entries: state.entries.filter(
+        (e) => !e.deletedAt || new Date(e.deletedAt).getTime() > cutoff,
+      ),
     });
   },
-  clearAll() { setState(initial); },
+  clearAll() {
+    setState(initial);
+  },
 
-  isDemoMode() { return demoMode; },
+  isDemoMode() {
+    return demoMode;
+  },
   enterDemoMode(demoState: AppState) {
     if (demoMode) {
-      state = demoState; persist(); emit(); return;
+      state = demoState;
+      persist();
+      emit();
+      return;
     }
     demoBackup = state;
     demoMode = true;
@@ -144,40 +171,17 @@ export const store = {
   exitDemoMode() {
     if (!demoMode) return;
     demoMode = false;
-    try { if (typeof window !== "undefined") window.sessionStorage.removeItem(DEMO_KEY); } catch { /* ignore */ }
+    try {
+      if (typeof window !== "undefined") window.sessionStorage.removeItem(DEMO_KEY);
+    } catch {
+      /* ignore */
+    }
     state = demoBackup ?? load();
     demoBackup = null;
     emit();
   },
 
-  exportAll() { return JSON.stringify(state, null, 2); },
-
-  // Labour
-  getLabourPlan(): LabourPlan {
-    if (state.labourPlan) return state.labourPlan;
-    return { bag: defaultBag() };
+  exportAll() {
+    return JSON.stringify(state, null, 2);
   },
-  updateLabourPlan(patch: Partial<LabourPlan>) {
-    const current = state.labourPlan ?? { bag: defaultBag() };
-    setState({ ...state, labourPlan: { ...current, ...patch } });
-  },
-  setBag(bag: BagItem[]) {
-    const current = state.labourPlan ?? { bag };
-    setState({ ...state, labourPlan: { ...current, bag } });
-  },
-  startLabourRecording() {
-    const current = state.labourPlan ?? { bag: defaultBag() };
-    const startISO = new Date().toISOString();
-    const episodes = [...(current.episodes ?? []), { id: crypto.randomUUID(), startISO }];
-    setState({ ...state, labourPlan: { ...current, recordingStartISO: startISO, episodes } });
-  },
-  endLabourRecording(opts?: { outcome?: "baby" | "settled" | "other"; outcomeNote?: string }) {
-    if (!state.labourPlan) return;
-    const endISO = new Date().toISOString();
-    const episodes = (state.labourPlan.episodes ?? []).map((ep) =>
-      ep.endISO ? ep : { ...ep, endISO, outcome: opts?.outcome, outcomeNote: opts?.outcomeNote },
-    );
-    setState({ ...state, labourPlan: { ...state.labourPlan, recordingStartISO: undefined, episodes } });
-  },
-
 };

@@ -11,11 +11,20 @@ export function CookieNotice() {
     try {
       const v = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
       if (!v) setVisible(true);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   function savePreference(analytics: boolean) {
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ accepted: true, analytics, at: new Date().toISOString() })); } catch { /* ignore */ }
+    try {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ accepted: true, analytics, at: new Date().toISOString() }),
+      );
+    } catch {
+      /* ignore */
+    }
     setAnalyticsConsent(analytics);
     setVisible(false);
   }
@@ -33,8 +42,16 @@ export function CookieNotice() {
           <div className="text-sm text-ink flex-1">
             <p className="font-medium">We use essential cookies</p>
             <p className="text-ink-soft text-[13px] mt-1 leading-relaxed">
-              BumpNotes uses essential cookies and local storage to keep you signed in, remember your choices, and protect unsynced notes on your device. When you create an account, your pregnancy record can also be saved securely to your BumpNotes account. With your permission, we use privacy-safe analytics to understand pages and buttons used, without sending names, notes, symptoms, health details or account data. See our{" "}
-              <Link to="/privacy" className="text-primary underline">Privacy Policy</Link>.
+              BumpNotes uses essential cookies and secure storage to keep you signed in, remember
+              your choices, and protect your account. Your pregnancy record is saved securely to
+              your BumpNotes account so you can access it across devices. With your permission, we
+              use privacy-safe analytics to understand which pages and buttons are used. We do not
+              send names, notes, symptoms, health details, pregnancy records or account data to
+              analytics. See our{" "}
+              <Link to="/privacy" className="text-primary underline">
+                Privacy Policy
+              </Link>
+              .
             </p>
           </div>
           <div className="flex shrink-0 gap-2 self-end sm:self-auto">

@@ -98,25 +98,28 @@ export const pingTesterSession = createServerFn({ method: "POST" })
 
 /** Submit the tester feedback form. Public server fn gated by valid session id. */
 export const submitTesterFeedback = createServerFn({ method: "POST" })
-  .inputValidator((data: {
-    sessionId: string;
-    pregnancyIdentity: Answer;
-    professionalIdentity: Answer;
-    feedbackRoute: "yes_to_both" | "yes_to_either" | "no_to_both";
-    q1: Q1 | null;
-    q2: Q23 | null;
-    q3: Q23 | null;
-    improvementText: string;
-  }) => ({
-    sessionId: String(data?.sessionId ?? ""),
-    pregnancyIdentity: data.pregnancyIdentity === "yes" ? "yes" as const : "no" as const,
-    professionalIdentity: data.professionalIdentity === "yes" ? "yes" as const : "no" as const,
-    feedbackRoute: data.feedbackRoute,
-    q1: data.q1 ?? null,
-    q2: data.q2 ?? null,
-    q3: data.q3 ?? null,
-    improvementText: String(data?.improvementText ?? "").slice(0, 4000),
-  }))
+  .inputValidator(
+    (data: {
+      sessionId: string;
+      pregnancyIdentity: Answer;
+      professionalIdentity: Answer;
+      feedbackRoute: "yes_to_both" | "yes_to_either" | "no_to_both";
+      q1: Q1 | null;
+      q2: Q23 | null;
+      q3: Q23 | null;
+      improvementText: string;
+    }) => ({
+      sessionId: String(data?.sessionId ?? ""),
+      pregnancyIdentity: data.pregnancyIdentity === "yes" ? ("yes" as const) : ("no" as const),
+      professionalIdentity:
+        data.professionalIdentity === "yes" ? ("yes" as const) : ("no" as const),
+      feedbackRoute: data.feedbackRoute,
+      q1: data.q1 ?? null,
+      q2: data.q2 ?? null,
+      q3: data.q3 ?? null,
+      improvementText: String(data?.improvementText ?? "").slice(0, 4000),
+    }),
+  )
   .handler(async ({ data }) => {
     if (!data.sessionId) throw new Error("Missing tester session");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

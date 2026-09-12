@@ -17,7 +17,11 @@ const PULSED_KEY = "bumpnotes:tester_feedback_clicked";
  *   - "inline"   : pill used inside the home dashboard
  *   - "floating" : fixed FAB visible across the app for testers
  */
-export function TesterFeedbackButton({ variant = "block" }: { variant?: "block" | "inline" | "floating" }) {
+export function TesterFeedbackButton({
+  variant = "block",
+}: {
+  variant?: "block" | "inline" | "floating";
+}) {
   const tester = useTester();
   const [open, setOpen] = useState(false);
   const [pulse, setPulse] = useState(false);
@@ -34,7 +38,11 @@ export function TesterFeedbackButton({ variant = "block" }: { variant?: "block" 
   function handleOpen() {
     setOpen(true);
     setPulse(false);
-    try { window.localStorage.setItem(PULSED_KEY, "1"); } catch { /* ignore */ }
+    try {
+      window.localStorage.setItem(PULSED_KEY, "1");
+    } catch {
+      /* ignore */
+    }
   }
 
   if (!tester) return null;
@@ -85,15 +93,28 @@ export function TesterFeedbackButton({ variant = "block" }: { variant?: "block" 
           >
             <span
               className="size-11 shrink-0 rounded-2xl grid place-items-center"
-              style={{ backgroundColor: "#fff", color: SAGE_DARK, border: `1px solid ${SAGE_BORDER}` }}
+              style={{
+                backgroundColor: "#fff",
+                color: SAGE_DARK,
+                border: `1px solid ${SAGE_BORDER}`,
+              }}
             >
               <MessageSquareHeart className="size-5" />
             </span>
             <span className="flex-1">
-              <span className="block font-bold text-[15px]" style={{ color: SAGE_DARK }}>{label}</span>
-              <span className="block text-[12.5px] mt-0.5" style={{ color: SAGE_DARK, opacity: 0.75 }}>A minute of honest thoughts helps a lot.</span>
+              <span className="block font-bold text-[15px]" style={{ color: SAGE_DARK }}>
+                {label}
+              </span>
+              <span
+                className="block text-[12.5px] mt-0.5"
+                style={{ color: SAGE_DARK, opacity: 0.75 }}
+              >
+                A minute of honest thoughts helps a lot.
+              </span>
             </span>
-            <span className="text-lg" style={{ color: SAGE_DARK }}>›</span>
+            <span className="text-lg" style={{ color: SAGE_DARK }}>
+              ›
+            </span>
           </button>
         </div>
       )}

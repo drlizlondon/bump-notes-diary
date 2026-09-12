@@ -19,7 +19,10 @@ export function FeedbackButton() {
   const [busy, setBusy] = useState(false);
 
   function reset() {
-    setCategory(null); setMessage(""); setReplyEmail(""); setWantReply(false);
+    setCategory(null);
+    setMessage("");
+    setReplyEmail("");
+    setWantReply(false);
   }
 
   async function send() {
@@ -36,7 +39,9 @@ export function FeedbackButton() {
       setOpen(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't send. Please try again.");
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -50,7 +55,10 @@ export function FeedbackButton() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 bg-ink/40 flex items-end sm:items-center justify-center px-3 py-4 sm:p-6" onClick={() => setOpen(false)}>
+        <div
+          className="fixed inset-0 z-50 bg-ink/40 flex items-end sm:items-center justify-center px-3 py-4 sm:p-6"
+          onClick={() => setOpen(false)}
+        >
           <div
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-[440px] max-h-[90dvh] overflow-y-auto surface-card p-5 shadow-2xl"
@@ -59,9 +67,15 @@ export function FeedbackButton() {
             <div className="flex items-start justify-between gap-3 mb-3">
               <div>
                 <h3 className="font-serif text-lg font-semibold">Tell us what's on your mind</h3>
-                <p className="text-xs text-ink-soft mt-1">Your message goes straight to the BumpNotes team.</p>
+                <p className="text-xs text-ink-soft mt-1">
+                  Your message goes straight to the BumpNotes team.
+                </p>
               </div>
-              <button onClick={() => setOpen(false)} className="-mr-1 -mt-1 size-8 grid place-items-center text-ink-soft" aria-label="Close">
+              <button
+                onClick={() => setOpen(false)}
+                className="-mr-1 -mt-1 size-8 grid place-items-center text-ink-soft"
+                aria-label="Close"
+              >
                 <X className="size-4" />
               </button>
             </div>
@@ -72,10 +86,13 @@ export function FeedbackButton() {
                   key={c.value}
                   onClick={() => setCategory(c.value)}
                   className={`px-3 py-3 rounded-2xl text-left text-sm border transition ${
-                    category === c.value ? "border-primary bg-primary/10 text-ink" : "border-border bg-white text-ink hover:border-primary/40"
+                    category === c.value
+                      ? "border-primary bg-primary/10 text-ink"
+                      : "border-border bg-white text-ink hover:border-primary/40"
                   }`}
                 >
-                  <span className="mr-1.5">{c.emoji}</span>{c.label}
+                  <span className="mr-1.5">{c.emoji}</span>
+                  {c.label}
                 </button>
               ))}
             </div>
@@ -90,7 +107,12 @@ export function FeedbackButton() {
             />
 
             <label className="flex items-start gap-2 mt-3 text-sm cursor-pointer">
-              <input type="checkbox" checked={wantReply} onChange={(e) => setWantReply(e.target.checked)} className="mt-1 size-4 accent-[var(--primary)]" />
+              <input
+                type="checkbox"
+                checked={wantReply}
+                onChange={(e) => setWantReply(e.target.checked)}
+                className="mt-1 size-4 accent-[var(--primary)]"
+              />
               <span>I'd like a reply</span>
             </label>
             {wantReply && (
@@ -111,8 +133,8 @@ export function FeedbackButton() {
               {busy ? "Sending..." : "Send to BumpNotes"}
             </button>
             <p className="text-[11px] text-ink-soft mt-3 leading-relaxed text-center">
-              We attach your page, browser and a tester/account ID so we can help.
-              No pregnancy details are sent unless you type them.
+              We attach your page, browser and a tester/account ID so we can help. No pregnancy
+              details are sent unless you type them.
             </p>
           </div>
         </div>

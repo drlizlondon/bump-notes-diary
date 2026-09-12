@@ -2,6 +2,7 @@ import { createStart, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+import { attachEntraAuth } from "@/lib/azure/entra-auth-attacher";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -19,6 +20,8 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 });
 
 export const startInstance = createStart(() => ({
-  functionMiddleware: [attachSupabaseAuth],
+  // attachEntraAuth runs after attachSupabaseAuth: it overrides the bearer when
+  // Entra sign-in is active, and is a no-op passthrough while it's off.
+  functionMiddleware: [attachSupabaseAuth, attachEntraAuth],
   requestMiddleware: [errorMiddleware],
 }));

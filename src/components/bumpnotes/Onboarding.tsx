@@ -18,7 +18,9 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const t = useT();
 
-  const dueDateISO = dueDate ? new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()).toISOString() : "";
+  const dueDateISO = dueDate
+    ? new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()).toISOString()
+    : "";
   const babyOk = babyBlank || babyNickname.trim().length > 0;
   const canFinish = userName && babyOk && dueDateISO;
 
@@ -27,7 +29,6 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
   return (
     <div className="app-shell flex flex-col bg-background">
       <div className="flex-1 flex flex-col w-full max-w-[640px] mx-auto px-5 sm:px-8 pt-10 pb-10">
-
         {step === 1 && (
           <Step
             title={t("onb.name.title")}
@@ -43,13 +44,18 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
         {step === 2 && (
           <div className="flex-1 flex flex-col gap-6">
             <div>
-              <h2 className="font-serif text-2xl font-semibold text-balance">{t("onb.baby.title")}</h2>
+              <h2 className="font-serif text-2xl font-semibold text-balance">
+                {t("onb.baby.title")}
+              </h2>
               <p className="mt-2 text-ink-soft text-sm">{t("onb.baby.subtitle")}</p>
             </div>
             <input
               autoFocus
               value={babyNickname}
-              onChange={(e) => { setBabyNickname(e.target.value); if (e.target.value) setBabyBlank(false); }}
+              onChange={(e) => {
+                setBabyNickname(e.target.value);
+                if (e.target.value) setBabyBlank(false);
+              }}
               placeholder={t("onb.baby.placeholder")}
               disabled={babyBlank}
               className="w-full px-5 py-4 rounded-2xl bg-white ring-1 ring-black/10 text-base disabled:opacity-50"
@@ -58,12 +64,17 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
               <input
                 type="checkbox"
                 checked={babyBlank}
-                onChange={(e) => { setBabyBlank(e.target.checked); if (e.target.checked) setBabyNickname(""); }}
+                onChange={(e) => {
+                  setBabyBlank(e.target.checked);
+                  if (e.target.checked) setBabyNickname("");
+                }}
                 className="size-5 mt-0.5 accent-[var(--primary)] shrink-0"
               />
               <span>
                 <span className="block text-sm font-medium">{t("onb.baby.blank")}</span>
-                <span className="block text-xs text-ink-soft mt-1 leading-relaxed">{t("onb.baby.blankHelp")}</span>
+                <span className="block text-xs text-ink-soft mt-1 leading-relaxed">
+                  {t("onb.baby.blankHelp")}
+                </span>
               </span>
             </label>
             <button
@@ -100,7 +111,10 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
                 <Calendar
                   mode="single"
                   selected={dueDate}
-                  onSelect={(d) => { setDueDate(d ?? undefined); if (d) setDatePickerOpen(false); }}
+                  onSelect={(d) => {
+                    setDueDate(d ?? undefined);
+                    if (d) setDatePickerOpen(false);
+                  }}
                   initialFocus
                   weekStartsOn={1}
                   className={cn("p-3 pointer-events-auto")}
@@ -111,17 +125,23 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
             {gest && (
               <div className="rounded-2xl bg-blush-soft p-4 ring-1 ring-coral/15">
                 <p className="text-sm leading-relaxed">
-                  {t("onb.due.today", { name: babyNickname.trim() || t("baby.fallback"), gest: formatGestation(gest) })}
+                  {t("onb.due.today", {
+                    name: babyNickname.trim() || t("baby.fallback"),
+                    gest: formatGestation(gest),
+                  })}
                 </p>
               </div>
             )}
             <button
-              onClick={() => canFinish && onDone({
-                userName: userName.trim(),
-                babyNickname: babyBlank ? "" : babyNickname.trim(),
-                dueDateISO,
-                onboarded: true,
-              })}
+              onClick={() =>
+                canFinish &&
+                onDone({
+                  userName: userName.trim(),
+                  babyNickname: babyBlank ? "" : babyNickname.trim(),
+                  dueDateISO,
+                  onboarded: true,
+                })
+              }
               disabled={!canFinish}
               className="mt-auto w-full max-w-[320px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
             >
@@ -131,7 +151,10 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
         )}
 
         {step > 1 && step < 4 && (
-          <button onClick={() => setStep(step - 1)} className="mt-6 text-sm text-ink-soft self-center">
+          <button
+            onClick={() => setStep(step - 1)}
+            className="mt-6 text-sm text-ink-soft self-center"
+          >
             {t("common.back")}
           </button>
         )}
@@ -141,10 +164,23 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
 }
 
 function Step({
-  title, subtitle, value, onChange, placeholder, onNext, disabled, cta,
+  title,
+  subtitle,
+  value,
+  onChange,
+  placeholder,
+  onNext,
+  disabled,
+  cta,
 }: {
-  title: string; subtitle?: string; value: string; onChange: (s: string) => void;
-  placeholder: string; onNext: () => void; disabled: boolean; cta: string;
+  title: string;
+  subtitle?: string;
+  value: string;
+  onChange: (s: string) => void;
+  placeholder: string;
+  onNext: () => void;
+  disabled: boolean;
+  cta: string;
 }) {
   return (
     <div className="flex-1 flex flex-col gap-6 w-full">
@@ -157,7 +193,9 @@ function Step({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        onKeyDown={(e) => { if (e.key === "Enter" && !disabled) onNext(); }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !disabled) onNext();
+        }}
         className="w-full px-5 py-4 rounded-2xl bg-white ring-1 ring-black/10 text-base"
       />
       <button

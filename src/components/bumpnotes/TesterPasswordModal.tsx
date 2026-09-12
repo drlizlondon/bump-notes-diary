@@ -45,7 +45,6 @@ export function TesterPasswordModal({ onClose }: { onClose: () => void }) {
     navigate({ to: "/onboarding" });
   }
 
-
   return (
     <div
       className="fixed inset-0 z-50 bg-ink/40 flex items-end sm:items-center justify-center p-3 sm:p-6"
@@ -59,9 +58,15 @@ export function TesterPasswordModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2 text-primary">
             <FlaskConical className="size-4" />
-            <span className="text-[11px] uppercase tracking-[0.2em] font-semibold">Tester Mode</span>
+            <span className="text-[11px] uppercase tracking-[0.2em] font-semibold">
+              Tester Mode
+            </span>
           </div>
-          <button onClick={onClose} className="-mr-1 -mt-1 size-8 grid place-items-center text-ink-soft" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="-mr-1 -mt-1 size-8 grid place-items-center text-ink-soft"
+            aria-label="Close"
+          >
             <X className="size-4" />
           </button>
         </div>
@@ -85,7 +90,10 @@ export function TesterPasswordModal({ onClose }: { onClose: () => void }) {
                   spellCheck={false}
                   inputMode="text"
                   value={code}
-                  onChange={(e) => { setCode(e.target.value); if (error) setError(null); }}
+                  onChange={(e) => {
+                    setCode(e.target.value);
+                    if (error) setError(null);
+                  }}
                   placeholder="Access code"
                   className="w-full pl-4 pr-11 py-3 rounded-xl bg-white border border-border text-sm tracking-wide focus:outline-none focus:border-primary/60"
                 />
@@ -101,7 +109,9 @@ export function TesterPasswordModal({ onClose }: { onClose: () => void }) {
             </label>
 
             {error && (
-              <p className="mt-3 text-sm text-coral leading-relaxed" role="alert">{error}</p>
+              <p className="mt-3 text-sm text-coral leading-relaxed" role="alert">
+                {error}
+              </p>
             )}
 
             <button
@@ -114,10 +124,18 @@ export function TesterPasswordModal({ onClose }: { onClose: () => void }) {
           </form>
         ) : (
           <div>
-            <h3 className="font-serif text-lg sm:text-xl font-semibold">You're in. Thank you for testing 💛</h3>
+            <h3 className="font-serif text-lg sm:text-xl font-semibold">
+              You're in. Thank you for testing 💛
+            </h3>
             <div className="mt-3 text-sm text-ink-soft leading-relaxed space-y-3">
-              <p><strong className="text-ink">Please use fake data only.</strong> Don't enter real pregnancy information — this is a sandbox shared for testing.</p>
-              <p>Explore the app, tap around, and tell us about anything that feels confusing, broken or missing.</p>
+              <p>
+                <strong className="text-ink">Please use fake data only.</strong> Don't enter real
+                pregnancy information — this is a sandbox shared for testing.
+              </p>
+              <p>
+                Explore the app, tap around, and tell us about anything that feels confusing, broken
+                or missing.
+              </p>
               <p>There's a small feedback button in the corner of every screen.</p>
             </div>
             <button

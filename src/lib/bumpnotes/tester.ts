@@ -4,18 +4,30 @@ const KEY = "bumpnotes:tester";
 const SESSION_KEY = "bumpnotes:tester_session";
 
 const listeners = new Set<() => void>();
-function emit() { listeners.forEach((l) => l()); }
+function emit() {
+  listeners.forEach((l) => l());
+}
 
 function read(): boolean {
   if (typeof window === "undefined") return false;
-  try { return window.localStorage.getItem(KEY) === "1"; } catch { return false; }
+  try {
+    return window.localStorage.getItem(KEY) === "1";
+  } catch {
+    return false;
+  }
 }
 
-export function isTester(): boolean { return read(); }
+export function isTester(): boolean {
+  return read();
+}
 
 export function getTesterSessionId(): string | null {
   if (typeof window === "undefined") return null;
-  try { return window.localStorage.getItem(SESSION_KEY); } catch { return null; }
+  try {
+    return window.localStorage.getItem(SESSION_KEY);
+  } catch {
+    return null;
+  }
 }
 
 export function enterTesterMode(sessionId?: string | null) {
@@ -27,7 +39,9 @@ export function enterTesterMode(sessionId?: string | null) {
     } else if (!window.localStorage.getItem(SESSION_KEY)) {
       window.localStorage.setItem(SESSION_KEY, `tester-${crypto.randomUUID()}`);
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   emit();
 }
 
@@ -36,13 +50,18 @@ export function exitTesterMode() {
   try {
     window.localStorage.removeItem(KEY);
     window.localStorage.removeItem(SESSION_KEY);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   emit();
 }
 
 export function useTester(): boolean {
   return useSyncExternalStore(
-    (cb) => { listeners.add(cb); return () => listeners.delete(cb); },
+    (cb) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
     read,
     () => false,
   );

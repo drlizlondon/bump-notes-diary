@@ -1,0 +1,118 @@
+# BumpNotes V2 — Azure Migration Plan (Supabase → Azure workstream)
+
+**Status:** Executable blueprint. **Supersedes PLAN §10 Phases 2–3** and amends Phases 4–8.
+**Product source of truth:** `docs/BUMPNOTES_V2_ARCHITECTURE.md` (ARCH) — unchanged by this document.
+**Engineering source of truth:** `docs/BUMPNOTES_V2_IMPLEMENTATION_PLAN.md` (PLAN) — still authoritative for everything this document does not explicitly supersede (domain model, summary pipeline, phases 4–8 task content, §5.8 blob mapping table).
+**Direction set by:** Liz, 12 July 2026 — Azure for NHS-compliance posture; architecture brief adopted in full (§1).
+**Sequencing decision (Liz, 12 July 2026):** Azure-first. V2 persistence is built directly on Azure; the Supabase V2 schema/RLS/bucket tasks (old PLAN 2.1–2.5, 3.2, 3.7 as written) are never built. The risky blob→tables user-data migration happens exactly once, into its final home.
+
+---
+
+## 1. Adopted architecture (Liz's brief, normative)
+
+| Supabase service | Azure replacement |
+|---|---|
+| Supabase PostgreSQL | Azure Database for PostgreSQL Flexible Server (PG 17, Burstable, UK South) |
+| Supabase Storage | Azure Blob Storage (GPv2 account, private containers) |
+| Supabase Auth | Microsoft Entra External ID (external tenant) — consumers; workforce tenant — staff/admin |
+| Supabase server functions' role | BumpNotes API on Azure App Service; Azure Functions for background jobs only |
+| Secrets | Azure Key Vault (+ managed identities, no storage account keys) |
+| Logs/monitoring | Application Insights |
+
+Non-negotiables from the brief:
+
+1. **The frontend never connects directly to PostgreSQL and never receives unrestricted storage credentials.** Every sensitive operation passes through the BumpNotes API.
+2. **Blob access is short-lived**: API checks ownership, then issues a short-lived SAS URL or streams the file. No permanent public URLs. Encryption at rest, soft delete, versioning where appropriate, lifecycle rules, restricted CORS, managed identities.
+3. **Entra authenticates the person; it is not the user database.** Internal `users` table with a BumpNotes UUID and `external_identity_id`; all data references the internal UUID.
+4. **Admin is a separate world**: workforce tenant, separate app registration, separate token audience, separate authorisation policy. A valid customer token must never reach admin surface.
+5. Database start-state: PG 17, Burstable, UK South, automated backups; HA and private networking deferred but planned before clinical/commercial scale.
+
+## 2. Engineering decisions (made here, reversible in one line each)
+
+- **DECISION — API lives in the existing app.** The repo is TanStack Start; its server functions *are* a conventional persistent API when deployed to App Service (nitro `node-server` preset). One deployable, the existing auth-middleware pattern survives, no second service to operate. A separate API service is the fallback if App Service/SSR constraints bite.
+- **DECISION — plain SQL migrations + `pg`, no Prisma.** Timestamped SQL files in `azure/migrations/` (mirroring the existing `supabase/migrations/` convention) applied by a small runner script using `pg`. The repository layer already owns row↔camelCase mapping and zod validation; an ORM adds a second source of truth for types. Reverse this if you want Prisma's migration tooling — say so before task 2.3.
+- **DECISION — new dependencies sanctioned for this workstream only:** `pg`, `@azure/storage-blob`, `@azure/identity`, `@azure/msal-browser`, App Insights SDK. Nothing else without escalation.
+- **DECISION — authorization is API-level first.** Every repository query is scoped by the authenticated internal user id in the API layer. PostgreSQL RLS (via `SET LOCAL` app user) is a listed hardening task (8A.3), not a launch blocker. Summaries' immutability (no UPDATE, ARCH §5.4) is enforced by API surface **and** a DB trigger, since Supabase's no-UPDATE-policy trick no longer applies.
+- **DECISION — containers:** `user-uploads` (journal attachments incl. photos), `profile-images`, `generated-summaries`, `exports`. Paths keep PLAN's shape: `{internalUserId}/{pregnancyId}/...`. Attachment rows store `container`, `blob_path`, `mime`, `size_bytes`, `checksum`, `uploaded_at`, owner — per the brief.
+- **DECISION — identity cutover is by verified-email match, after data cutover.** Supabase bcrypt hashes cannot be imported into Entra External ID. Existing users sign in once with Entra using the same email; on first validated Entra token whose verified email matches exactly one existing account, `users.external_identity_id` is linked. No fuzzy matching, no silent merge. The user-facing comms/copy for this is **Liz's sign-off, not mine** (§5).
+- **DECISION — the blob archive moves to Azure at cutover.** One-time bulk copy of `bumpnotes_state` rows into an Azure `bumpnotes_state_archive` table (same read-only, checksum-stamped semantics as PLAN §5.2). The lazy per-user backfill (PLAN §5.8 mapping table, unchanged) then runs entirely inside Azure. No steady-state cross-cloud reads.
+- **DECISION — no new consent tables in V2.** The brief lists "consent and sharing records" and "audit events" as DB contents. Existing ToS timestamps on `profiles` plus `summaries.shared` cover consent/sharing as the product currently defines them; a minimal `audit_events` table (auth, export, share, delete, migration events — actor, action, target, timestamp; no entry content) ships in 2.4. Anything richer is a product decision ARCH doesn't make — escalate before inventing.
+
+## 3. Phase plan
+
+Phases 0–1 are complete on `staging`. This section **replaces** PLAN §10 Phases 2–3 and inserts Phase I. PLAN Phases 4–8 keep their content with the amendments in §4.
+
+**Phase 2 — Azure foundation** *(app behaviour unchanged; production stays on current hosting + Supabase)*
+- [x] 2.1 **[LIZ/OPS — blocks all of 2.3+]** Provision per checklist §6: resource group (UK South), PG Flexible Server 17, GPv2 storage account + 4 private containers, Key Vault, App Insights, App Service plan, Entra External ID external tenant + app registrations (SPA + API audience), workforce-tenant admin registration. Deliver endpoints/ids as env config (never committed).
+  **DONE 8 Sep 2026** (Liz driving the portal, live-supervised session; resource group `bumpnotes-prod`). Provisioned inventory:
+  - **PostgreSQL Flexible Server** `bumpnotes` — UK South, Burstable **B1ms**, **PG 18** (plan said 17; 18 is compatible for the plain-SQL migrations — noted deviation), public access ON with firewall allow-list to Liz's Mac IP, 7-day backup, geo-redundancy off. Admin login `drlizlondon` (password Liz-held, never committed). Host `bumpnotes.postgres.database.azure.com`.
+  - **Storage account** `bumpnotesproduks` — UK South, Standard **LRS**, GPv2. **Blob anonymous access DISABLED** (account-level — no container can ever be public), secure transfer on, TLS 1.2, key access still on (harden off after 2.5/2.7), **soft-delete on (blobs+containers, 7d) + blob versioning on**, Defender for Storage off. Four **private** containers: `user-uploads`, `profile-images`, `generated-summaries`, `exports`. CORS deliberately not yet set (locked to the app origin at 2.7/3.4 once the upload/download path is wired).
+  - **Key Vault** `bumpnotes-kv` — UK South, Standard, **RBAC permission model**, soft-delete on (90d), purge protection off (enable at go-live hardening).
+  - **Application Insights** `bumpnotes-insight` — UK South, workspace-based (default Log Analytics workspace, UK South). *Not* auto-instrumented on the web app by design (PII risk on a health app — SDK wired deliberately in 2.5).
+  - **App Service** web app `bumpnotes-api` — **UK West** (⚠️ deviation: UK South had a 0 App Service compute quota on the trial subscription for both Free and Basic; UK West had B1 quota; still UK data residency — DB/storage/KV/Insights remain UK South, same resource group). Linux, **Node 24 LTS**, **B1** plan `ASP-bumpnotesprod-8767`, basic-auth publishing off. Default origin `https://bumpnotes-api-cvhqc8bydscregf7.ukwest-01.azurewebsites.net`. **System-assigned managed identity ON** (principal `4363fcdd-fea4-465c-8e65-ad5d8a31ea37`) with least-privilege role grants: **Key Vault Secrets User** on `bumpnotes-kv`, **Storage Blob Data Contributor** on `bumpnotesproduks`.
+  - **Entra External ID** external tenant `BumpNotes` (`bumpnotes.onmicrosoft.com`, tenant `23f549b5-2003-4406-9b16-fb823bcee3a8`, **UK/EU data location**). App registrations: **API** `bumpnotes-api` (client `4b749876-187e-4305-b6bb-001461d6ddca`, App ID URI `api://4b749876-187e-4305-b6bb-001461d6ddca`, scope `access_as_user`, **`email` optional claim on the access token + Graph email permission** — required by the 2.6 middleware); **SPA** `bumpnotes-spa` (client `3180eb1a-7ec6-46b2-9347-e128f1f83ee1`, SPA/PKCE, `access_as_user` granted + admin-consented); **user flow** `SignUpSignIn` (email+password, email verification, associated to the SPA). **Workforce admin** registration `bumpnotes-admin` in the Default Directory tenant (`9bbda104-…`, client `f192d9a0-4e94-47b2-8aaf-e00f9…`) — separate tenant/issuer/audience from consumers (the "admin is a separate world" non-negotiable); its redirect/audience/MFA are finalised at I.4.
+  - **Env config for the 2.6 middleware** (all non-secret public identifiers; wired into App Service settings at 2.5): `AZURE_ENTRA_ISSUER=https://23f549b5-2003-4406-9b16-fb823bcee3a8.ciamlogin.com/23f549b5-2003-4406-9b16-fb823bcee3a8/v2.0` · `AZURE_ENTRA_JWKS_URI=https://bumpnotes.ciamlogin.com/23f549b5-2003-4406-9b16-fb823bcee3a8/discovery/v2.0/keys` · `AZURE_ENTRA_AUDIENCE=4b749876-187e-4305-b6bb-001461d6ddca` (issuer/jwks read verbatim from the tenant's OIDC metadata — the issuer host is `<tenant-id>.ciamlogin.com`, not the domain host).
+  - **Open items (tracked, non-blocking):** confirm the access-token `aud` form against a real token at I.1 (GUID vs `api://<guid>`); App Service (UK West) → PG (UK South) networking/firewall at 2.5; harden PG public access + disable storage account-key access pre-launch; App Insights telemetry residency check (DTAC §8 row 7).
+  - **Migrations 001+002 applied to the real Azure `bumpnotes` DB (8 Sep 2026)** — status shows 2 applied/0 pending, idempotent on re-run; the 9-check behavioural suite (summaries immutability, audit append-only, case-insensitive email, one-active-pregnancy, container guard, updated_at trigger) ran green against real Azure PG 18.6 in a throwaway `bumpnotes_verify` DB which was then dropped, leaving `bumpnotes` pristine (schema only, 0 rows). This closes the first item of §5's post-2.1 sequence.
+- [x] 2.2 `azure/migrations/` scaffolding + runner script (`pg`); documented apply procedure; CI-free for now.
+- [x] 2.3 Migration 001: `users` (internal UUID, `external_identity_id` nullable unique, `supabase_user_id` nullable unique for the bridge window, email, status, timestamps), `profiles`, `pregnancies`, `people`, `health_items`, `previous_pregnancy_notes`, `preferences` — PLAN §5.3 shapes with `user_id` → internal UUID.
+  **Authoring notes (binding):** (a) `profiles` is authored fresh from PLAN §5.2's *combined* column set — the existing Supabase columns (display name, tester flag, ToS timestamps) plus the V2 additions — FK → `users(id)`, not `auth.users`; (b) **no RLS policies in this migration** — AZURE §2 decided API-level authorization; ignore old PLAN 2.1's "+ RLS" wording (PG RLS arrives, if at all, at 8A.3); (c) create the `updated_at` touch-trigger function here — nothing pre-exists in an empty Azure database; (d) `users.email` is NOT NULL with a unique index on `lower(email)` — Phase I's verified-email linking depends on it; (e) verification is **local only** until 2.1 provisioning completes: apply with the 2.2 runner against a throwaway local PostgreSQL, check `status`, re-run for idempotence, inspect the schema, drop the DB — the ledger and DTAC tracker must not claim Azure application or live-environment verification until Liz completes AZURE §6 and supplies environment configuration.
+- [x] 2.4 Migration 002: `entries`, `attachments` (blob metadata per §2), `summaries` (+ immutability trigger), `audit_events`, `bumpnotes_state_archive` (empty until 3.8), indexes per PLAN §5.6.
+  **Authoring notes (binding):** (a) the summaries immutability trigger rejects changes to the frozen fields (`snapshot`, `manifest`, `range_start/end`, `type`, `layout_version`, `pregnancy_id`, `user_id`, `created_at`) but **must allow `pdf_path` and `shared` to change** — Phase 7's outbox retry sets `pdf_path` after generation and sharing flips `shared`; a block-all trigger breaks ARCH §5.4's own flows; (b) `bumpnotes_state_archive` has **no FK to `users`** — the 3.8 bulk copy includes users who may never authenticate on Azure; key it by `supabase_user_id`, mirror the column set from the generated Supabase types for `bumpnotes_state`, and add `migrated_at timestamptz` + `migration_checksum jsonb` (PLAN §5.2 archive semantics); (c) `entries`, `attachments`, and `summaries` each carry a denormalized `user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE` (PLAN §5.3 owner-scoping + the brief's `ownerUserId`) so API authorization scopes without joins; (d) `audit_events` is append-only: no `updated_at` column/trigger, and a trigger raises on UPDATE or DELETE; (e) same local-only verification protocol as 2.3 — throwaway local PostgreSQL via the 2.2 runner (001 then 002 in sequence), inspect schema, **prove the summaries trigger both rejects a frozen-field update and permits a `pdf_path` update**, prove audit_events rejects UPDATE/DELETE, re-run for idempotence, drop; no Azure-application claims until 2.1 completes.
+- [ ] 2.5 Azure deploy target: nitro `node-server` preset build + App Service deployment (staging slot only); Key Vault/managed identity wiring; App Insights; health endpoint. Production traffic untouched.
+  **Partial (17 Jul 2026):** nitro `node-server` preset pinned in `vite.config.ts` (applies only outside a Lovable build — sandbox/preview unaffected, confirmed by local `dev` run) and `/api/health` added in `src/server.ts` (answered before SSR/auth/DB; verified 200 locally). App Service deployment, Key Vault/managed identity wiring, and App Insights all need live resources — blocked on 2.1.
+  **LIVE DEPLOY DONE 8 Sep 2026 (2.1 unblocked it):** the app is deployed and running on Azure App Service `bumpnotes-api` (UK West). Confirmed independently: `GET https://bumpnotes-api-cvhqc8bydscregf7.ukwest-01.azurewebsites.net/api/health` → `{"status":"ok"}` HTTP 200 over the public internet. Deploy path is a **manual, approval-gated GitHub Actions workflow** (`.github/workflows/azure-deploy.yml`, `workflow_dispatch` only, on both `main` (default, required for dispatch) and `staging` (deployed ref)) using **OIDC federated credentials** on the `bumpnotes-deploy` app registration (Website Contributor on the App Service, least-privilege) — no publish profile, no stored secret. The `node-server` preset builds correctly in real CI (not forced back to cloudflare outside a Lovable build), producing `.output/server/index.mjs`; App Service startup command `node server/index.mjs`. App settings set (the 3 Entra values, `AZURE_STORAGE_ACCOUNT`, `SCM_DO_BUILD_DURING_DEPLOYMENT=false`, `WEBSITE_RUN_FROM_PACKAGE=0`), with **`AZURE_PG_URL` as a Key Vault reference** `@Microsoft.KeyVault(VaultName=bumpnotes-kv;SecretName=AzurePgUrl)` resolved by the App Service managed identity (Key Vault Secrets User). PG networking: "Allow Azure services" enabled on the PG server (interim; Private Endpoint is the pre-launch hardening). **Gotcha recorded:** the Entra GitHub-Actions federated credential generated an ID-augmented subject (`repo:owner@id/repo@id:...`) that did NOT match GitHub's actual token subject `repo:drlizlondon/bump-notes-diary:environment:azure-app-service`; fixed by adding a second "Other issuer" federated credential with that exact classic subject. **Still open for 2.5:** wire the App Insights SDK (PII-safe, connection string not yet set); end-to-end DB-connectivity proof awaits a real route (Phase 3 `api-repo`).
+- [x] 2.6 API auth middleware: validates **either** a Supabase JWT (bridge window) **or** an Entra access token; resolves/creates the `users` row; all server functions take the internal user id from this middleware only.
+- [ ] 2.7 Blob helper endpoints: upload (ownership-checked, size-capped 10 MB), short-lived SAS issuance, delete. Managed identity; no account keys in config.
+  **Partial (17 Jul 2026):** `src/lib/azure/blob-helpers.ts` — `uploadAttachment`/`issueDownloadSas`/`deleteAttachment`, all ownership-checked against `attachments.user_id`, 10 MB cap enforced before any storage call. **Deliberately not ticked**: this authoring uses `StorageSharedKeyCredential` (`AZURE_STORAGE_ACCOUNT_KEY` env var) for SAS signing, which is exactly the account-key config the AZURE §1.2 non-negotiable rules out. That's a stand-in to get real, verifiable behaviour (SAS mint + fetch + ownership checks) against Azurite without a live tenant — swapping to `@azure/identity`'s `DefaultAzureCredential` + [user delegation SAS](https://learn.microsoft.com/rest/api/storageservices/create-user-delegation-sas) is the remaining work, and it needs a real App Service managed identity to verify, so it waits for 2.1/2.5's live deployment. Do not wire this into any route while it still reads an account key from config.
+
+**Phase 3 — Data layer + cutover** *(supersedes PLAN 3.x; PLAN task content carries over except where noted)*
+- [ ] 3.1 `lib/domain/types.ts` — unchanged from PLAN 3.1.
+- [ ] 3.2 `lib/data/repository.ts` interface + **`api-repo.ts`** (HTTP to the BumpNotes API server functions; replaces `supabase-repo.ts`).
+- [ ] 3.3 Outbox + IndexedDB staging — unchanged from PLAN 3.3.
+- [ ] 3.4 `lib/data/attachments.ts` — EXIF-stripping canvas re-encode unchanged; upload/signed-URL calls target 2.7 endpoints.
+- [ ] 3.5 `local-repo.ts` + V2 demo fixtures — unchanged from PLAN 3.5.
+- [ ] 3.6 Query hooks + mode factory — unchanged from PLAN 3.6.
+- [ ] 3.7 `ensureMigrated` server fn + lazy backfill per PLAN §5.8 (mapping table verbatim; photos → `user-uploads`; checksums → `bumpnotes_state_archive.migration_checksum`) + read-only fallback banner + `V2_DATA` flag.
+- [ ] 3.8 Cutover prep: bulk-copy `bumpnotes_state` → `bumpnotes_state_archive`; revoke Supabase client writes (archive lock, applied to Supabase as its **final** migration); production hosting cutover current host → App Service. **[LIZ approves the cutover window]**
+- [ ] 3.9 Cut over capture panels — PLAN 3.8 content, writes via api-repo.
+- [ ] 3.10 Cut over home + timeline — PLAN 3.9 content. `[after 3.9]`
+- [ ] 3.11 Cut over settings + demo/tester to LocalRepository — PLAN 3.10 content. `[after 3.10]`
+- [ ] 3.12 Migrate staging-cohort accounts; verify checksums; delete Group C files (store/sync/types) + `@supabase/supabase-js` usage outside auth. `[after 3.11]`
+- [ ] 3.13 Manual test pass per PLAN 3.12 + blob-access check (SAS expiry, cross-user 403) + App Insights PII spot-check (no entry content in telemetry).
+
+**Phase I — Identity cutover to Entra External ID** `[after 3.x, before Phase 4]`
+- [ ] I.1 MSAL sign-in/sign-up flow (email+password, email verification, reset) behind a flag; token validation already live from 2.6.
+- [ ] I.2 Linking: first Entra sign-in matches verified email → set `external_identity_id`; ambiguous/no match → support path, never silent merge. Audit event on every link.
+- [ ] I.3 Cutover: new sign-ins Entra-only; existing sessions honoured until expiry; **user comms + in-app copy sign-off by Liz before enabling**.
+- [ ] I.4 Decommission Supabase: auth off, project archived (export retained), `supabase_user_id` column kept as historical record; delete Supabase client code + bridge branch of 2.6. Admin dashboard auth → workforce tenant, separate audience.
+
+**Phases 4–8** proceed per PLAN §10 with §4 amendments below. The archive-drop (now `bumpnotes_state_archive`) still waits one full release cycle after Phase 3 ships clean.
+
+## 4. Amendments to PLAN Phases 4–8
+
+- **Phase 4 (Onboarding):** step 6 "create account" embeds the MSAL/Entra flow (I.1), not Supabase auth screens. Pre-auth local buffer flush unchanged.
+- **Phase 7 (PDF):** upload targets `generated-summaries` container via 2.7; history opens short-lived SAS URLs.
+- **Phase 8 (Closeout):** export = V2 entities + PDFs + legacy blob from `bumpnotes_state_archive`; `deleteOwnAccount` = PG rows + all four container prefixes + Entra account deletion (Graph API) + audit event; grep-audit extends to `supabase` references; new task **8A.3**: evaluate PG RLS hardening + private networking + HA enablement gate (pre-scale checklist from §1.5).
+
+## 5. Escalations awaiting Liz (recorded, non-blocking until their task)
+
+1. **Identity-cutover comms and in-app copy** (I.3) — user-facing, trust-sensitive; wording is the feature. Needed before I.3, drafted during Phase 3.
+2. **Cutover window approval** (3.8) — brief write-freeze on legacy blob sync while the archive copies.
+3. **Provisioning** (2.1) — blocks 2.3 onward; checklist in §6. Includes cost acceptance (Burstable PG + App Service plan + storage, modest at current scale).
+4. **Prisma preference** (§2) — say before 2.3 or plain SQL + `pg` stands.
+5. **Consent/audit scope** (§2 last DECISION) — if NHS compliance review needs more than `audit_events` + existing ToS/shared fields, that's a product definition to add to ARCH first.
+
+## 6. Provisioning checklist (for 2.1 — human, not model)
+
+In UK South, one resource group (`bumpnotes-prod` suggested): PostgreSQL Flexible Server 17 (Burstable B-series, automated backups ≥14 days, public access temporarily with firewall allow-list until private networking lands) · GPv2 storage account, private containers `user-uploads`, `profile-images`, `generated-summaries`, `exports`, soft delete on, CORS locked to app origin · Key Vault (RBAC mode) · Application Insights · App Service plan (Linux, Node LTS) + staging slot · Entra External ID external tenant: SPA app registration (auth code + PKCE), API app registration (its audience is what 2.6 validates), email+password with verification enabled · workforce-tenant app registration for admin (separate audience, MFA/conditional access) · managed identity for App Service granted: Key Vault secrets get, Storage Blob Data Contributor, PG AAD auth (or connection string in Key Vault as interim). Hand over: tenant ids, client ids, API audience URI, PG host, storage account name, App Insights connection string — as env config only.
+
+## 7. Working-rule deltas (extend WORK.md §3 for this workstream)
+
+- §3.11 applies to `azure/migrations/` type artefacts equally: applied migrations are immutable; new files only.
+- §3.13 extends to Azure: never commit connection strings, tenant/client secrets, or SAS tokens; never modify Azure resources as part of a code task — config/infra changes go through Liz or a sanctioned ops task (2.1-style).
+- The PLAN §7 AI fence and `lib/summary/**` lint rule are unaffected: the Azure SDK upload helper is the only sanctioned network client in the summary pipeline.
+
+---
+
+*Checklist execution: tasks here tick in this document; PLAN §10 Phases 2–3 are marked superseded and stay unticked forever. Anything undecidable from ARCH + PLAN + this document: escalate, don't guess.*

@@ -7,6 +7,9 @@ import { LogoWordmark } from "@/components/bumpnotes/Logo";
 import { PasswordInput } from "@/components/bumpnotes/PasswordInput";
 import { trackEvent } from "@/lib/analytics";
 import { buildAuthCallbackUrl } from "@/lib/supabase-auth-redirect";
+import { ENTRA_NATIVE_ENABLED } from "@/lib/azure/entra-native";
+import { EntraNativeSignIn } from "@/routes/entra";
+import { useAppSession, setNativeSession } from "@/lib/data/session";
 
 type Search = { redirect?: string; admin?: string };
 
@@ -19,7 +22,39 @@ export const Route = createFileRoute("/signin")({
   component: SignInPage,
 });
 
+// Flag decides the front door: native Entra form (identity flip, B2) or the
+// legacy Supabase form. ENTRA_NATIVE_ENABLED is a build constant, so the branch
+// is stable across renders (no hook-order issue).
 function SignInPage() {
+  return ENTRA_NATIVE_ENABLED ? <NativeSignInPage /> : <SupabaseSignInPage />;
+}
+
+function NativeSignInPage() {
+  const navigate = useNavigate();
+  const search = useSearch({ from: "/signin" }) as Search;
+  const { userId } = useAppSession();
+  const redirectTo = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/";
+
+  useEffect(() => {
+    if (userId) navigate({ to: redirectTo, replace: true });
+  }, [userId, navigate, redirectTo]);
+
+  return (
+    <EntraNativeSignIn
+      onSignedIn={(account) => {
+        setNativeSession(account);
+        // Full page load (not an in-app transition) to the destination: a fresh
+        // boot reads the just-established Entra session reliably and lands on the
+        // dashboard/onboarding, avoiding the client-side store-timing race that
+        // could strand a just-signed-in user on /welcome.
+        if (typeof window !== "undefined") window.location.assign(redirectTo);
+        else navigate({ to: redirectTo, replace: true });
+      }}
+    />
+  );
+}
+
+function SupabaseSignInPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/signin" }) as Search;
   const { userId } = useSyncSnapshot();
@@ -40,14 +75,22 @@ function SignInPage() {
     setBusy(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) { toast.error(error.message); return; }
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       trackEvent("sign_in");
       navigate({ to: redirectTo });
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function onMagicLink() {
-    if (!email) { toast.error("Enter your email above first."); return; }
+    if (!email) {
+      toast.error("Enter your email above first.");
+      return;
+    }
     setBusy(true);
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -57,17 +100,28 @@ function SignInPage() {
           shouldCreateUser: false,
         },
       });
-      if (error) { toast.error(error.message); return; }
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       toast.success("Magic link sent. Check your email.");
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function onForgot() {
-    if (!email) { toast.error("Enter your email above first."); return; }
+    if (!email) {
+      toast.error("Enter your email above first.");
+      return;
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: buildAuthCallbackUrl("/reset-password"),
     });
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Password reset email sent.");
   }
 
@@ -93,36 +147,58 @@ function SignInPage() {
           <div className="surface-card p-5 space-y-4">
             <form onSubmit={onSubmit} className="space-y-3">
               <input
-                type="email" autoComplete="email" required value={email}
-                onChange={(e) => setEmail(e.target.value)} placeholder="Email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
                 className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
               />
               <PasswordInput
-                autoComplete="current-password" required minLength={6}
-                value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password"
+                autoComplete="current-password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
               />
               <button
-                disabled={busy} type="submit"
+                disabled={busy}
+                type="submit"
                 onClick={() => trackEvent("cta_clicked")}
                 className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
-              >Sign in</button>
-              <button type="button" onClick={onForgot} className="block mx-auto text-xs text-ink-soft underline underline-offset-2">
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                onClick={onForgot}
+                className="block mx-auto text-xs text-ink-soft underline underline-offset-2"
+              >
                 Forgot password?
               </button>
             </form>
 
             <button
               type="button"
-              onClick={() => { trackEvent("cta_clicked"); void onMagicLink(); }} disabled={busy}
+              onClick={() => {
+                trackEvent("cta_clicked");
+                void onMagicLink();
+              }}
+              disabled={busy}
               className="w-full py-3 rounded-full bg-white border border-border text-sm font-medium disabled:opacity-60"
-            >Email me a magic link</button>
+            >
+              Email me a magic link
+            </button>
           </div>
 
           {!isAdmin && (
             <div className="surface-card p-5 text-center space-y-3">
               <h2 className="font-serif text-base font-semibold">New to BumpNotes?</h2>
               <p className="text-xs text-ink-soft leading-relaxed">
-                Start your pregnancy record to create your account and begin your private pregnancy record.
+                Start your pregnancy record to create your account and begin your private pregnancy
+                record.
               </p>
               <Link
                 to="/onboarding"
@@ -135,7 +211,9 @@ function SignInPage() {
           )}
 
           <p className="text-center text-xs">
-            <Link to="/welcome" className="text-ink-soft">← Back to welcome</Link>
+            <Link to="/welcome" className="text-ink-soft">
+              ← Back to welcome
+            </Link>
           </p>
         </div>
       </div>

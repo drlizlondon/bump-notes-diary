@@ -25,7 +25,9 @@ function AuthPage() {
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { if (userId) navigate({ to: "/", replace: true }); }, [userId, navigate]);
+  useEffect(() => {
+    if (userId) navigate({ to: "/", replace: true });
+  }, [userId, navigate]);
 
   // If user lands here without completing onboarding, send them to onboarding first.
   useEffect(() => {
@@ -50,7 +52,9 @@ function AuthPage() {
         accepted_terms_at: new Date().toISOString(),
         accepted_privacy_at: new Date().toISOString(),
       });
-    } catch (e) { console.warn("acceptance record failed", e); }
+    } catch (e) {
+      console.warn("acceptance record failed", e);
+    }
   }
 
   async function onEmail(e: React.FormEvent) {
@@ -60,15 +64,21 @@ function AuthPage() {
     setBusy(true);
     try {
       const { error } = await supabase.auth.signUp({
-        email, password,
+        email,
+        password,
         options: { emailRedirectTo: buildAuthCallbackUrl("/") },
       });
-      if (error) { toast.error(error.message); return; }
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       trackEvent("account_created");
       toast.success("Check your email to confirm your account, then sign in.");
       await recordAcceptance();
       navigate({ to: "/signin" });
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
 
   const greeting = profile?.userName ? `, ${profile.userName}` : "";
@@ -82,57 +92,91 @@ function AuthPage() {
             <Link to="/welcome" className="inline-flex items-center justify-center">
               <LogoWordmark className="h-20 w-auto" />
             </Link>
-            <h1 className="font-serif text-2xl font-semibold mt-4 text-balance">You're almost there{greeting}</h1>
+            <h1 className="font-serif text-2xl font-semibold mt-4 text-balance">
+              You're almost there{greeting}
+            </h1>
             <p className="text-sm text-ink-soft mt-2 text-balance leading-relaxed">
-              Create your secure account to save your pregnancy record and access it whenever you need it.
+              Create your secure account to save your pregnancy record and access it whenever you
+              need it.
             </p>
           </div>
 
           <div className="surface-card p-5 space-y-4">
             <form onSubmit={onEmail} className="space-y-3">
               <input
-                type="email" autoComplete="email" required value={email}
-                onChange={(e) => setEmail(e.target.value)} placeholder="Email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
                 className="w-full px-4 py-3 rounded-xl bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
               />
               <PasswordInput
-                autoComplete="new-password" required minLength={6}
-                value={password} onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password (min 6 characters)"
               />
 
               <div className="space-y-2">
                 <label className="flex items-start gap-2 text-xs text-ink-soft cursor-pointer">
                   <input
-                    type="checkbox" checked={acceptTerms}
+                    type="checkbox"
+                    checked={acceptTerms}
                     onChange={(e) => setAcceptTerms(e.target.checked)}
                     className="mt-0.5 size-4 accent-[var(--primary)] shrink-0"
                   />
-                  <span>I agree to the{" "}
-                    <Link to="/terms" target="_blank" rel="noopener" className="text-primary font-medium underline">Terms of Use</Link>.
+                  <span>
+                    I agree to the{" "}
+                    <Link
+                      to="/terms"
+                      target="_blank"
+                      rel="noopener"
+                      className="text-primary font-medium underline"
+                    >
+                      Terms of Use
+                    </Link>
+                    .
                   </span>
                 </label>
                 <label className="flex items-start gap-2 text-xs text-ink-soft cursor-pointer">
                   <input
-                    type="checkbox" checked={acceptPrivacy}
+                    type="checkbox"
+                    checked={acceptPrivacy}
                     onChange={(e) => setAcceptPrivacy(e.target.checked)}
                     className="mt-0.5 size-4 accent-[var(--primary)] shrink-0"
                   />
-                  <span>I have read the{" "}
-                    <Link to="/privacy" target="_blank" rel="noopener" className="text-primary font-medium underline">Privacy Policy</Link>{" "}
+                  <span>
+                    I have read the{" "}
+                    <Link
+                      to="/privacy"
+                      target="_blank"
+                      rel="noopener"
+                      className="text-primary font-medium underline"
+                    >
+                      Privacy Policy
+                    </Link>{" "}
                     and understand how my data will be used.
                   </span>
                 </label>
                 <p className="text-[11px] text-ink-soft leading-relaxed pt-1">
-                  BumpNotes helps you organise your pregnancy notes and questions. It is not a medical device and does not replace your midwife, doctor or emergency care. Do not use it for urgent symptoms.
+                  BumpNotes helps you organise your pregnancy notes and questions. It is not a
+                  medical device and does not replace your midwife, doctor or emergency care. Do not
+                  use it for urgent symptoms.
                 </p>
               </div>
 
               <button
-                disabled={busy} type="submit"
+                disabled={busy}
+                type="submit"
                 onClick={() => trackEvent("cta_clicked")}
                 className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
-              >Create account</button>
+              >
+                Create account
+              </button>
             </form>
           </div>
 
@@ -140,7 +184,10 @@ function AuthPage() {
             Your record is private to you. Only you can read it. We don't sell or share it.
           </p>
           <p className="text-center text-xs">
-            Already have an account? <Link to="/signin" className="text-primary font-medium">Sign in</Link>
+            Already have an account?{" "}
+            <Link to="/signin" className="text-primary font-medium">
+              Sign in
+            </Link>
           </p>
         </div>
       </div>

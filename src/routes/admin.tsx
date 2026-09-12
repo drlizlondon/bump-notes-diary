@@ -2,40 +2,72 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { Shield, Plus, Copy, Power, Download, RefreshCcw, MessageSquareHeart, Trash2, Mail, Bug, Users, UserPlus, Activity, Clock } from "lucide-react";
+import {
+  Shield,
+  Plus,
+  Copy,
+  Power,
+  Download,
+  RefreshCcw,
+  MessageSquareHeart,
+  Trash2,
+  Mail,
+  Bug,
+  Users,
+  UserPlus,
+  Activity,
+  Clock,
+} from "lucide-react";
 import { PasswordInput } from "@/components/bumpnotes/PasswordInput";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import {
-  checkAdmin, claimAdminWithSecret,
-  listAccessCodes, generateAccessCodeBatch, createCustomAccessCode,
-  setAccessCodeStatus, deleteAccessCode, deleteUnusedAccessCodes,
-  listFeedbackResponses, adminDashboardSummary,
-  listContactMessages, deleteContactMessage,
-  listFeedbackSubmissions, deleteFeedbackSubmission,
-  listUserAccounts, deleteUserAccount,
+  checkAdmin,
+  claimAdminWithSecret,
+  listAccessCodes,
+  generateAccessCodeBatch,
+  createCustomAccessCode,
+  setAccessCodeStatus,
+  deleteAccessCode,
+  deleteUnusedAccessCodes,
+  listFeedbackResponses,
+  adminDashboardSummary,
+  listContactMessages,
+  deleteContactMessage,
+  listFeedbackSubmissions,
+  deleteFeedbackSubmission,
+  listUserAccounts,
+  deleteUserAccount,
 } from "@/lib/bumpnotes/admin.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
-    meta: [
-      { title: "BumpNotes — Admin" },
-      { name: "robots", content: "noindex,nofollow" },
-    ],
+    meta: [{ title: "BumpNotes — Admin" }, { name: "robots", content: "noindex,nofollow" }],
   }),
   component: AdminRoute,
 });
 
 type CodeRow = {
-  id: string; code: string; label: string | null; notes: string | null; status: string;
-  created_at: string; first_used_at: string | null; last_used_at: string | null;
-  use_count: number; feedback_submitted_at: string | null;
+  id: string;
+  code: string;
+  label: string | null;
+  notes: string | null;
+  status: string;
+  created_at: string;
+  first_used_at: string | null;
+  last_used_at: string | null;
+  use_count: number;
+  feedback_submitted_at: string | null;
 };
 type FeedbackRow = {
-  id: string; created_at: string;
-  pregnancy_identity_answer: string; professional_identity_answer: string;
+  id: string;
+  created_at: string;
+  pregnancy_identity_answer: string;
+  professional_identity_answer: string;
   feedback_route: string;
-  q1_answer: string | null; q2_answer: string | null; q3_answer: string | null;
+  q1_answer: string | null;
+  q2_answer: string | null;
+  q3_answer: string | null;
   improvement_text: string | null;
   tester_access_codes?: { code: string; label: string | null } | null;
 };
@@ -44,29 +76,38 @@ function AdminRoute() {
   const navigate = useNavigate();
   const { userId } = useSyncSnapshot();
   const checkAdminFn = useServerFn(checkAdmin);
-  const [state, setState] = useState<"loading" | "needs-auth" | "needs-claim" | "ready" | "error">("loading");
+  const [state, setState] = useState<"loading" | "needs-auth" | "needs-claim" | "ready" | "error">(
+    "loading",
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setErrorMessage(null);
-    if (!userId) { setState("needs-auth"); return; }
+    if (!userId) {
+      setState("needs-auth");
+      return;
+    }
     let cancelled = false;
-    checkAdminFn({ data: undefined } as never).then((r) => {
-      if (cancelled) return;
-      setState(r.isAdmin ? "ready" : "needs-claim");
-    }).catch((err) => {
-      if (cancelled) return;
-      const msg = err instanceof Error ? err.message : String(err);
-      // Distinguish infrastructure errors (env vars / DB) from "not admin yet"
-      const isInfra = /SUPABASE|env|environment|fetch|network|500|connect/i.test(msg);
-      if (isInfra) {
-        setErrorMessage(msg);
-        setState("error");
-      } else {
-        setState("needs-claim");
-      }
-    });
-    return () => { cancelled = true; };
+    checkAdminFn({ data: undefined } as never)
+      .then((r) => {
+        if (cancelled) return;
+        setState(r.isAdmin ? "ready" : "needs-claim");
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        // Distinguish infrastructure errors (env vars / DB) from "not admin yet"
+        const isInfra = /SUPABASE|env|environment|fetch|network|500|connect/i.test(msg);
+        if (isInfra) {
+          setErrorMessage(msg);
+          setState("error");
+        } else {
+          setState("needs-claim");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [userId, checkAdminFn]);
 
   return (
@@ -79,7 +120,9 @@ function AdminRoute() {
             <span className="text-[11px] uppercase tracking-[0.2em] font-semibold">Admin</span>
           </div>
           <h1 className="font-serif text-2xl sm:text-3xl font-semibold mt-1">BumpNotes admin</h1>
-          <p className="text-sm text-ink-soft mt-1">Manage tester access, feedback and user accounts.</p>
+          <p className="text-sm text-ink-soft mt-1">
+            Manage tester access, feedback and user accounts.
+          </p>
 
           {state === "loading" && <p className="mt-6 text-sm text-ink-soft">Checking access…</p>}
 
@@ -87,10 +130,13 @@ function AdminRoute() {
             <div className="mt-6 surface-card p-5 max-w-[440px]">
               <h2 className="font-serif text-lg font-semibold">Admin sign in required</h2>
               <p className="text-sm text-ink-soft mt-1 leading-relaxed">
-                Sign in with your admin account to access the dashboard. This is separate from the regular pregnancy record sign-up flow.
+                Sign in with your admin account to access the dashboard. This is separate from the
+                regular pregnancy record sign-up flow.
               </p>
               <button
-                onClick={() => navigate({ to: "/signin", search: { redirect: "/admin", admin: "1" } })}
+                onClick={() =>
+                  navigate({ to: "/signin", search: { redirect: "/admin", admin: "1" } })
+                }
                 className="mt-4 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
               >
                 Go to admin sign in
@@ -98,21 +144,27 @@ function AdminRoute() {
             </div>
           )}
 
-          {state === "needs-claim" && (
-            <NotAdminOrClaim onClaimed={() => setState("ready")} />
-          )}
+          {state === "needs-claim" && <NotAdminOrClaim onClaimed={() => setState("ready")} />}
 
           {state === "error" && (
             <div className="mt-6 surface-card p-5 max-w-[560px]">
-              <h2 className="font-serif text-lg font-semibold text-coral">Admin dashboard unavailable</h2>
+              <h2 className="font-serif text-lg font-semibold text-coral">
+                Admin dashboard unavailable
+              </h2>
               <p className="text-sm text-ink-soft mt-2 leading-relaxed">
-                We couldn't reach the admin services. Please try again in a moment. If this keeps happening, contact the BumpNotes team.
+                We couldn't reach the admin services. Please try again in a moment. If this keeps
+                happening, contact the BumpNotes team.
               </p>
               {import.meta.env.DEV && errorMessage && (
-                <pre className="mt-3 text-[11px] bg-blush-soft/60 rounded-lg p-2 overflow-auto whitespace-pre-wrap">{errorMessage}</pre>
+                <pre className="mt-3 text-[11px] bg-blush-soft/60 rounded-lg p-2 overflow-auto whitespace-pre-wrap">
+                  {errorMessage}
+                </pre>
               )}
               <button
-                onClick={() => { setState("loading"); setTimeout(() => location.reload(), 50); }}
+                onClick={() => {
+                  setState("loading");
+                  setTimeout(() => location.reload(), 50);
+                }}
                 className="mt-4 px-4 py-2 rounded-full bg-white border border-border text-sm font-semibold"
               >
                 Try again
@@ -136,7 +188,8 @@ function NotAdminOrClaim({ onClaimed }: { onClaimed: () => void }) {
     <div className="mt-6 surface-card p-5 max-w-[480px]">
       <h2 className="font-serif text-lg font-semibold">You do not have admin access</h2>
       <p className="text-sm text-ink-soft mt-1 leading-relaxed">
-        Your account is signed in but isn't an admin. If you're a BumpNotes team member, you can claim admin access with the bootstrap secret.
+        Your account is signed in but isn't an admin. If you're a BumpNotes team member, you can
+        claim admin access with the bootstrap secret.
       </p>
       {!showClaim ? (
         <button
@@ -158,7 +211,9 @@ function NotAdminOrClaim({ onClaimed }: { onClaimed: () => void }) {
               onClaimed();
             } catch (err) {
               toast.error(err instanceof Error ? err.message : "That didn't work");
-            } finally { setBusy(false); }
+            } finally {
+              setBusy(false);
+            }
           }}
         >
           <PasswordInput
@@ -167,7 +222,10 @@ function NotAdminOrClaim({ onClaimed }: { onClaimed: () => void }) {
             placeholder="Admin bootstrap secret"
             autoComplete="off"
           />
-          <button disabled={busy} className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
+          <button
+            disabled={busy}
+            className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50"
+          >
             {busy ? "Checking…" : "Grant admin access"}
           </button>
         </form>
@@ -204,10 +262,14 @@ function AdminDashboard() {
       setSessionCount(s.sessionCount);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't load");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
 
-  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => {
+    refresh(); /* eslint-disable-next-line */
+  }, []);
 
   const summary = useMemo(() => {
     const total = codes.length;
@@ -224,12 +286,20 @@ function AdminDashboard() {
       <AccountsAnalytics />
 
       <div className="flex flex-wrap items-center gap-2">
-        <button onClick={refresh} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium bg-white">
+        <button
+          onClick={refresh}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium bg-white"
+        >
           <RefreshCcw className="size-3.5" /> Refresh
         </button>
         <button
           onClick={async () => {
-            if (!confirm("Delete every unused code (codes never claimed by a tester)? This cannot be undone.")) return;
+            if (
+              !confirm(
+                "Delete every unused code (codes never claimed by a tester)? This cannot be undone.",
+              )
+            )
+              return;
             try {
               const res = await deleteUnused({ data: undefined } as never);
               toast.success(`Deleted ${res.deleted} unused code(s)`);
@@ -242,7 +312,9 @@ function AdminDashboard() {
         >
           <Trash2 className="size-3.5" /> Delete all unused
         </button>
-        <span className="text-xs text-ink-soft">{loading ? "Loading…" : `${sessionCount} tester sessions recorded`}</span>
+        <span className="text-xs text-ink-soft">
+          {loading ? "Loading…" : `${sessionCount} tester sessions recorded`}
+        </span>
       </div>
 
       {/* Tester code overview tiles */}
@@ -257,7 +329,6 @@ function AdminDashboard() {
           <Tile label="Completion" value={`${summary.completion}%`} />
         </div>
       </div>
-
 
       <Generators
         onBatch={async (prefix, count, startAt, label) => {
@@ -279,7 +350,12 @@ function AdminDashboard() {
           refresh();
         }}
         onDelete={async (id, code) => {
-          if (!confirm(`Delete code ${code}? Any tester sessions and feedback linked to this code will also be removed. This cannot be undone.`)) return;
+          if (
+            !confirm(
+              `Delete code ${code}? Any tester sessions and feedback linked to this code will also be removed. This cannot be undone.`,
+            )
+          )
+            return;
           try {
             await deleteCode({ data: { id } });
             toast.success(`Deleted ${code}`);
@@ -297,7 +373,9 @@ function AdminDashboard() {
       <UsersPanel />
 
       <p className="text-xs text-ink-soft pt-4">
-        <Link to="/welcome" className="text-primary font-medium">← Back to BumpNotes</Link>
+        <Link to="/welcome" className="text-primary font-medium">
+          ← Back to BumpNotes
+        </Link>
       </p>
     </div>
   );
@@ -306,7 +384,15 @@ function AdminDashboard() {
 function ContactMessagesPanel() {
   const fetchAll = useServerFn(listContactMessages);
   const removeOne = useServerFn(deleteContactMessage);
-  const [items, setItems] = useState<Array<{ id: string; created_at: string; name: string | null; email: string | null; message: string }>>([]);
+  const [items, setItems] = useState<
+    Array<{
+      id: string;
+      created_at: string;
+      name: string | null;
+      email: string | null;
+      message: string;
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
 
   async function refresh() {
@@ -314,24 +400,43 @@ function ContactMessagesPanel() {
     try {
       const r = await fetchAll({ data: undefined } as never);
       setItems(r.messages as never);
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't load"); }
-    finally { setLoading(false); }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't load");
+    } finally {
+      setLoading(false);
+    }
   }
-  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => {
+    refresh(); /* eslint-disable-next-line */
+  }, []);
 
   async function del(id: string) {
     if (!confirm("Delete this contact message?")) return;
-    try { await removeOne({ data: { id } }); setItems((x) => x.filter((m) => m.id !== id)); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't delete"); }
+    try {
+      await removeOne({ data: { id } });
+      setItems((x) => x.filter((m) => m.id !== id));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't delete");
+    }
   }
 
   return (
     <section className="surface-card p-4">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 className="font-serif text-xl font-semibold flex items-center gap-2"><Mail className="size-5 text-primary" /> Contact messages</h2>
-        <button onClick={refresh} className="px-2.5 py-1 rounded-full text-xs border border-border hover:bg-blush-soft"><RefreshCcw className="size-3 inline mr-1" />Refresh</button>
+        <h2 className="font-serif text-xl font-semibold flex items-center gap-2">
+          <Mail className="size-5 text-primary" /> Contact messages
+        </h2>
+        <button
+          onClick={refresh}
+          className="px-2.5 py-1 rounded-full text-xs border border-border hover:bg-blush-soft"
+        >
+          <RefreshCcw className="size-3 inline mr-1" />
+          Refresh
+        </button>
       </div>
-      {loading ? <p className="text-sm text-ink-soft">Loading…</p> : items.length === 0 ? (
+      {loading ? (
+        <p className="text-sm text-ink-soft">Loading…</p>
+      ) : items.length === 0 ? (
         <p className="text-sm text-ink-soft">No contact messages yet.</p>
       ) : (
         <ul className="space-y-2">
@@ -339,10 +444,21 @@ function ContactMessagesPanel() {
             <li key={m.id} className="rounded-xl border border-border bg-white p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{m.name || "Anonymous"} <span className="text-ink-soft font-normal">· {m.email || "no email"}</span></p>
-                  <p className="text-[11px] text-ink-soft">{new Date(m.created_at).toLocaleString("en-GB")}</p>
+                  <p className="text-sm font-medium truncate">
+                    {m.name || "Anonymous"}{" "}
+                    <span className="text-ink-soft font-normal">· {m.email || "no email"}</span>
+                  </p>
+                  <p className="text-[11px] text-ink-soft">
+                    {new Date(m.created_at).toLocaleString("en-GB")}
+                  </p>
                 </div>
-                <button onClick={() => del(m.id)} className="p-1.5 rounded-full hover:bg-blush-soft text-ink-soft" title="Delete"><Trash2 className="size-4" /></button>
+                <button
+                  onClick={() => del(m.id)}
+                  className="p-1.5 rounded-full hover:bg-blush-soft text-ink-soft"
+                  title="Delete"
+                >
+                  <Trash2 className="size-4" />
+                </button>
               </div>
               <p className="text-sm mt-2 whitespace-pre-wrap">{m.message}</p>
             </li>
@@ -355,7 +471,9 @@ function ContactMessagesPanel() {
 
 function AccountsAnalytics() {
   const fetchAll = useServerFn(listUserAccounts);
-  const [items, setItems] = useState<Array<{ id: string; email: string | null; created_at: string; last_sign_in_at: string | null }>>([]);
+  const [items, setItems] = useState<
+    Array<{ id: string; email: string | null; created_at: string; last_sign_in_at: string | null }>
+  >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -366,9 +484,13 @@ function AccountsAnalytics() {
         if (!cancelled) setItems((r.users as never) ?? []);
       } catch (e) {
         if (!cancelled) toast.error(e instanceof Error ? e.message : "Couldn't load accounts");
-      } finally { if (!cancelled) setLoading(false); }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [fetchAll]);
 
   const stats = useMemo(() => {
@@ -377,7 +499,9 @@ function AccountsAnalytics() {
     const total = items.length;
     const last7 = items.filter((u) => now - new Date(u.created_at).getTime() < 7 * day).length;
     const last30 = items.filter((u) => now - new Date(u.created_at).getTime() < 30 * day).length;
-    const signedInLast7 = items.filter((u) => u.last_sign_in_at && now - new Date(u.last_sign_in_at).getTime() < 7 * day).length;
+    const signedInLast7 = items.filter(
+      (u) => u.last_sign_in_at && now - new Date(u.last_sign_in_at).getTime() < 7 * day,
+    ).length;
     const lastSignIn = items.reduce<Date | null>((acc, u) => {
       if (!u.last_sign_in_at) return acc;
       const d = new Date(u.last_sign_in_at);
@@ -387,7 +511,9 @@ function AccountsAnalytics() {
       const d = new Date(u.created_at);
       return !acc || d < acc ? d : acc;
     }, null);
-    const daysSinceFirst = firstSignup ? Math.max(0, Math.floor((now - firstSignup.getTime()) / day)) : 0;
+    const daysSinceFirst = firstSignup
+      ? Math.max(0, Math.floor((now - firstSignup.getTime()) / day))
+      : 0;
     const recent = [...items]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 5);
@@ -403,7 +529,9 @@ function AccountsAnalytics() {
         <p className="text-sm text-ink-soft">Loading…</p>
       ) : items.length === 0 ? (
         <div className="surface-card p-5 text-center">
-          <p className="text-sm text-ink-soft">No accounts yet. When users sign up, they'll appear here.</p>
+          <p className="text-sm text-ink-soft">
+            No accounts yet. When users sign up, they'll appear here.
+          </p>
         </div>
       ) : (
         <>
@@ -413,10 +541,15 @@ function AccountsAnalytics() {
             <Tile label="New · 30 days" value={stats.last30} />
             <Tile label="Active · 7 days" value={stats.signedInLast7} />
             <Tile label="Days since 1st signup" value={stats.daysSinceFirst} />
-            <Tile label="Last sign-in" value={stats.lastSignIn ? fmt(stats.lastSignIn.toISOString()) : "—"} />
+            <Tile
+              label="Last sign-in"
+              value={stats.lastSignIn ? fmt(stats.lastSignIn.toISOString()) : "—"}
+            />
           </div>
           <div className="surface-card mt-3 p-4">
-            <h3 className="font-serif text-sm font-semibold flex items-center gap-2"><UserPlus className="size-4 text-primary" /> Recent sign-ups</h3>
+            <h3 className="font-serif text-sm font-semibold flex items-center gap-2">
+              <UserPlus className="size-4 text-primary" /> Recent sign-ups
+            </h3>
             <ul className="mt-2 divide-y divide-border">
               {stats.recent.map((u) => (
                 <li key={u.id} className="py-2 flex items-center justify-between gap-3 text-sm">
@@ -434,11 +567,20 @@ function AccountsAnalytics() {
   );
 }
 
-
 function FeedbackSubmissionsPanel() {
   const fetchAll = useServerFn(listFeedbackSubmissions);
   const removeOne = useServerFn(deleteFeedbackSubmission);
-  const [items, setItems] = useState<Array<{ id: string; created_at: string; category: string; message: string; reply_email: string | null; is_tester: boolean; page_path: string | null }>>([]);
+  const [items, setItems] = useState<
+    Array<{
+      id: string;
+      created_at: string;
+      category: string;
+      message: string;
+      reply_email: string | null;
+      is_tester: boolean;
+      page_path: string | null;
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
 
   async function refresh() {
@@ -446,24 +588,43 @@ function FeedbackSubmissionsPanel() {
     try {
       const r = await fetchAll({ data: undefined } as never);
       setItems(r.submissions as never);
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't load"); }
-    finally { setLoading(false); }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't load");
+    } finally {
+      setLoading(false);
+    }
   }
-  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => {
+    refresh(); /* eslint-disable-next-line */
+  }, []);
 
   async function del(id: string) {
     if (!confirm("Delete this feedback submission?")) return;
-    try { await removeOne({ data: { id } }); setItems((x) => x.filter((m) => m.id !== id)); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't delete"); }
+    try {
+      await removeOne({ data: { id } });
+      setItems((x) => x.filter((m) => m.id !== id));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't delete");
+    }
   }
 
   return (
     <section className="surface-card p-4">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 className="font-serif text-xl font-semibold flex items-center gap-2"><Bug className="size-5 text-primary" /> Feedback submissions</h2>
-        <button onClick={refresh} className="px-2.5 py-1 rounded-full text-xs border border-border hover:bg-blush-soft"><RefreshCcw className="size-3 inline mr-1" />Refresh</button>
+        <h2 className="font-serif text-xl font-semibold flex items-center gap-2">
+          <Bug className="size-5 text-primary" /> Feedback submissions
+        </h2>
+        <button
+          onClick={refresh}
+          className="px-2.5 py-1 rounded-full text-xs border border-border hover:bg-blush-soft"
+        >
+          <RefreshCcw className="size-3 inline mr-1" />
+          Refresh
+        </button>
       </div>
-      {loading ? <p className="text-sm text-ink-soft">Loading…</p> : items.length === 0 ? (
+      {loading ? (
+        <p className="text-sm text-ink-soft">Loading…</p>
+      ) : items.length === 0 ? (
         <p className="text-sm text-ink-soft">No in-app feedback yet.</p>
       ) : (
         <ul className="space-y-2">
@@ -472,13 +633,27 @@ function FeedbackSubmissionsPanel() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium">
-                    <span className="inline-block px-2 py-0.5 rounded-full bg-blush-soft text-[11px] mr-2">{m.category}</span>
-                    {m.is_tester && <span className="inline-block px-2 py-0.5 rounded-full bg-sage/20 text-[11px] mr-2">Tester</span>}
+                    <span className="inline-block px-2 py-0.5 rounded-full bg-blush-soft text-[11px] mr-2">
+                      {m.category}
+                    </span>
+                    {m.is_tester && (
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-sage/20 text-[11px] mr-2">
+                        Tester
+                      </span>
+                    )}
                     {m.reply_email || "no reply email"}
                   </p>
-                  <p className="text-[11px] text-ink-soft">{new Date(m.created_at).toLocaleString("en-GB")} · {m.page_path || "-"}</p>
+                  <p className="text-[11px] text-ink-soft">
+                    {new Date(m.created_at).toLocaleString("en-GB")} · {m.page_path || "-"}
+                  </p>
                 </div>
-                <button onClick={() => del(m.id)} className="p-1.5 rounded-full hover:bg-blush-soft text-ink-soft" title="Delete"><Trash2 className="size-4" /></button>
+                <button
+                  onClick={() => del(m.id)}
+                  className="p-1.5 rounded-full hover:bg-blush-soft text-ink-soft"
+                  title="Delete"
+                >
+                  <Trash2 className="size-4" />
+                </button>
               </div>
               <p className="text-sm mt-2 whitespace-pre-wrap">{m.message}</p>
             </li>
@@ -492,7 +667,18 @@ function FeedbackSubmissionsPanel() {
 function UsersPanel() {
   const fetchAll = useServerFn(listUserAccounts);
   const removeOne = useServerFn(deleteUserAccount);
-  const [items, setItems] = useState<Array<{ id: string; email: string | null; created_at: string; last_sign_in_at: string | null; provider: string; is_tester: boolean; display_name: string | null; roles: string[] }>>([]);
+  const [items, setItems] = useState<
+    Array<{
+      id: string;
+      email: string | null;
+      created_at: string;
+      last_sign_in_at: string | null;
+      provider: string;
+      is_tester: boolean;
+      display_name: string | null;
+      roles: string[];
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
 
   async function refresh() {
@@ -500,27 +686,49 @@ function UsersPanel() {
     try {
       const r = await fetchAll({ data: undefined } as never);
       setItems(r.users as never);
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't load"); }
-    finally { setLoading(false); }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't load");
+    } finally {
+      setLoading(false);
+    }
   }
-  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => {
+    refresh(); /* eslint-disable-next-line */
+  }, []);
 
   async function del(id: string, email: string | null) {
-    if (!confirm(`Permanently delete ${email ?? id} and all their BumpNotes data?\n\nThis cannot be undone.`)) return;
+    if (
+      !confirm(
+        `Permanently delete ${email ?? id} and all their BumpNotes data?\n\nThis cannot be undone.`,
+      )
+    )
+      return;
     try {
       await removeOne({ data: { userId: id } });
       setItems((x) => x.filter((m) => m.id !== id));
       toast.success("Account deleted");
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't delete"); }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't delete");
+    }
   }
 
   return (
     <section className="surface-card p-4">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 className="font-serif text-xl font-semibold flex items-center gap-2"><Users className="size-5 text-primary" /> User accounts</h2>
-        <button onClick={refresh} className="px-2.5 py-1 rounded-full text-xs border border-border hover:bg-blush-soft"><RefreshCcw className="size-3 inline mr-1" />Refresh</button>
+        <h2 className="font-serif text-xl font-semibold flex items-center gap-2">
+          <Users className="size-5 text-primary" /> User accounts
+        </h2>
+        <button
+          onClick={refresh}
+          className="px-2.5 py-1 rounded-full text-xs border border-border hover:bg-blush-soft"
+        >
+          <RefreshCcw className="size-3 inline mr-1" />
+          Refresh
+        </button>
       </div>
-      {loading ? <p className="text-sm text-ink-soft">Loading…</p> : items.length === 0 ? (
+      {loading ? (
+        <p className="text-sm text-ink-soft">Loading…</p>
+      ) : items.length === 0 ? (
         <p className="text-sm text-ink-soft">No users yet.</p>
       ) : (
         <div className="overflow-x-auto -mx-1">
@@ -540,19 +748,42 @@ function UsersPanel() {
                 <tr key={u.id} className="border-b border-border/60">
                   <td className="py-2 px-1">
                     <p className="font-medium">{u.email ?? "—"}</p>
-                    {u.display_name && <p className="text-[11px] text-ink-soft">{u.display_name}</p>}
+                    {u.display_name && (
+                      <p className="text-[11px] text-ink-soft">{u.display_name}</p>
+                    )}
                   </td>
                   <td className="py-2 px-1 text-ink-soft">{u.provider}</td>
-                  <td className="py-2 px-1 text-ink-soft">{new Date(u.created_at).toLocaleDateString("en-GB")}</td>
-                  <td className="py-2 px-1 text-ink-soft">{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-GB") : "—"}</td>
+                  <td className="py-2 px-1 text-ink-soft">
+                    {new Date(u.created_at).toLocaleDateString("en-GB")}
+                  </td>
+                  <td className="py-2 px-1 text-ink-soft">
+                    {u.last_sign_in_at
+                      ? new Date(u.last_sign_in_at).toLocaleDateString("en-GB")
+                      : "—"}
+                  </td>
                   <td className="py-2 px-1">
-                    {u.is_tester && <span className="inline-block px-1.5 py-0.5 rounded-full bg-sage/20 text-[10px] mr-1">Tester</span>}
+                    {u.is_tester && (
+                      <span className="inline-block px-1.5 py-0.5 rounded-full bg-sage/20 text-[10px] mr-1">
+                        Tester
+                      </span>
+                    )}
                     {u.roles.map((r) => (
-                      <span key={r} className="inline-block px-1.5 py-0.5 rounded-full bg-blush-soft text-[10px] mr-1">{r}</span>
+                      <span
+                        key={r}
+                        className="inline-block px-1.5 py-0.5 rounded-full bg-blush-soft text-[10px] mr-1"
+                      >
+                        {r}
+                      </span>
                     ))}
                   </td>
                   <td className="py-2 px-1 text-right">
-                    <button onClick={() => del(u.id, u.email)} className="p-1.5 rounded-full hover:bg-blush-soft text-ink-soft" title="Delete user"><Trash2 className="size-4" /></button>
+                    <button
+                      onClick={() => del(u.id, u.email)}
+                      className="p-1.5 rounded-full hover:bg-blush-soft text-ink-soft"
+                      title="Delete user"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -574,7 +805,8 @@ function Tile({ label, value }: { label: string; value: number | string }) {
 }
 
 function Generators({
-  onBatch, onCustom,
+  onBatch,
+  onCustom,
 }: {
   onBatch: (prefix: string, count: number, startAt: number, label: string) => Promise<void>;
   onCustom: (code: string, label: string, notes: string) => Promise<void>;
@@ -592,30 +824,103 @@ function Generators({
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="surface-card p-4">
-        <h3 className="font-serif text-base font-semibold flex items-center gap-2"><Plus className="size-4" /> Generate batch</h3>
+        <h3 className="font-serif text-base font-semibold flex items-center gap-2">
+          <Plus className="size-4" /> Generate batch
+        </h3>
         <div className="mt-3 grid grid-cols-3 gap-2">
-          <Field label="Prefix"><input value={prefix} onChange={(e) => setPrefix(e.target.value.toUpperCase())} className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
-          <Field label="Count"><input type="number" min={1} max={50} value={count} onChange={(e) => setCount(Number(e.target.value))} className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
-          <Field label="Start at"><input type="number" min={1} value={startAt} onChange={(e) => setStartAt(Number(e.target.value))} className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
+          <Field label="Prefix">
+            <input
+              value={prefix}
+              onChange={(e) => setPrefix(e.target.value.toUpperCase())}
+              className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
+            />
+          </Field>
+          <Field label="Count">
+            <input
+              type="number"
+              min={1}
+              max={50}
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
+            />
+          </Field>
+          <Field label="Start at">
+            <input
+              type="number"
+              min={1}
+              value={startAt}
+              onChange={(e) => setStartAt(Number(e.target.value))}
+              className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
+            />
+          </Field>
         </div>
-        <Field label="Batch label (optional)"><input value={batchLabel} onChange={(e) => setBatchLabel(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
+        <Field label="Batch label (optional)">
+          <input
+            value={batchLabel}
+            onChange={(e) => setBatchLabel(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
+          />
+        </Field>
         <button
           disabled={busy}
-          onClick={async () => { setBusy(true); try { await onBatch(prefix, count, startAt, batchLabel); } finally { setBusy(false); } }}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await onBatch(prefix, count, startAt, batchLabel);
+            } finally {
+              setBusy(false);
+            }
+          }}
           className="mt-3 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50"
-        >Generate</button>
+        >
+          Generate
+        </button>
       </div>
 
       <div className="surface-card p-4">
-        <h3 className="font-serif text-base font-semibold flex items-center gap-2"><Plus className="size-4" /> Create custom code</h3>
-        <Field label="Code"><input value={custom} onChange={(e) => setCustom(e.target.value.toUpperCase())} placeholder="SOPHIE01" className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
-        <Field label="Label"><input value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
-        <Field label="Notes"><input value={customNotes} onChange={(e) => setCustomNotes(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60" /></Field>
+        <h3 className="font-serif text-base font-semibold flex items-center gap-2">
+          <Plus className="size-4" /> Create custom code
+        </h3>
+        <Field label="Code">
+          <input
+            value={custom}
+            onChange={(e) => setCustom(e.target.value.toUpperCase())}
+            placeholder="SOPHIE01"
+            className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
+          />
+        </Field>
+        <Field label="Label">
+          <input
+            value={customLabel}
+            onChange={(e) => setCustomLabel(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
+          />
+        </Field>
+        <Field label="Notes">
+          <input
+            value={customNotes}
+            onChange={(e) => setCustomNotes(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg bg-white border border-border text-sm focus:outline-none focus:border-primary/60"
+          />
+        </Field>
         <button
           disabled={busy || !custom.trim()}
-          onClick={async () => { setBusy(true); try { await onCustom(custom, customLabel, customNotes); setCustom(""); setCustomLabel(""); setCustomNotes(""); } finally { setBusy(false); } }}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await onCustom(custom, customLabel, customNotes);
+              setCustom("");
+              setCustomLabel("");
+              setCustomNotes("");
+            } finally {
+              setBusy(false);
+            }
+          }}
           className="mt-3 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50"
-        >Create</button>
+        >
+          Create
+        </button>
       </div>
     </div>
   );
@@ -624,27 +929,54 @@ function Generators({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="mt-2 block">
-      <span className="block text-[11px] uppercase tracking-[0.15em] text-ink-soft font-semibold mb-1">{label}</span>
+      <span className="block text-[11px] uppercase tracking-[0.15em] text-ink-soft font-semibold mb-1">
+        {label}
+      </span>
       {children}
     </label>
   );
 }
 
-function CodesTable({ codes, onToggle, onDelete }: {
+function CodesTable({
+  codes,
+  onToggle,
+  onDelete,
+}: {
   codes: CodeRow[];
   onToggle: (id: string, next: "active" | "inactive") => Promise<void>;
   onDelete: (id: string, code: string) => Promise<void>;
 }) {
   function exportCsv() {
-    const headers = ["code","label","status","first_used_at","last_used_at","use_count","feedback_submitted_at","notes"];
-    const rows = codes.map((c) => [c.code, c.label ?? "", c.status, c.first_used_at ?? "", c.last_used_at ?? "", c.use_count, c.feedback_submitted_at ?? "", c.notes ?? ""]);
+    const headers = [
+      "code",
+      "label",
+      "status",
+      "first_used_at",
+      "last_used_at",
+      "use_count",
+      "feedback_submitted_at",
+      "notes",
+    ];
+    const rows = codes.map((c) => [
+      c.code,
+      c.label ?? "",
+      c.status,
+      c.first_used_at ?? "",
+      c.last_used_at ?? "",
+      c.use_count,
+      c.feedback_submitted_at ?? "",
+      c.notes ?? "",
+    ]);
     download("tester-access-codes.csv", toCsv([headers, ...rows]));
   }
   return (
     <div className="surface-card overflow-hidden">
       <div className="flex items-center justify-between gap-2 p-4">
         <h3 className="font-serif text-base font-semibold">Access codes</h3>
-        <button onClick={exportCsv} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium bg-white">
+        <button
+          onClick={exportCsv}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium bg-white"
+        >
           <Download className="size-3.5" /> Export CSV
         </button>
       </div>
@@ -652,8 +984,23 @@ function CodesTable({ codes, onToggle, onDelete }: {
         <table className="w-full text-sm">
           <thead className="bg-blush-soft text-ink">
             <tr className="text-left">
-              {["Code","Label","Status","First used","Last used","Uses","Feedback","Notes",""].map((h) => (
-                <th key={h} className="px-3 py-2 text-[11px] uppercase tracking-[0.15em] font-semibold whitespace-nowrap">{h}</th>
+              {[
+                "Code",
+                "Label",
+                "Status",
+                "First used",
+                "Last used",
+                "Uses",
+                "Feedback",
+                "Notes",
+                "",
+              ].map((h) => (
+                <th
+                  key={h}
+                  className="px-3 py-2 text-[11px] uppercase tracking-[0.15em] font-semibold whitespace-nowrap"
+                >
+                  {h}
+                </th>
               ))}
             </tr>
           </thead>
@@ -663,37 +1010,62 @@ function CodesTable({ codes, onToggle, onDelete }: {
                 <td className="px-3 py-2 font-mono text-[13px] font-semibold">{c.code}</td>
                 <td className="px-3 py-2">{c.label ?? "—"}</td>
                 <td className="px-3 py-2">
-                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${c.status === "active" ? "bg-mint/30 text-ink" : "bg-border text-ink-soft"}`}>{c.status}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${c.status === "active" ? "bg-mint/30 text-ink" : "bg-border text-ink-soft"}`}
+                  >
+                    {c.status}
+                  </span>
                 </td>
-                <td className="px-3 py-2 text-[12px] text-ink-soft whitespace-nowrap">{fmt(c.first_used_at)}</td>
-                <td className="px-3 py-2 text-[12px] text-ink-soft whitespace-nowrap">{fmt(c.last_used_at)}</td>
+                <td className="px-3 py-2 text-[12px] text-ink-soft whitespace-nowrap">
+                  {fmt(c.first_used_at)}
+                </td>
+                <td className="px-3 py-2 text-[12px] text-ink-soft whitespace-nowrap">
+                  {fmt(c.last_used_at)}
+                </td>
                 <td className="px-3 py-2 text-[12px]">{c.use_count}</td>
-                <td className="px-3 py-2 text-[12px] text-ink-soft whitespace-nowrap">{c.feedback_submitted_at ? fmt(c.feedback_submitted_at) : "—"}</td>
-                <td className="px-3 py-2 text-[12px] text-ink-soft max-w-[200px] truncate">{c.notes ?? ""}</td>
+                <td className="px-3 py-2 text-[12px] text-ink-soft whitespace-nowrap">
+                  {c.feedback_submitted_at ? fmt(c.feedback_submitted_at) : "—"}
+                </td>
+                <td className="px-3 py-2 text-[12px] text-ink-soft max-w-[200px] truncate">
+                  {c.notes ?? ""}
+                </td>
                 <td className="px-3 py-2 whitespace-nowrap">
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={() => { navigator.clipboard.writeText(c.code); toast.success("Copied"); }}
+                      onClick={() => {
+                        navigator.clipboard.writeText(c.code);
+                        toast.success("Copied");
+                      }}
                       className="size-7 grid place-items-center rounded-full border border-border bg-white"
                       aria-label="Copy code"
-                    ><Copy className="size-3.5" /></button>
+                    >
+                      <Copy className="size-3.5" />
+                    </button>
                     <button
                       onClick={() => onToggle(c.id, c.status === "active" ? "inactive" : "active")}
                       className="size-7 grid place-items-center rounded-full border border-border bg-white"
                       aria-label="Toggle status"
-                    ><Power className="size-3.5" /></button>
+                    >
+                      <Power className="size-3.5" />
+                    </button>
                     <button
                       onClick={() => onDelete(c.id, c.code)}
                       className="size-7 grid place-items-center rounded-full border border-border bg-white text-coral hover:bg-coral/10"
                       aria-label="Delete code"
                       title="Delete code"
-                    ><Trash2 className="size-3.5" /></button>
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
                   </div>
                 </td>
               </tr>
             ))}
             {codes.length === 0 && (
-              <tr><td colSpan={9} className="px-3 py-6 text-center text-sm text-ink-soft">No codes yet. Generate a batch above.</td></tr>
+              <tr>
+                <td colSpan={9} className="px-3 py-6 text-center text-sm text-ink-soft">
+                  No codes yet. Generate a batch above.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -731,32 +1103,54 @@ const ROUTE_LABEL: Record<RouteKey, string> = {
 };
 
 function routeQuestions(route: RouteKey, pregnancyYes: boolean): [string, string, string] {
-  const q1 = route === "no_to_both"
-    ? "Did you understand what BumpNotes is for?"
-    : "Was BumpNotes easy to understand and use?";
-  const q2 = route === "yes_to_both"
-    ? "Would BumpNotes feel useful, either personally or if someone came to you with their summary?"
-    : route === "yes_to_either"
-      ? (pregnancyYes
+  const q1 =
+    route === "no_to_both"
+      ? "Did you understand what BumpNotes is for?"
+      : "Was BumpNotes easy to understand and use?";
+  const q2 =
+    route === "yes_to_both"
+      ? "Would BumpNotes feel useful, either personally or if someone came to you with their summary?"
+      : route === "yes_to_either"
+        ? pregnancyYes
           ? "Would you use BumpNotes yourself, or would you have found it useful during a pregnancy journey?"
-          : "Would you find it useful if someone came to you with this summary?")
-      : "Was it easy to click around and know what to do?";
-  const q3 = route === "no_to_both"
-    ? "Can you imagine who BumpNotes would be useful for?"
-    : route === "yes_to_both"
-      ? "Would you recommend BumpNotes to someone who is pregnant, planning a pregnancy, or supporting someone through pregnancy?"
-      : "Would you recommend BumpNotes to someone who is pregnant or planning a pregnancy?";
+          : "Would you find it useful if someone came to you with this summary?"
+        : "Was it easy to click around and know what to do?";
+  const q3 =
+    route === "no_to_both"
+      ? "Can you imagine who BumpNotes would be useful for?"
+      : route === "yes_to_both"
+        ? "Would you recommend BumpNotes to someone who is pregnant, planning a pregnancy, or supporting someone through pregnancy?"
+        : "Would you recommend BumpNotes to someone who is pregnant or planning a pregnancy?";
   return [q1, q2, q3];
 }
 
 function FeedbackPanel({ feedback }: { feedback: FeedbackRow[] }) {
   function exportCsv() {
-    const headers = ["created_at","code","label","segment","route","pregnancy","professional","q1","q2","q3","improvement"];
+    const headers = [
+      "created_at",
+      "code",
+      "label",
+      "segment",
+      "route",
+      "pregnancy",
+      "professional",
+      "q1",
+      "q2",
+      "q3",
+      "improvement",
+    ];
     const rows = feedback.map((r) => [
-      r.created_at, r.tester_access_codes?.code ?? "", r.tester_access_codes?.label ?? "",
+      r.created_at,
+      r.tester_access_codes?.code ?? "",
+      r.tester_access_codes?.label ?? "",
       SEGMENT_LABEL[segmentOf(r)],
-      r.feedback_route, r.pregnancy_identity_answer, r.professional_identity_answer,
-      r.q1_answer ?? "", r.q2_answer ?? "", r.q3_answer ?? "", r.improvement_text ?? "",
+      r.feedback_route,
+      r.pregnancy_identity_answer,
+      r.professional_identity_answer,
+      r.q1_answer ?? "",
+      r.q2_answer ?? "",
+      r.q3_answer ?? "",
+      r.improvement_text ?? "",
     ]);
     download("tester-feedback.csv", toCsv([headers, ...rows]));
   }
@@ -769,7 +1163,11 @@ function FeedbackPanel({ feedback }: { feedback: FeedbackRow[] }) {
 
   // Group responses by feedback_route, then within yes_to_either also split by pregnant-only / clinician-only.
   const byRoute = useMemo(() => {
-    const groups: Record<RouteKey, FeedbackRow[]> = { yes_to_both: [], yes_to_either: [], no_to_both: [] };
+    const groups: Record<RouteKey, FeedbackRow[]> = {
+      yes_to_both: [],
+      yes_to_either: [],
+      no_to_both: [],
+    };
     for (const r of feedback) {
       const key = (r.feedback_route as RouteKey) ?? "no_to_both";
       if (groups[key]) groups[key].push(r);
@@ -780,13 +1178,20 @@ function FeedbackPanel({ feedback }: { feedback: FeedbackRow[] }) {
   return (
     <div className="surface-card p-4">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-serif text-base font-semibold flex items-center gap-2"><MessageSquareHeart className="size-4" /> Feedback</h3>
-        <button onClick={exportCsv} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium bg-white">
+        <h3 className="font-serif text-base font-semibold flex items-center gap-2">
+          <MessageSquareHeart className="size-4" /> Feedback
+        </h3>
+        <button
+          onClick={exportCsv}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium bg-white"
+        >
           <Download className="size-3.5" /> Export CSV
         </button>
       </div>
 
-      <p className="text-[11px] uppercase tracking-[0.15em] text-ink-soft font-semibold mt-4">Identity segments</p>
+      <p className="text-[11px] uppercase tracking-[0.15em] text-ink-soft font-semibold mt-4">
+        Identity segments
+      </p>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-2">
         <Tile label="Pregnant / planning only" value={segmentCounts.pregnant_only} />
         <Tile label="Clinician only" value={segmentCounts.clinician_only} />
@@ -794,10 +1199,18 @@ function FeedbackPanel({ feedback }: { feedback: FeedbackRow[] }) {
         <Tile label="Neither" value={segmentCounts.neither} />
       </div>
 
-      <p className="text-[11px] uppercase tracking-[0.15em] text-ink-soft font-semibold mt-6">Identity questions asked</p>
+      <p className="text-[11px] uppercase tracking-[0.15em] text-ink-soft font-semibold mt-6">
+        Identity questions asked
+      </p>
       <ul className="mt-2 text-sm text-ink-soft space-y-1.5 list-disc pl-5">
-        <li>Have you ever been pregnant, are you currently pregnant, or are you planning a pregnancy? <span className="text-ink-soft/70">(Yes / No)</span></li>
-        <li>Are you a clinician or professional who works with pregnant people, such as a GP, midwife, doula, or other support role? <span className="text-ink-soft/70">(Yes / No)</span></li>
+        <li>
+          Have you ever been pregnant, are you currently pregnant, or are you planning a pregnancy?{" "}
+          <span className="text-ink-soft/70">(Yes / No)</span>
+        </li>
+        <li>
+          Are you a clinician or professional who works with pregnant people, such as a GP, midwife,
+          doula, or other support role? <span className="text-ink-soft/70">(Yes / No)</span>
+        </li>
       </ul>
 
       <div className="mt-6 space-y-5">
@@ -809,14 +1222,17 @@ function FeedbackPanel({ feedback }: { feedback: FeedbackRow[] }) {
       <div className="mt-6">
         <h4 className="font-serif text-sm font-semibold mb-2">Written improvements</h4>
         <ul className="space-y-2">
-          {feedback.filter((f) => (f.improvement_text ?? "").trim()).map((f) => (
-            <li key={f.id} className="rounded-xl border border-border bg-white p-3 text-sm">
-              <p className="text-ink whitespace-pre-wrap">{f.improvement_text}</p>
-              <p className="text-[11px] text-ink-soft mt-1 font-mono">
-                {f.tester_access_codes?.code ?? "—"} · {SEGMENT_LABEL[segmentOf(f)]} · {fmt(f.created_at)}
-              </p>
-            </li>
-          ))}
+          {feedback
+            .filter((f) => (f.improvement_text ?? "").trim())
+            .map((f) => (
+              <li key={f.id} className="rounded-xl border border-border bg-white p-3 text-sm">
+                <p className="text-ink whitespace-pre-wrap">{f.improvement_text}</p>
+                <p className="text-[11px] text-ink-soft mt-1 font-mono">
+                  {f.tester_access_codes?.code ?? "—"} · {SEGMENT_LABEL[segmentOf(f)]} ·{" "}
+                  {fmt(f.created_at)}
+                </p>
+              </li>
+            ))}
           {feedback.filter((f) => (f.improvement_text ?? "").trim()).length === 0 && (
             <li className="text-sm text-ink-soft">No written feedback yet.</li>
           )}
@@ -850,7 +1266,9 @@ function RouteBreakdown({ route, responses }: { route: RouteKey; responses: Feed
     <div className="rounded-2xl border border-border bg-white p-4">
       <div className="flex items-baseline justify-between gap-2 flex-wrap">
         <h4 className="font-serif text-base font-semibold">{ROUTE_LABEL[route]}</h4>
-        <span className="text-[11px] text-ink-soft">{responses.length} response{responses.length === 1 ? "" : "s"}</span>
+        <span className="text-[11px] text-ink-soft">
+          {responses.length} response{responses.length === 1 ? "" : "s"}
+        </span>
       </div>
 
       <BreakdownCard title={`Q1. ${q1Text}`} data={tally(responses, "q1_answer")} />
@@ -863,11 +1281,17 @@ function RouteBreakdown({ route, responses }: { route: RouteKey; responses: Feed
           />
           <BreakdownCard
             title={`Q2 (clinician only). ${routeQuestions(route, false)[1]}`}
-            data={tally(profYes.filter((r) => r.pregnancy_identity_answer === "no"), "q2_answer")}
+            data={tally(
+              profYes.filter((r) => r.pregnancy_identity_answer === "no"),
+              "q2_answer",
+            )}
           />
         </>
       ) : (
-        <BreakdownCard title={`Q2. ${routeQuestions(route, true)[1]}`} data={tally(responses, "q2_answer")} />
+        <BreakdownCard
+          title={`Q2. ${routeQuestions(route, true)[1]}`}
+          data={tally(responses, "q2_answer")}
+        />
       )}
 
       <BreakdownCard title={`Q3. ${q3Text}`} data={tally(responses, "q3_answer")} />
@@ -875,7 +1299,13 @@ function RouteBreakdown({ route, responses }: { route: RouteKey; responses: Feed
   );
 }
 
-function BreakdownCard({ title, data }: { title: string; data: { counts: Record<string, number>; n: number } }) {
+function BreakdownCard({
+  title,
+  data,
+}: {
+  title: string;
+  data: { counts: Record<string, number>; n: number };
+}) {
   const keys = Object.keys(data.counts);
   return (
     <div className="mt-3 rounded-xl border border-border bg-blush-soft/40 p-3">
@@ -889,7 +1319,9 @@ function BreakdownCard({ title, data }: { title: string; data: { counts: Record<
             return (
               <li key={k} className="flex items-center justify-between text-sm">
                 <span className="capitalize">{k}</span>
-                <span className="text-ink-soft text-[12px]">{pct}% ({data.counts[k]})</span>
+                <span className="text-ink-soft text-[12px]">
+                  {pct}% ({data.counts[k]})
+                </span>
               </li>
             );
           })}
@@ -905,21 +1337,31 @@ function fmt(iso: string | null): string {
     const d = new Date(iso);
     const pad = (n: number) => String(n).padStart(2, "0");
     return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  } catch { return iso; }
+  } catch {
+    return iso;
+  }
 }
 
 function toCsv(rows: (string | number | null | undefined)[][]) {
-  return rows.map((r) => r.map((v) => {
-    const s = v == null ? "" : String(v);
-    if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-    return s;
-  }).join(",")).join("\n");
+  return rows
+    .map((r) =>
+      r
+        .map((v) => {
+          const s = v == null ? "" : String(v);
+          if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+          return s;
+        })
+        .join(","),
+    )
+    .join("\n");
 }
 
 function download(name: string, content: string) {
   const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = name; a.click();
+  a.href = url;
+  a.download = name;
+  a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

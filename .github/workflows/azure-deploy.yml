@@ -48,6 +48,18 @@ jobs:
         run: npm ci
 
       - name: Build (nitro node-server preset)
+        # Entra sign-in activated on the Azure instance (Phase I.1). All non-secret
+        # public identifiers. VITE_ vars are inlined at build time.
+        env:
+          VITE_ENTRA_AUTH: "true"
+          # Native auth ("B" login) — on at the Azure instance so /entra proves the
+          # own-form -> native-auth path. Requires native auth + public-client on the
+          # SPA app registration (enabled 2026-09-08). Live /signin is NOT rewired to
+          # this yet (gated on the Phase 3 surface cutover).
+          VITE_ENTRA_NATIVE: "true"
+          VITE_ENTRA_CLIENT_ID: "3180eb1a-7ec6-46b2-9347-e128f1f83ee1"
+          VITE_ENTRA_AUTHORITY: "https://bumpnotes.ciamlogin.com/23f549b5-2003-4406-9b16-fb823bcee3a8"
+          VITE_ENTRA_API_SCOPE: "api://4b749876-187e-4305-b6bb-001461d6ddca/access_as_user"
         run: npm run build
 
       - name: Verify node-server artifact exists

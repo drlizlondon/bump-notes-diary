@@ -22,6 +22,7 @@ import { Route as OurStoryRouteImport } from './routes/our-story'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LabourRouteImport } from './routes/labour'
 import { Route as FeaturesRouteImport } from './routes/features'
+import { Route as EntraRouteImport } from './routes/entra'
 import { Route as DetailsRouteImport } from './routes/details'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -95,6 +96,11 @@ const FeaturesRoute = FeaturesRouteImport.update({
   path: '/features',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EntraRoute = EntraRouteImport.update({
+  id: '/entra',
+  path: '/entra',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DetailsRoute = DetailsRouteImport.update({
   id: '/details',
   path: '/details',
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
   '/details': typeof DetailsRoute
+  '/entra': typeof EntraRoute
   '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
   '/onboarding': typeof OnboardingRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
   '/details': typeof DetailsRoute
+  '/entra': typeof EntraRoute
   '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
   '/onboarding': typeof OnboardingRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
   '/details': typeof DetailsRoute
+  '/entra': typeof EntraRoute
   '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
   '/onboarding': typeof OnboardingRoute
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/demo'
     | '/details'
+    | '/entra'
     | '/features'
     | '/labour'
     | '/onboarding'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/demo'
     | '/details'
+    | '/entra'
     | '/features'
     | '/labour'
     | '/onboarding'
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/demo'
     | '/details'
+    | '/entra'
     | '/features'
     | '/labour'
     | '/onboarding'
@@ -274,6 +286,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DemoRoute: typeof DemoRoute
   DetailsRoute: typeof DetailsRoute
+  EntraRoute: typeof EntraRoute
   FeaturesRoute: typeof FeaturesRoute
   LabourRoute: typeof LabourRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FeaturesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/entra': {
+      id: '/entra'
+      path: '/entra'
+      fullPath: '/entra'
+      preLoaderRoute: typeof EntraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/details': {
       id: '/details'
       path: '/details'
@@ -451,6 +471,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DemoRoute: DemoRoute,
   DetailsRoute: DetailsRoute,
+  EntraRoute: EntraRoute,
   FeaturesRoute: FeaturesRoute,
   LabourRoute: LabourRoute,
   OnboardingRoute: OnboardingRoute,

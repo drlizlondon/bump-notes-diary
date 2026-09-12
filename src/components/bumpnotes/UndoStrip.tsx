@@ -22,7 +22,10 @@ export function UndoStrip({
       <Check className="size-4 text-mint shrink-0" />
       <span className="flex-1 min-w-0 truncate">{label}</span>
       <button
-        onClick={() => { setVisible(false); onUndo(); }}
+        onClick={() => {
+          setVisible(false);
+          onUndo();
+        }}
         className="inline-flex items-center gap-1 text-[12px] font-semibold text-primary hover:underline shrink-0"
       >
         <RotateCcw className="size-3.5" /> Undo

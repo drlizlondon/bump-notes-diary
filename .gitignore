@@ -30,3 +30,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Private business documents — never commit
+BUMPNOTES_INVESTOR_PRESENTATION.md
+INVESTMENT_STRATEGY_AND_DECK_BRIEF.md
