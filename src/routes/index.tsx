@@ -11,7 +11,6 @@ import {
   Heart,
   Sparkles,
 } from "lucide-react";
-import { useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PregnancySummaryAside } from "@/components/bumpnotes/AppShell";
 import { HomeHeader } from "@/components/bumpnotes/HomeHeader";
 import {
@@ -26,9 +25,14 @@ import {
 } from "@/components/bumpnotes/Panels";
 import { useT } from "@/lib/bumpnotes/i18n";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
-import { useTester } from "@/lib/bumpnotes/tester";
+import { useTester, isTester } from "@/lib/bumpnotes/tester";
 import { gestationFromDueDate } from "@/lib/bumpnotes/gestation";
 import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButton";
+import { AppRepository } from "@/lib/data/capture";
+import { useActivePregnancy, useEntries, useProfile } from "@/lib/data/hooks";
+import { storeEntryFromV2, storeProfileFromV2 } from "@/lib/data/entry-adapter";
+import type { Entry as StoreEntry } from "@/lib/bumpnotes/types";
+import type { Pregnancy } from "@/lib/domain/types";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -55,28 +59,56 @@ export const Route = createFileRoute("/")({
 
 type PanelKey = "symptom" | "question" | "people" | "measurement" | "photo" | "note" | "feeling";
 
+// Auth gate: only tester or signed-in users load the app (and its repository
+// data). Anon visitors go to the marketing homepage. The repository read for
+// "has an active pregnancy?" happens inside AppRepository, so anon users never
+// trigger an API call. (Identity signal is still Supabase-sync until B1/B2.)
 function Index() {
-  const { profile } = useAppState();
-  const [open, setOpen] = useState<PanelKey | null>(null);
-  const t = useT();
   const { userId, status } = useSyncSnapshot();
   const tester = useTester();
   const navigate = useNavigate();
+  const authorized = !!userId || tester;
 
   useEffect(() => {
-    if (profile?.onboarded) return;
-    // Wait for Supabase sync to finish before deciding to send a signed-in user to onboarding.
-    // Otherwise we briefly show "What shall we call you?" before the remote profile hydrates.
-    if (userId && status === "syncing") return;
-    if (userId || tester) navigate({ to: "/onboarding", replace: true });
-    else navigate({ to: "/welcome", replace: true });
-  }, [userId, tester, profile, status, navigate]);
+    // Read the tester flag imperatively (client-only) to avoid a hydration race
+    // where the reactive snapshot is still false when this effect first fires.
+    const authed = !!userId || isTester();
+    if (!authed && status !== "syncing") navigate({ to: "/welcome", replace: true });
+  }, [userId, status, navigate]);
 
-  if (!profile?.onboarded) return null;
+  if (!authorized) return null;
+
+  return (
+    <AppRepository>
+      <HomeGate />
+    </AppRepository>
+  );
+}
+
+// Inside the repository: no active pregnancy -> onboarding; else the dashboard.
+function HomeGate() {
+  const navigate = useNavigate();
+  const { data: pregnancy, isLoading, isError } = useActivePregnancy();
+
+  useEffect(() => {
+    if (!isLoading && !isError && !pregnancy) navigate({ to: "/onboarding", replace: true });
+  }, [isLoading, isError, pregnancy, navigate]);
+
+  if (isLoading || !pregnancy) return null;
+  return <HomeView pregnancy={pregnancy} />;
+}
+
+function HomeView({ pregnancy }: { pregnancy: Pregnancy }) {
+  const t = useT();
+  const [open, setOpen] = useState<PanelKey | null>(null);
+  const { data: profileV2 } = useProfile();
+  const profile = storeProfileFromV2(profileV2 ?? null, pregnancy);
 
   function toggle(k: PanelKey) {
     setOpen((p) => (p === k ? null : k));
   }
+
+  if (!profile) return null;
 
   return (
     <>
@@ -84,7 +116,7 @@ function Index() {
       <AppShell right={<PregnancySummaryAside />}>
         <HomeHeader profile={profile} />
 
-        <ThisWeekCard />
+        <ThisWeekCard pregnancyId={pregnancy.id} dueDateISO={profile.dueDateISO} />
 
         <section className="px-4 md:px-0 pb-28 lg:pb-10 mt-5">
           <h2 className="font-serif text-lg md:text-2xl font-semibold mt-1 mb-0.5 px-1">
@@ -172,12 +204,13 @@ function Index() {
   );
 }
 
-function ThisWeekCard() {
-  const { entries, profile } = useAppState();
-  const { weeks: currentWeek } = useMemo(
-    () => (profile ? gestationFromDueDate(profile.dueDateISO) : { weeks: 0, days: 0 }),
-    [profile],
+function ThisWeekCard({ pregnancyId, dueDateISO }: { pregnancyId: string; dueDateISO: string }) {
+  const { data: v2entries } = useEntries({ pregnancyId });
+  const entries = useMemo<StoreEntry[]>(
+    () => (v2entries ?? []).map(storeEntryFromV2).filter((e): e is StoreEntry => e !== null),
+    [v2entries],
   );
+  const currentWeek = useMemo(() => gestationFromDueDate(dueDateISO).weeks, [dueDateISO]);
 
   const stats = useMemo(() => {
     const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -194,7 +227,7 @@ function ThisWeekCard() {
   const labelMap: Record<string, string> = {
     symptom: "symptoms",
     question: "questions",
-    person: "appointments",
+    appointment: "appointments",
     measurement: "measurements",
     photo: "uploads",
     note: "notes",

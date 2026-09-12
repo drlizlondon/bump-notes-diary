@@ -21,6 +21,7 @@ import type { PersonRole } from "../domain/types";
 import { gestationFromDueDate } from "../bumpnotes/gestation";
 import { prepareImageForUpload } from "./attachments";
 import { createInputFromCapture, type CaptureDraft } from "./entry-adapter";
+import { RepositoryProvider, resolveDefaultMode } from "./repository-context";
 import {
   useActivePregnancy,
   useCreateEntry,
@@ -208,4 +209,20 @@ export function RepositoryCaptureProvider({ children }: { children: ReactNode })
 /** The active capture API. Defaults to the store source outside a provider. */
 export function useCapture(): CaptureApi {
   return useContext(CaptureContext);
+}
+
+/**
+ * Wraps an authenticated app surface so it reads/writes the V2 Azure repository:
+ * mode from `resolveDefaultMode()` (tester → on-device LocalRepository; else the
+ * authed ApiRepository), with repository-backed capture. Mount only inside an
+ * authorized subtree (tester or signed-in) so anon visitors never trigger an API
+ * read — the route's gate decides that before rendering this.
+ */
+export function AppRepository({ children }: { children: ReactNode }) {
+  const mode = resolveDefaultMode();
+  return (
+    <RepositoryProvider mode={mode}>
+      <RepositoryCaptureProvider>{children}</RepositoryCaptureProvider>
+    </RepositoryProvider>
+  );
 }

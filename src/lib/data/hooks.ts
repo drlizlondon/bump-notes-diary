@@ -81,12 +81,13 @@ export function useCreatePregnancy() {
 }
 
 // --- Entries ---------------------------------------------------------------
-export function useEntries(params: ListEntriesParams) {
+export function useEntries(params: ListEntriesParams, opts?: { enabled?: boolean }) {
   const { repository, mode } = useRepository();
   return useQuery({
     queryKey: keys.entries(mode, params),
     queryFn: () => repository.listEntries(params),
     staleTime: STALE,
+    enabled: opts?.enabled ?? true,
   });
 }
 

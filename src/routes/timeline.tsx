@@ -1,17 +1,20 @@
 import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButton";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Toaster } from "sonner";
-import { FileUp, Pencil, Trash2, Search, X } from "lucide-react";
-import { store, useAppState } from "@/lib/bumpnotes/store";
+import { FileUp, Trash2, Search, X } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
-import { EntryEditDialog } from "@/components/bumpnotes/EntryEditDialog";
 import { formatUKDate, formatUKTime } from "@/lib/bumpnotes/gestation";
 import { summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
 import { useT } from "@/lib/bumpnotes/i18n";
 import type { Entry } from "@/lib/bumpnotes/types";
 import { isArchivedLabourEntryType } from "@/lib/bumpnotes/archive/labour";
 import { trackEvent } from "@/lib/analytics";
+import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
+import { useTester, isTester } from "@/lib/bumpnotes/tester";
+import { AppRepository } from "@/lib/data/capture";
+import { useActivePregnancy, useEntries, useSoftDeleteEntry } from "@/lib/data/hooks";
+import { storeEntryFromV2 } from "@/lib/data/entry-adapter";
 
 export const Route = createFileRoute("/timeline")({
   head: () => ({ meta: [{ title: "Timeline · BumpNotes" }] }),
@@ -79,16 +82,52 @@ function entryText(e: Entry): string {
   return bits.join(" ").toLowerCase();
 }
 
+// Auth gate (identity signal still Supabase-sync until B1/B2): only tester or
+// signed-in users load the repository-backed timeline.
 function TimelinePage() {
-  const { entries } = useAppState();
-  const [editing, setEditing] = useState<Entry | null>(null);
+  const { userId, status } = useSyncSnapshot();
+  const tester = useTester();
+  const navigate = useNavigate();
+  const authorized = !!userId || tester;
+
+  useEffect(() => {
+    const authed = !!userId || isTester();
+    if (!authed && status !== "syncing") navigate({ to: "/welcome", replace: true });
+  }, [userId, status, navigate]);
+
+  if (!authorized) return null;
+
+  return (
+    <AppRepository>
+      <TimelineData />
+    </AppRepository>
+  );
+}
+
+function TimelineData() {
+  const { data: pregnancy, isLoading } = useActivePregnancy();
+  if (isLoading) return null;
+  return <TimelineInner pregnancyId={pregnancy?.id ?? null} />;
+}
+
+function TimelineInner({ pregnancyId }: { pregnancyId: string | null }) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
-  const t = useT();
+  const { data: v2entries } = useEntries(
+    { pregnancyId: pregnancyId ?? "" },
+    { enabled: !!pregnancyId },
+  );
+  const softDelete = useSoftDeleteEntry();
 
   useEffect(() => {
     trackEvent("timeline_opened");
   }, []);
+
+  const entries = useMemo<Entry[]>(
+    () => (v2entries ?? []).map(storeEntryFromV2).filter((e): e is Entry => e !== null),
+    [v2entries],
+  );
 
   const grouped = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -205,46 +244,18 @@ function TimelinePage() {
                             {s.detail && (
                               <p className="text-sm text-ink-soft mt-1 break-words">{s.detail}</p>
                             )}
-                            {e.type === "photo" &&
-                              (e.dataUrl.startsWith("data:image/") ? (
-                                <img
-                                  src={e.dataUrl}
-                                  alt={e.tag}
-                                  className="mt-3 w-full rounded-xl border border-border"
-                                />
-                              ) : (
-                                <div className="mt-3 w-full min-h-28 rounded-xl border border-border bg-white grid place-items-center text-sm text-ink-soft">
-                                  <span className="inline-flex items-center gap-2">
-                                    <FileUp className="size-4" /> {t("upload.ready")}
-                                  </span>
-                                </div>
-                              ))}
-                            {e.type === "person" &&
-                              e.dataUrl &&
-                              (e.dataUrl.startsWith("data:image/") ? (
-                                <img
-                                  src={e.dataUrl}
-                                  alt=""
-                                  className="mt-3 w-full rounded-xl border border-border"
-                                />
-                              ) : (
-                                <div className="mt-3 w-full min-h-28 rounded-xl border border-border bg-white grid place-items-center text-sm text-ink-soft">
-                                  <span className="inline-flex items-center gap-2">
-                                    <FileUp className="size-4" /> {t("upload.ready")}
-                                  </span>
-                                </div>
-                              ))}
+                            {e.type === "photo" && (
+                              <div className="mt-3 w-full min-h-28 rounded-xl border border-border bg-white grid place-items-center text-sm text-ink-soft">
+                                <span className="inline-flex items-center gap-2">
+                                  <FileUp className="size-4" /> {t("upload.ready")}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="mt-3 pt-3 border-t border-border flex gap-3">
                           <button
-                            onClick={() => setEditing(e)}
-                            className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft"
-                          >
-                            <Pencil className="size-3.5" /> {t("common.edit")}
-                          </button>
-                          <button
-                            onClick={() => store.softDelete(e.id)}
+                            onClick={() => softDelete.mutate(e.id)}
                             className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-destructive"
                           >
                             <Trash2 className="size-3.5" /> {t("common.delete")}
@@ -260,7 +271,6 @@ function TimelinePage() {
         </div>
         <TesterFeedbackButton />
       </AppShell>
-      {editing && <EntryEditDialog entry={editing} onClose={() => setEditing(null)} />}
     </>
   );
 }

@@ -1,47 +1,79 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
-import { store, useAppState } from "@/lib/bumpnotes/store";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
-import { useTester } from "@/lib/bumpnotes/tester";
+import { useTester, isTester } from "@/lib/bumpnotes/tester";
 import { Onboarding } from "@/components/bumpnotes/Onboarding";
 import type { Profile } from "@/lib/bumpnotes/types";
 import { useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
+import { AppRepository } from "@/lib/data/capture";
+import { useActivePregnancy, useCreatePregnancy, useUpsertProfile } from "@/lib/data/hooks";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({ meta: [{ title: "Get started — BumpNotes" }] }),
   component: OnboardingRoute,
 });
 
+// V2: onboarding writes to the repository, which needs an authorized session
+// (tester on-device, or signed-in). Anon visitors sign up first (identity flow).
 function OnboardingRoute() {
   const navigate = useNavigate();
-  const { profile } = useAppState();
   const { userId } = useSyncSnapshot();
   const tester = useTester();
-
-  // If user already onboarded and authenticated/tester, send straight to dashboard.
-  useEffect(() => {
-    if (profile?.onboarded && (userId || tester)) navigate({ to: "/", replace: true });
-  }, [profile, userId, tester, navigate]);
+  const authorized = !!userId || tester;
 
   useEffect(() => {
-    if (!profile?.onboarded) trackEvent("onboarding_started");
-  }, [profile?.onboarded]);
+    const authed = !!userId || isTester();
+    if (!authed) navigate({ to: "/auth", replace: true });
+  }, [userId, navigate]);
 
-  function handleDone(p: Profile) {
-    store.setProfile({ ...p, onboarded: true });
+  useEffect(() => {
+    trackEvent("onboarding_started");
+  }, []);
+
+  if (!authorized) return null;
+
+  return (
+    <AppRepository>
+      <OnboardingInner />
+    </AppRepository>
+  );
+}
+
+function OnboardingInner() {
+  const navigate = useNavigate();
+  const { data: pregnancy, isLoading } = useActivePregnancy();
+  const upsertProfile = useUpsertProfile();
+  const createPregnancy = useCreatePregnancy();
+
+  // Already has an active pregnancy -> straight to the dashboard.
+  useEffect(() => {
+    if (!isLoading && pregnancy) navigate({ to: "/", replace: true });
+  }, [isLoading, pregnancy, navigate]);
+
+  // D3: split the old single "profile" into a Profile (identity) + an active
+  // Pregnancy (the due date + nickname). displayName <- userName; the due date
+  // and nickname live on the pregnancy.
+  async function handleDone(p: Profile) {
+    await upsertProfile.mutateAsync({ displayName: p.userName || null });
+    await createPregnancy.mutateAsync({
+      edd: p.dueDateISO.slice(0, 10),
+      nickname: p.babyNickname ? p.babyNickname : null,
+    });
     trackEvent("onboarding_completed");
-    if (tester || userId) {
-      navigate({ to: "/", replace: true });
-    } else {
-      navigate({ to: "/auth", replace: true });
-    }
+    navigate({ to: "/", replace: true });
   }
+
+  if (isLoading || pregnancy) return null;
 
   return (
     <>
       <Toaster position="top-center" />
-      <Onboarding onDone={handleDone} />
+      <Onboarding
+        onDone={(p) => {
+          void handleDone(p);
+        }}
+      />
     </>
   );
 }
