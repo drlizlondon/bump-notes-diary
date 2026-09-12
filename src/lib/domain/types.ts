@@ -141,10 +141,26 @@ export interface Entry {
  * backfill maps cleanly; the API zod-validates per type on write.
  */
 export type EntryPayload =
-  | { symptom: string; severity?: number; quantifier?: string; clarification?: string; location?: string; note?: string }
+  | {
+      symptom: string;
+      severity?: number;
+      quantifier?: string;
+      clarification?: string;
+      location?: string;
+      note?: string;
+    }
   | { text: string; context?: string; answered?: boolean } // question
   | { kind: string; whoSeen?: string; discussed?: string; advice?: string; followUp?: string } // appointment
-  | { kind: string; customLabel?: string; systolic?: number; diastolic?: number; pulse?: number; value?: number; unit?: string; note?: string } // measurement
+  | {
+      kind: string;
+      customLabel?: string;
+      systolic?: number;
+      diastolic?: number;
+      pulse?: number;
+      value?: number;
+      unit?: string;
+      note?: string;
+    } // measurement
   | { tag: string; note?: string } // upload (binary lives in attachments)
   | { text: string } // note
   | { feeling: string; note?: string }; // feeling (visibility always 'private')
