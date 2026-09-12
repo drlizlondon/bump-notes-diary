@@ -55,6 +55,16 @@ export function refreshNativeSession(): void {
   void loadNative();
 }
 
+/**
+ * Set the session directly from a just-completed native sign-in result, rather
+ * than re-querying getNativeAccount() (which can briefly return null right after
+ * sign-up). The gates react immediately; a later reload rehydrates via loadNative.
+ * Pass null on sign-out.
+ */
+export function setNativeSession(account: NativeAccount | null): void {
+  setSnap({ account, checked: true });
+}
+
 function subscribeNative(cb: () => void): () => void {
   listeners.add(cb);
   if (!snap.checked) {

@@ -44,11 +44,16 @@ type CodeStep = Extract<NativeSignInResult, { status: "code_required" }>;
 type ResetCodeStep = Extract<NativeResetResult, { status: "code_required" }>;
 type ResetPwStep = Extract<NativeResetPwStep, { status: "password_required" }>;
 
-export function EntraNativeSignIn({ onSignedIn }: { onSignedIn?: () => void }) {
+export function EntraNativeSignIn({
+  onSignedIn,
+}: {
+  onSignedIn?: (account: NativeAccount) => void;
+}) {
   const [account, setAccount] = useState<NativeAccount | null>(null);
   const [checked, setChecked] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -84,7 +89,7 @@ export function EntraNativeSignIn({ onSignedIn }: { onSignedIn?: () => void }) {
       setCodeStep(null);
       setCode("");
       void profile.refetch();
-      onSignedIn?.();
+      onSignedIn?.(result.account);
       return;
     }
     if (result.status === "code_required") {
@@ -102,6 +107,16 @@ export function EntraNativeSignIn({ onSignedIn }: { onSignedIn?: () => void }) {
   async function onPasswordSignIn(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) return;
+    if (mode === "signup") {
+      if (password.length < 8) {
+        setErr("Password must be at least 8 characters.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErr("Those passwords don't match.");
+        return;
+      }
+    }
     setErr(null);
     setNotice(null);
     setBusy(true);
@@ -309,6 +324,21 @@ export function EntraNativeSignIn({ onSignedIn }: { onSignedIn?: () => void }) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
               />
+              {mode === "signup" && (
+                <>
+                  <p className="text-[11px] text-ink-soft -mt-1 px-1">
+                    At least 8 characters, with a mix of letters, numbers and symbols.
+                  </p>
+                  <PasswordInput
+                    autoComplete="new-password"
+                    required
+                    minLength={8}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm password"
+                  />
+                </>
+              )}
               <button
                 disabled={busy}
                 type="submit"
@@ -350,6 +380,7 @@ export function EntraNativeSignIn({ onSignedIn }: { onSignedIn?: () => void }) {
               onClick={() => {
                 setErr(null);
                 setNotice(null);
+                setConfirmPassword("");
                 setMode(mode === "signup" ? "signin" : "signup");
               }}
               className="block mx-auto text-xs text-ink-soft underline underline-offset-2"

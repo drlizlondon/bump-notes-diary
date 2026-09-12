@@ -9,8 +9,7 @@ import { trackEvent } from "@/lib/analytics";
 import { buildAuthCallbackUrl } from "@/lib/supabase-auth-redirect";
 import { ENTRA_NATIVE_ENABLED } from "@/lib/azure/entra-native";
 import { EntraNativeSignIn } from "@/routes/entra";
-import { useAppSession } from "@/lib/data/session";
-import { refreshNativeSession } from "@/lib/data/session";
+import { useAppSession, setNativeSession } from "@/lib/data/session";
 
 type Search = { redirect?: string; admin?: string };
 
@@ -42,8 +41,8 @@ function NativeSignInPage() {
 
   return (
     <EntraNativeSignIn
-      onSignedIn={() => {
-        refreshNativeSession();
+      onSignedIn={(account) => {
+        setNativeSession(account);
         navigate({ to: redirectTo, replace: true });
       }}
     />

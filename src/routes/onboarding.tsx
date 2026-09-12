@@ -24,7 +24,9 @@ function OnboardingRoute() {
 
   useEffect(() => {
     const authed = !!userId || isTester();
-    if (!authed) navigate({ to: "/auth", replace: true });
+    // Signed-out -> the sign-in front door (native or Supabase per the flag).
+    // NOT /auth, whose own "not onboarded -> /onboarding" redirect would loop.
+    if (!authed) navigate({ to: "/signin", replace: true });
   }, [userId, navigate]);
 
   useEffect(() => {
