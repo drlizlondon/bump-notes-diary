@@ -30,7 +30,13 @@
 //     metadata; the panel resolves the binary via `getAttachmentUrl` separately.
 
 import type { CreateEntryInput } from "./repository";
-import type { Entry as V2Entry, EntryType as V2EntryType, EntryVisibility } from "../domain/types";
+import type {
+  Entry as V2Entry,
+  EntryType as V2EntryType,
+  EntryVisibility,
+  Profile as V2Profile,
+  Pregnancy,
+} from "../domain/types";
 
 // The V2 `EntryPayload` union members are bare shapes with overlapping fields
 // (several carry `text`, `note`, `kind`), so `Extract<EntryPayload, …>` can match
@@ -64,6 +70,7 @@ type ReadPayload = {
 };
 import type {
   Entry as StoreEntry,
+  Profile as StoreProfile,
   MeasurementKind,
   SymptomEntry,
   QuestionEntry,
@@ -184,6 +191,28 @@ export function storeEntryFromV2(e: V2Entry): StoreEntry | null {
 /** Default visibility per type (feeling is always private — ARCH/V2 rule). */
 export function defaultVisibilityFor(type: V2EntryType): EntryVisibility {
   return type === "feeling" ? "private" : "personal";
+}
+
+/**
+ * V2 `Profile` + active `Pregnancy` -> the old store `Profile` shape the
+ * HomeHeader / onboarding gate render. Encodes D3: the due date lives on the
+ * Pregnancy in V2, name/nickname split across Profile and Pregnancy. `onboarded`
+ * is true when an active pregnancy exists (the V1 flag has no V2 column — presence
+ * of the pregnancy is the source of truth). Care contacts (midwife/GP/…) come
+ * from People (D2) and are filled by the surface where listPeople() is in scope,
+ * not here — this returns the identity/due-date fields the header needs.
+ */
+export function storeProfileFromV2(
+  profile: V2Profile | null,
+  pregnancy: Pregnancy | null,
+): StoreProfile | null {
+  if (!profile && !pregnancy) return null;
+  return {
+    userName: profile?.displayName ?? profile?.preferredName ?? "",
+    babyNickname: pregnancy?.nickname ?? "",
+    dueDateISO: pregnancy?.edd ?? "",
+    onboarded: !!pregnancy,
+  };
 }
 
 /**
