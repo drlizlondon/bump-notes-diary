@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { FlaskConical, NotebookPen, Sparkles, FileText, ArrowRight } from "lucide-react";
-import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
-import { useTester } from "@/lib/bumpnotes/tester";
-import { useAppState } from "@/lib/bumpnotes/store";
+import { isTester } from "@/lib/bumpnotes/tester";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 import { LogoBadge } from "@/components/bumpnotes/Logo";
 import { TesterPasswordModal } from "@/components/bumpnotes/TesterPasswordModal";
@@ -35,15 +33,12 @@ export const Route = createFileRoute("/tester")({
 
 function Tester() {
   const navigate = useNavigate();
-  const { userId } = useSyncSnapshot();
-  const { profile } = useAppState();
-  const tester = useTester();
   const [showModal, setShowModal] = useState(false);
 
-  // If they already have a tester session and have onboarded, go to the app.
+  // Already a tester -> straight into the app (which routes to onboarding or home).
   useEffect(() => {
-    if (!userId && tester && profile?.onboarded) navigate({ to: "/", replace: true });
-  }, [userId, tester, profile, navigate]);
+    if (isTester()) navigate({ to: "/", replace: true });
+  }, [navigate]);
 
   return (
     <>

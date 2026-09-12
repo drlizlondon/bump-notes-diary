@@ -145,6 +145,21 @@ export class LocalRepository implements Repository {
     this.write("pregnancies", list);
     return p;
   }
+  async updatePregnancy(
+    id: string,
+    patch: Partial<Pick<Pregnancy, "edd" | "lmp" | "nickname" | "birthPlace">>,
+  ): Promise<Pregnancy> {
+    const list = this.read<Pregnancy[]>("pregnancies", []);
+    const p = list.find((x) => x.id === id);
+    if (!p) throw new Error("pregnancy not found");
+    if (patch.edd !== undefined) p.edd = patch.edd;
+    if (patch.lmp !== undefined) p.lmp = patch.lmp;
+    if (patch.nickname !== undefined) p.nickname = patch.nickname;
+    if (patch.birthPlace !== undefined) p.birthPlace = patch.birthPlace;
+    p.updatedAt = now();
+    this.write("pregnancies", list);
+    return p;
+  }
 
   // --- Entries ---
   async listEntries(params: ListEntriesParams): Promise<Entry[]> {

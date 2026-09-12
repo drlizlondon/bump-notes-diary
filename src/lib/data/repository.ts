@@ -62,6 +62,12 @@ export interface Repository {
   createPregnancy(
     input: Pick<Pregnancy, "edd"> & Partial<Pick<Pregnancy, "lmp" | "nickname" | "birthPlace">>,
   ): Promise<Pregnancy>;
+  // Correct an existing pregnancy episode's due date / nickname / birth place.
+  // Not an entry (the append-only ruling covers health entries, not the episode).
+  updatePregnancy(
+    id: string,
+    patch: Partial<Pick<Pregnancy, "edd" | "lmp" | "nickname" | "birthPlace">>,
+  ): Promise<Pregnancy>;
 
   // --- Entries (the core journal) ---
   listEntries(params: ListEntriesParams): Promise<Entry[]>;

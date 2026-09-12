@@ -14,6 +14,7 @@ import {
   createPregnancy as createPregnancyFn,
   getActivePregnancy as getActivePregnancyFn,
   listPregnancies as listPregnanciesFn,
+  updatePregnancy as updatePregnancyFn,
 } from "../azure/pregnancy.functions";
 import {
   createEntry as createEntryFn,
@@ -92,6 +93,12 @@ export class ApiRepository implements Repository {
         birthPlace: input.birthPlace,
       },
     });
+  }
+  async updatePregnancy(
+    id: string,
+    patch: Partial<Pick<Pregnancy, "edd" | "lmp" | "nickname" | "birthPlace">>,
+  ): Promise<Pregnancy> {
+    return updatePregnancyFn({ data: { id, ...patch } });
   }
 
   // --- Entries ---

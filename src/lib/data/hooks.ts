@@ -80,6 +80,24 @@ export function useCreatePregnancy() {
   });
 }
 
+export function useUpdatePregnancy() {
+  const { repository, mode } = useRepository();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (
+      args: {
+        id: string;
+      } & Partial<Pick<Pregnancy, "edd" | "lmp" | "nickname" | "birthPlace">>,
+    ) => {
+      const { id, ...patch } = args;
+      return repository.updatePregnancy(id, patch);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: keys.pregnancies(mode) });
+    },
+  });
+}
+
 // --- Entries ---------------------------------------------------------------
 export function useEntries(params: ListEntriesParams, opts?: { enabled?: boolean }) {
   const { repository, mode } = useRepository();

@@ -3,8 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { ArrowRight, Lock } from "lucide-react";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
-import { useTester } from "@/lib/bumpnotes/tester";
-import { useAppState } from "@/lib/bumpnotes/store";
+import { isTester } from "@/lib/bumpnotes/tester";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 import { PregnancySummaryPreview } from "@/components/bumpnotes/PregnancySummaryPreview";
 import { buildDemoSummary } from "@/lib/bumpnotes/demo-summary";
@@ -48,19 +47,12 @@ export const Route = createFileRoute("/welcome")({
 function Welcome() {
   const navigate = useNavigate();
   const { userId } = useSyncSnapshot();
-  const { profile } = useAppState();
-  const tester = useTester();
 
+  // Authorized visitors go to the app root, which routes them to their dashboard
+  // or onboarding based on whether they have an active pregnancy (repository).
   useEffect(() => {
-    if (userId) {
-      if (profile?.onboarded) navigate({ to: "/", replace: true });
-      else navigate({ to: "/onboarding", replace: true });
-    }
-  }, [userId, profile, navigate]);
-
-  useEffect(() => {
-    if (!userId && tester && profile?.onboarded) navigate({ to: "/", replace: true });
-  }, [userId, tester, profile, navigate]);
+    if (userId || isTester()) navigate({ to: "/", replace: true });
+  }, [userId, navigate]);
 
   return (
     <>

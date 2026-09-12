@@ -1,10 +1,13 @@
 import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButton";
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
-import { store, useAppState } from "@/lib/bumpnotes/store";
 import { AppShell, PageHeader, PregnancySummaryAside } from "@/components/bumpnotes/AppShell";
-import { EntryEditDialog } from "@/components/bumpnotes/EntryEditDialog";
+import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
+import { useTester, isTester } from "@/lib/bumpnotes/tester";
+import { AppRepository } from "@/lib/data/capture";
+import { useActivePregnancy, useEntries, useProfile, useSoftDeleteEntry } from "@/lib/data/hooks";
+import { storeEntryFromV2, storeProfileFromV2 } from "@/lib/data/entry-adapter";
 import {
   formatGestation,
   formatUKDate,
@@ -73,7 +76,36 @@ type Step = 1 | 2 | 3;
 type ReviewTarget = { title: string; entryIds: string[] };
 
 function SummaryPage() {
-  const { profile, entries } = useAppState();
+  const { userId } = useSyncSnapshot();
+  const tester = useTester();
+  const navigate = useNavigate();
+  const authorized = !!userId || tester;
+
+  useEffect(() => {
+    const authed = !!userId || isTester();
+    if (!authed) navigate({ to: "/welcome", replace: true });
+  }, [userId, navigate]);
+
+  if (!authorized) return null;
+  return (
+    <AppRepository>
+      <SummaryInner />
+    </AppRepository>
+  );
+}
+
+function SummaryInner() {
+  const { data: profileV2 } = useProfile();
+  const { data: pregnancy } = useActivePregnancy();
+  const { data: v2entries } = useEntries(
+    { pregnancyId: pregnancy?.id ?? "" },
+    { enabled: !!pregnancy?.id },
+  );
+  const profile = storeProfileFromV2(profileV2 ?? null, pregnancy ?? null);
+  const entries = useMemo<Entry[]>(
+    () => (v2entries ?? []).map(storeEntryFromV2).filter((e): e is Entry => e !== null),
+    [v2entries],
+  );
   const t = useT();
   const [step, setStep] = useState<Step>(1);
   const [selectedWeeks, setSelectedWeeks] = useState<Set<number>>(new Set());
@@ -554,7 +586,7 @@ function ReviewRecordsModal({
   const matching = entries
     .filter((entry) => target.entryIds.includes(entry.id))
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  const [editing, setEditing] = useState<Entry | null>(null);
+  const softDelete = useSoftDeleteEntry();
   return (
     <div className="fixed inset-0 z-50 bg-ink/40 grid place-items-end md:place-items-center px-4 py-6">
       <div className="surface-card w-full max-w-[620px] max-h-[86vh] overflow-hidden shadow-xl">
@@ -583,14 +615,7 @@ function ReviewRecordsModal({
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => setEditing(entry)}
-                      className="rounded-full border border-border bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => store.softDelete(entry.id)}
+                      onClick={() => softDelete.mutate(entry.id)}
                       className="rounded-full border border-destructive/30 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-destructive"
                     >
                       Delete
@@ -610,9 +635,6 @@ function ReviewRecordsModal({
           </button>
         </div>
       </div>
-      {editing && (
-        <EntryEditDialog entry={editing} onClose={() => setEditing(null)} overlay="absolute" />
-      )}
     </div>
   );
 }

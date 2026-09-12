@@ -102,3 +102,66 @@ export const createPregnancy = createServerFn({ method: "POST" })
     );
     return mapPregnancyRow(res.rows[0]);
   });
+
+const updatePregnancySchema = z
+  .object({
+    id: z.string().uuid(),
+    edd: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "edd must be YYYY-MM-DD")
+      .optional(),
+    lmp: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "lmp must be YYYY-MM-DD")
+      .nullish(),
+    nickname: z.string().max(200).nullish(),
+    birthPlace: z.string().max(200).nullish(),
+  })
+  .strict();
+
+type UpdatePregnancyInput = z.infer<typeof updatePregnancySchema>;
+
+/**
+ * Correct an existing pregnancy episode (owner-scoped): due date, nickname,
+ * birth place. Only the provided fields change. Not a health entry, so it is a
+ * normal in-place update (the append-only rule applies to `entries`, not this).
+ */
+export const updatePregnancy = createServerFn({ method: "POST" })
+  .middleware([requireApiAuth])
+  .inputValidator((data: UpdatePregnancyInput) => updatePregnancySchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const pool = getAzurePgPool();
+    const sets: string[] = [];
+    const params: unknown[] = [data.id, context.userId];
+    if (data.edd !== undefined) {
+      params.push(data.edd);
+      sets.push(`edd = $${params.length}::date`);
+    }
+    if (data.lmp !== undefined) {
+      params.push(data.lmp);
+      sets.push(`lmp = $${params.length}::date`);
+    }
+    if (data.nickname !== undefined) {
+      params.push(data.nickname);
+      sets.push(`nickname = $${params.length}`);
+    }
+    if (data.birthPlace !== undefined) {
+      params.push(data.birthPlace);
+      sets.push(`birth_place = $${params.length}`);
+    }
+    if (sets.length === 0) {
+      const cur = await pool.query<PregnancyRow>(
+        `SELECT ${PREGNANCY_COLUMNS} FROM pregnancies WHERE id = $1 AND user_id = $2`,
+        [data.id, context.userId],
+      );
+      if (!cur.rows[0]) throw new Error("pregnancy not found");
+      return mapPregnancyRow(cur.rows[0]);
+    }
+    const res = await pool.query<PregnancyRow>(
+      `UPDATE pregnancies SET ${sets.join(", ")} WHERE id = $1 AND user_id = $2
+       RETURNING ${PREGNANCY_COLUMNS}`,
+      params,
+    );
+    if (!res.rows[0]) throw new Error("pregnancy not found");
+    return mapPregnancyRow(res.rows[0]);
+  });
