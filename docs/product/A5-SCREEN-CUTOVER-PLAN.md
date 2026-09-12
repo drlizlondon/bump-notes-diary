@@ -31,19 +31,36 @@ decisions below are made.**
 
 ## Decisions needed from Liz (blocking the affected screens only)
 
-**D1 — The labour subsystem. This is the big one.** The app's labour tools
-(contraction timer, hospital-bag checklist, labour episodes, birth-preferences
-`labourPlan`, triage/labour-ward phone numbers) have **no table in the V2 Azure
-schema**. Options:
+**D1 — The labour subsystem. RESOLVED (founder ruling, 12 Sep 2026):**
+"We won't have labour on the system but archive it so we can expand to it
+very easily." This is stronger than option (a) below — labour is not just
+deferred, it is permanently excluded from the Azure V2 launch and its V1
+code is archived. Full detail, including exactly what "on the system" means
+layer by layer and the re-enable recipe: `docs/product/LABOUR-ARCHIVE.md`.
+In short: the Azure schema (migrations 001/002) already has zero labour
+presence (never added), the V1 legacy types/model now live in
+`src/lib/bumpnotes/archive/labour.ts` (a clearly-labelled, documented
+boundary), and any labour data in an old user's blob will flow untouched
+into `bumpnotes_state_archive` at cutover rather than being interpreted
+into any V2 table. **This unblocks A5 — D1 is no longer an open question.**
+
+<details>
+<summary>Original options considered (12 Sep 2026, superseded by the ruling above)</summary>
+
+The app's labour tools (contraction timer, hospital-bag checklist, labour
+episodes, birth-preferences `labourPlan`, triage/labour-ward phone numbers)
+have **no table in the V2 Azure schema**. Options considered:
   - **(a) Out of scope for the Azure V2 launch** — keep labour features local-only
     for now (they stay on-device, not synced), cut everything else to Azure, and
     add labour tables later. Fastest path to "core record on Azure".
   - **(b) Extend the schema now** — add `labour_plan` / `contractions` / `bag_items`
     tables (a new migration 003) before cutting the labour/pack screens.
   - **(c) Drop the labour features** for V2 entirely.
-  Recommendation: **(a)** — launch the core pregnancy record on Azure, keep labour
-  on-device, schema-extend later. It unblocks the whole cutover without a rushed
-  schema decision. Needs your yes.
+  The founder ruling above is closest to (a), made explicit and permanent,
+  with the archive location for the code/model now built and documented
+  rather than left implicit.
+
+</details>
 
 **D2 — People.** Old "person" entries AND the profile's inline care contacts
 (midwife/GP/consultant/hospital/birth partner) both become **People** rows.
@@ -73,7 +90,10 @@ under the panels rather than rewriting them. Then, surface by surface, behind th
 4. **Capture panels (writes)** → `useCreateEntry`/`useUpsertPerson`/attachments —
    the clean types first; `person`/`photo` per D2.
 5. **Settings + profile** → `useProfile`/`usePreferences`/`useHealthItems` + People.
-6. **Labour/pack screens** → per D1 (either keep local, or after a 003 migration).
+6. **Labour/pack screens** → per D1 (resolved): no cutover work needed —
+   labour never gets a V2 home. `pack.tsx`'s existing `isLabourEntry` filter
+   (now `isArchivedLabourEntryType` from `archive/labour.ts`) already keeps
+   archived entries out of the Pregnancy Summary; nothing else to build.
 7. Delete the old `store`/`sync`/`useAppState` + `@supabase/*` reads once every
    surface is off them (plan 3.12).
 
