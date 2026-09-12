@@ -20,6 +20,7 @@ import {
   type PregnancySummarySection,
 } from "@/lib/bumpnotes/pregnancy-summary";
 import type { Entry, EntryType, Profile } from "@/lib/bumpnotes/types";
+import { isArchivedLabourEntryType } from "@/lib/bumpnotes/archive/labour";
 import { downloadSummaryPdf } from "@/lib/bumpnotes/pdf";
 import { PregnancySummaryPreview } from "@/components/bumpnotes/PregnancySummaryPreview";
 
@@ -62,9 +63,10 @@ function defaultIncluded(): Record<EntryType, boolean> {
   };
 }
 
-// Labour entry types survive in old blobs but have no UI; never include them.
+// ARCHIVED labour entry types survive in old blobs but have no UI; never
+// include them. See src/lib/bumpnotes/archive/labour.ts.
 function isLabourEntry(entry: Entry): boolean {
-  return entry.type === "labour" || entry.type === "labour_event" || entry.type === "contraction";
+  return isArchivedLabourEntryType(entry.type);
 }
 
 type Step = 1 | 2 | 3;

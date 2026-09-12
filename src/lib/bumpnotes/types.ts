@@ -1,3 +1,20 @@
+// ARCHIVED (founder ruling, 12 Sep 2026): labour/contraction is not part of
+// the Azure V2 launch — see src/lib/bumpnotes/archive/labour.ts for why these
+// three EntryType members and the labour-shaped fields below still exist
+// (back-compat with old blobs only; no screen creates them any more).
+import type { ArchivedLabourEntry, LabourPlan as ArchivedLabourPlan } from "./archive/labour";
+export type {
+  ArchivedLabourEntry,
+  ArchivedLabourEntryType,
+  LabourEntry,
+  LabourEventEntry,
+  ContractionEntry,
+  BagItem,
+  LabourEpisode,
+  LabourPlan,
+} from "./archive/labour";
+export { ARCHIVED_LABOUR_ENTRY_TYPES, isArchivedLabourEntryType } from "./archive/labour";
+
 export type EntryType =
   | "symptom"
   | "question"
@@ -5,9 +22,9 @@ export type EntryType =
   | "person"
   | "measurement"
   | "photo"
-  | "labour" // legacy (kept for back-compat)
-  | "labour_event"
-  | "contraction"
+  | "labour" // ARCHIVED, legacy (kept for back-compat) — see archive/labour.ts
+  | "labour_event" // ARCHIVED, legacy — see archive/labour.ts
+  | "contraction" // ARCHIVED, legacy — see archive/labour.ts
   | "feeling"
   | "note"
   | "concern"; // legacy
@@ -88,26 +105,6 @@ export interface PhotoEntry extends BaseEntry {
   note?: string;
 }
 
-export interface LabourEntry extends BaseEntry {
-  type: "labour";
-  event: string;
-  note?: string;
-}
-
-export interface LabourEventEntry extends BaseEntry {
-  type: "labour_event";
-  event: string;
-  note?: string;
-}
-
-export interface ContractionEntry extends BaseEntry {
-  type: "contraction";
-  startISO: string;
-  endISO: string;
-  durationSec: number;
-  note?: string;
-}
-
 export interface FeelingEntry extends BaseEntry {
   type: "feeling";
   feeling: string;
@@ -133,9 +130,7 @@ export type Entry =
   | PersonEntry
   | MeasurementEntry
   | PhotoEntry
-  | LabourEntry
-  | LabourEventEntry
-  | ContractionEntry
+  | ArchivedLabourEntry
   | FeelingEntry
   | NoteEntry
   | ConcernEntry;
@@ -149,42 +144,17 @@ export interface Profile {
   consultant?: string;
   gp?: string;
   birthPartner?: string;
+  // ARCHIVED (founder ruling, 12 Sep 2026): not part of the Azure V2 Profile
+  // (src/lib/domain/types.ts) — kept here only so the current app keeps
+  // reading/showing pre-existing values; see archive/labour.ts.
   triagePhone?: string;
   labourWardPhone?: string;
   onboarded: boolean;
 }
 
-export interface BagItem {
-  id: string;
-  label: string;
-  packed: boolean;
-}
-
-export interface LabourEpisode {
-  id: string;
-  startISO: string;
-  endISO?: string;
-  outcome?: "baby" | "settled" | "other";
-  outcomeNote?: string;
-}
-
-export interface LabourPlan {
-  preferences?: string;
-  painRelief?: string;
-  partnerNotes?: string;
-  notes?: string;
-  bag: BagItem[];
-  infoHospital?: string;
-  infoContacts?: string;
-  infoParking?: string;
-  infoChildcare?: string;
-  infoNotes?: string;
-  recordingStartISO?: string; // present when actively recording labour
-  episodes?: LabourEpisode[]; // completed and in-progress labour episodes
-}
-
 export interface AppState {
   profile: Profile | null;
   entries: Entry[];
-  labourPlan?: LabourPlan;
+  // ARCHIVED (founder ruling, 12 Sep 2026): see archive/labour.ts.
+  labourPlan?: ArchivedLabourPlan;
 }

@@ -10,6 +10,7 @@ import { formatUKDate, formatUKTime } from "@/lib/bumpnotes/gestation";
 import { summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
 import { useT } from "@/lib/bumpnotes/i18n";
 import type { Entry } from "@/lib/bumpnotes/types";
+import { isArchivedLabourEntryType } from "@/lib/bumpnotes/archive/labour";
 import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/timeline")({
@@ -37,9 +38,6 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "appointment", label: "Appointments" },
   { key: "baby", label: "Baby" },
 ];
-
-// Labour entry types survive in old blobs but have no UI; never render them.
-const HIDDEN_TYPES = new Set(["labour", "labour_event", "contraction"]);
 
 function matchesFilter(e: Entry, f: FilterKey): boolean {
   if (f === "all") return true;
@@ -97,7 +95,7 @@ function TimelinePage() {
 
     const live = entries.filter((e) => {
       if (e.deletedAt) return false;
-      if (HIDDEN_TYPES.has(e.type)) return false;
+      if (isArchivedLabourEntryType(e.type)) return false;
       if (!matchesFilter(e, filter)) return false;
       if (q && !entryText(e).includes(q)) return false;
       return true;
