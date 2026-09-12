@@ -17,7 +17,7 @@
 // repository-backed implementation.
 
 import { createContext, useContext, useMemo, type ReactNode } from "react";
-import type { PersonRole } from "../domain/types";
+import type { Entry as V2Entry, PersonRole } from "../domain/types";
 import { gestationFromDueDate } from "../bumpnotes/gestation";
 import { prepareImageForUpload } from "./attachments";
 import { createInputFromCapture, type CaptureDraft } from "./entry-adapter";
@@ -58,6 +58,13 @@ export interface CaptureApi {
   addEntry(draft: CaptureDraft): Promise<{ id: string }>;
   /** Undo a just-created entry (repository: soft-delete — append-only). */
   removeEntry(id: string): Promise<void>;
+  /**
+   * Amend an entry's free-text (append-a-correction, per the append-only ruling):
+   * writes a corrected copy preserving all metadata, then soft-deletes the
+   * original — nothing is mutated in place, the original is retained for the
+   * record. Returns the new entry id.
+   */
+  amendEntry(original: V2Entry, editableText: string): Promise<{ id: string }>;
   /** Photo capture: upload entry + EXIF-stripped blob attachment (A3). */
   addPhoto(input: PhotoCapture): Promise<{ id: string }>;
   /** "Who I saw": a People row (D2) + an appointment entry referencing it. */
@@ -85,11 +92,34 @@ const notInRepositoryMode = (): never => {
   throw new Error("capture: repository method called while source is 'store'");
 };
 
+/** The free-text field amended per entry type (mirrors EntryEditDialog). */
+function applyEditableText(
+  type: V2Entry["type"],
+  payload: Record<string, unknown>,
+  text: string,
+): Record<string, unknown> {
+  const next = { ...payload };
+  switch (type) {
+    case "note":
+    case "question":
+      next.text = text;
+      break;
+    case "appointment":
+      next.discussed = text || undefined;
+      break;
+    default: // symptom, measurement, upload, feeling
+      next.note = text || undefined;
+      break;
+  }
+  return next;
+}
+
 const storeCaptureApi: CaptureApi = {
   source: "store",
   ready: true,
   addEntry: notInRepositoryMode,
   removeEntry: notInRepositoryMode,
+  amendEntry: notInRepositoryMode,
   addPhoto: notInRepositoryMode,
   addPersonVisit: notInRepositoryMode,
 };
@@ -138,6 +168,26 @@ export function RepositoryCaptureProvider({ children }: { children: ReactNode })
 
       async removeEntry(id) {
         await softDelete.mutateAsync(id);
+      },
+
+      async amendEntry(original, editableText) {
+        const payload = applyEditableText(
+          original.type,
+          original.payload as Record<string, unknown>,
+          editableText,
+        );
+        const created = await createEntry.mutateAsync({
+          pregnancyId: original.pregnancyId,
+          personId: original.personId,
+          type: original.type,
+          occurredAt: original.occurredAt,
+          gestationWeeks: original.gestationWeeks,
+          gestationDays: original.gestationDays,
+          visibility: original.visibility,
+          payload: payload as never,
+        });
+        await softDelete.mutateAsync(original.id);
+        return { id: created.id };
       },
 
       async addPhoto({ tag, note, file }) {

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { store } from "@/lib/bumpnotes/store";
 import type { Entry } from "@/lib/bumpnotes/types";
 import { useT } from "@/lib/bumpnotes/i18n";
 
@@ -28,10 +27,13 @@ export function getEditableText(entry: Entry): string {
 
 export function EntryEditDialog({
   entry,
+  onSave,
   onClose,
   overlay = "fixed",
 }: {
   entry: Entry;
+  /** Called with the amended free-text. The caller persists it (append-a-correction). */
+  onSave: (text: string) => void;
   onClose: () => void;
   overlay?: "fixed" | "absolute";
 }) {
@@ -39,28 +41,7 @@ export function EntryEditDialog({
   const [text, setText] = useState(() => getEditableText(entry));
 
   function save() {
-    const patch: Partial<Entry> = {};
-    switch (entry.type) {
-      case "note":
-      case "question":
-        (patch as { text: string }).text = text;
-        break;
-      case "concern":
-      case "symptom":
-      case "feeling":
-      case "labour":
-      case "labour_event":
-      case "contraction":
-      case "photo":
-      case "measurement":
-        (patch as { note?: string }).note = text || undefined;
-        break;
-      case "appointment":
-      case "person":
-        (patch as { discussed?: string }).discussed = text || undefined;
-        break;
-    }
-    store.updateEntry(entry.id, patch);
+    onSave(text);
     onClose();
   }
 

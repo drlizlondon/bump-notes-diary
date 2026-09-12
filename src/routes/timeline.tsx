@@ -2,8 +2,9 @@ import { TesterFeedbackButton } from "@/components/bumpnotes/TesterFeedbackButto
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Toaster } from "sonner";
-import { FileUp, Trash2, Search, X } from "lucide-react";
+import { FileUp, Pencil, Trash2, Search, X } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
+import { EntryEditDialog } from "@/components/bumpnotes/EntryEditDialog";
 import { formatUKDate, formatUKTime } from "@/lib/bumpnotes/gestation";
 import { summariseEntry, weekDayKey } from "@/lib/bumpnotes/summary";
 import { useT } from "@/lib/bumpnotes/i18n";
@@ -12,9 +13,10 @@ import { isArchivedLabourEntryType } from "@/lib/bumpnotes/archive/labour";
 import { trackEvent } from "@/lib/analytics";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { useTester, isTester } from "@/lib/bumpnotes/tester";
-import { AppRepository } from "@/lib/data/capture";
+import { AppRepository, useCapture } from "@/lib/data/capture";
 import { useActivePregnancy, useEntries, useSoftDeleteEntry } from "@/lib/data/hooks";
 import { storeEntryFromV2 } from "@/lib/data/entry-adapter";
+import type { Entry as V2Entry } from "@/lib/domain/types";
 
 export const Route = createFileRoute("/timeline")({
   head: () => ({ meta: [{ title: "Timeline · BumpNotes" }] }),
@@ -112,8 +114,10 @@ function TimelineData() {
 
 function TimelineInner({ pregnancyId }: { pregnancyId: string | null }) {
   const t = useT();
+  const cap = useCapture();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [amending, setAmending] = useState<Entry | null>(null);
   const { data: v2entries } = useEntries(
     { pregnancyId: pregnancyId ?? "" },
     { enabled: !!pregnancyId },
@@ -128,6 +132,17 @@ function TimelineInner({ pregnancyId }: { pregnancyId: string | null }) {
     () => (v2entries ?? []).map(storeEntryFromV2).filter((e): e is Entry => e !== null),
     [v2entries],
   );
+  // Keep the source V2 entries by id so an amend preserves all metadata.
+  const v2ById = useMemo(
+    () => new Map<string, V2Entry>((v2entries ?? []).map((e) => [e.id, e])),
+    [v2entries],
+  );
+
+  function amend(text: string) {
+    if (!amending) return;
+    const original = v2ById.get(amending.id);
+    if (original) void cap.amendEntry(original, text);
+  }
 
   const grouped = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -255,6 +270,12 @@ function TimelineInner({ pregnancyId }: { pregnancyId: string | null }) {
                         </div>
                         <div className="mt-3 pt-3 border-t border-border flex gap-3">
                           <button
+                            onClick={() => setAmending(e)}
+                            className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft"
+                          >
+                            <Pencil className="size-3.5" /> {t("common.edit")}
+                          </button>
+                          <button
                             onClick={() => softDelete.mutate(e.id)}
                             className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-destructive"
                           >
@@ -271,6 +292,9 @@ function TimelineInner({ pregnancyId }: { pregnancyId: string | null }) {
         </div>
         <TesterFeedbackButton />
       </AppShell>
+      {amending && (
+        <EntryEditDialog entry={amending} onSave={amend} onClose={() => setAmending(null)} />
+      )}
     </>
   );
 }

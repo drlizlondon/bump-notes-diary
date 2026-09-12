@@ -5,9 +5,11 @@ import { Toaster, toast } from "sonner";
 import { AppShell, PageHeader, PregnancySummaryAside } from "@/components/bumpnotes/AppShell";
 import { useSyncSnapshot } from "@/lib/bumpnotes/sync";
 import { useTester, isTester } from "@/lib/bumpnotes/tester";
-import { AppRepository } from "@/lib/data/capture";
+import { AppRepository, useCapture } from "@/lib/data/capture";
 import { useActivePregnancy, useEntries, useProfile, useSoftDeleteEntry } from "@/lib/data/hooks";
 import { storeEntryFromV2, storeProfileFromV2 } from "@/lib/data/entry-adapter";
+import { EntryEditDialog } from "@/components/bumpnotes/EntryEditDialog";
+import type { Entry as V2Entry } from "@/lib/domain/types";
 import {
   formatGestation,
   formatUKDate,
@@ -104,6 +106,10 @@ function SummaryInner() {
   const profile = storeProfileFromV2(profileV2 ?? null, pregnancy ?? null);
   const entries = useMemo<Entry[]>(
     () => (v2entries ?? []).map(storeEntryFromV2).filter((e): e is Entry => e !== null),
+    [v2entries],
+  );
+  const v2ById = useMemo(
+    () => new Map<string, V2Entry>((v2entries ?? []).map((e) => [e.id, e])),
     [v2entries],
   );
   const t = useT();
@@ -241,6 +247,7 @@ function SummaryInner() {
         <ReviewRecordsModal
           target={reviewTarget}
           entries={liveEntries}
+          v2ById={v2ById}
           onClose={() => setReviewTarget(null)}
         />
       )}
@@ -577,16 +584,20 @@ function sectionTextLines(section: PregnancySummarySection): string[] {
 function ReviewRecordsModal({
   target,
   entries,
+  v2ById,
   onClose,
 }: {
   target: ReviewTarget;
   entries: Entry[];
+  v2ById: Map<string, V2Entry>;
   onClose: () => void;
 }) {
   const matching = entries
     .filter((entry) => target.entryIds.includes(entry.id))
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const softDelete = useSoftDeleteEntry();
+  const cap = useCapture();
+  const [amending, setAmending] = useState<Entry | null>(null);
   return (
     <div className="fixed inset-0 z-50 bg-ink/40 grid place-items-end md:place-items-center px-4 py-6">
       <div className="surface-card w-full max-w-[620px] max-h-[86vh] overflow-hidden shadow-xl">
@@ -615,6 +626,13 @@ function ReviewRecordsModal({
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
+                      onClick={() => setAmending(entry)}
+                      className="rounded-full border border-border bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => softDelete.mutate(entry.id)}
                       className="rounded-full border border-destructive/30 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-destructive"
                     >
@@ -635,6 +653,17 @@ function ReviewRecordsModal({
           </button>
         </div>
       </div>
+      {amending && (
+        <EntryEditDialog
+          entry={amending}
+          overlay="absolute"
+          onSave={(text) => {
+            const original = v2ById.get(amending.id);
+            if (original) void cap.amendEntry(original, text);
+          }}
+          onClose={() => setAmending(null)}
+        />
+      )}
     </div>
   );
 }
