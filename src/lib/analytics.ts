@@ -53,6 +53,37 @@ function clarityProjectId() {
   return /^[a-z0-9]+$/i.test(projectId) ? projectId : "";
 }
 
+// Microsoft Clarity (session replay) may load ONLY on these public, pre-personal-
+// data routes — never on any authenticated/health/credential surface (founder
+// ruling, DECISIONS-LOG 2026-09-12: "Clarity on public/pre-data surfaces ONLY,
+// never women's private use"). This allow-list is the boundary; the
+// `data-clarity-mask` attribute is defence-in-depth only, NOT the control.
+// "When in doubt, exclude." NOTE (post-Azure-cutover): `/` (index) is the AUTHED
+// home, and `/onboarding` collects the EDD, so both are excluded; the public
+// landing is `/welcome`. GA4 (no replay, consent-gated) is unaffected and stays
+// app-wide.
+const CLARITY_ALLOWED_ROUTES: readonly string[] = [
+  "/welcome",
+  "/features",
+  "/our-story",
+  "/privacy",
+  "/terms",
+  "/contact",
+];
+
+/**
+ * True only on the public, pre-personal-data routes where Clarity is permitted.
+ * Pure + SSR/test-safe: reads the given pathname (falls back to the current URL
+ * in a browser). This predicate is the guardrail — a route not listed here can
+ * never load Clarity.
+ */
+export function isClarityAllowedRoute(pathname?: string): boolean {
+  let path = pathname;
+  if (!path && browserReady()) path = window.location.pathname;
+  path = (path || "/").replace(/\/+$/, "") || "/";
+  return CLARITY_ALLOWED_ROUTES.includes(path);
+}
+
 function safePath(pathname?: string) {
   if (!browserReady()) return "/";
   return pathname && pathname.startsWith("/") ? pathname : window.location.pathname || "/";
@@ -99,6 +130,11 @@ function initGa4() {
 
 function initClarity() {
   try {
+    // Structural boundary: never initialise off the public allow-list, even with
+    // consent (DECISIONS-LOG 2026-09-12). Route-gated + self-guarded, so it is
+    // safe to call on every page view — it starts Clarity only once the user is
+    // on a permitted route.
+    if (!isClarityAllowedRoute()) return;
     const projectId = clarityProjectId();
     if (!projectId || window.clarity) return;
     const clarity = ((...args: Parameters<Clarity>) => {
@@ -157,10 +193,16 @@ export function onAnalyticsConsentChange(callback: (analytics: boolean) => void)
 }
 
 export function initAnalytics() {
-  if (!browserReady() || initialized || !hasAnalyticsConsent()) return;
-  initialized = true;
+  if (!browserReady() || !hasAnalyticsConsent()) return;
   try {
-    initGa4();
+    // GA4 is app-wide (no session replay), so it initialises once.
+    if (!initialized) {
+      initialized = true;
+      initGa4();
+    }
+    // Clarity is route-gated: attempt on every call (e.g. per page view) so it
+    // starts only when — and if — the user is on an allow-listed public route,
+    // never blocked by GA4's one-shot flag. initClarity self-guards.
     initClarity();
   } catch {
     /* Analytics must never stop the app from loading. */
@@ -175,7 +217,7 @@ export function trackEvent(eventName: AnalyticsEvent) {
       send_to: ga4MeasurementId(),
       transport_type: "beacon",
     });
-    if (eventName !== "page_view") window.clarity?.("event", eventName);
+    if (eventName !== "page_view" && isClarityAllowedRoute()) window.clarity?.("event", eventName);
   } catch {
     /* Analytics must never stop the app from loading. */
   }
@@ -191,7 +233,7 @@ export function trackPageView(pathname?: string) {
       page_location: window.location.href,
       page_path: path,
     });
-    window.clarity?.("event", "page_view");
+    if (isClarityAllowedRoute(path)) window.clarity?.("event", "page_view");
   } catch {
     /* Analytics must never stop the app from loading. */
   }
