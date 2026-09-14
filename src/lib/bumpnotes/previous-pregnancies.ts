@@ -12,7 +12,11 @@
 // Framework-free by design: imported by the data layer (server + local repos,
 // for prompt-tag validation) AND by React surfaces, so it must not import React.
 
-/** The fixed set of memory-prompt tags stored in previous_pregnancy_notes.prompt_tag. */
+/**
+ * The tags stored in previous_pregnancy_notes.prompt_tag. Seven are the memory
+ * prompts shown as chips; `loss` is the free-text under the loss line (§3.4
+ * rule 3) — a stored note, but never shown as a memory-prompt chip.
+ */
 export type PreviousPregnancyPromptTag =
   | "caesarean"
   | "pph"
@@ -20,7 +24,11 @@ export type PreviousPregnancyPromptTag =
   | "pre_eclampsia"
   | "premature_birth"
   | "assisted_birth"
-  | "other";
+  | "other"
+  | "loss";
+
+/** The loss-line free-text tag — stored like a note, but not a memory prompt. */
+export const LOSS_NOTE_TAG: PreviousPregnancyPromptTag = "loss";
 
 /** Prompts in display order. `label` is the reviewed, user-facing wording. */
 export const PREVIOUS_PREGNANCY_PROMPTS: {
@@ -36,9 +44,11 @@ export const PREVIOUS_PREGNANCY_PROMPTS: {
   { tag: "other", label: "Something else" },
 ];
 
-/** Valid prompt tags, for server-side validation of prompt_tag writes. */
-export const PREVIOUS_PREGNANCY_PROMPT_TAGS: PreviousPregnancyPromptTag[] =
-  PREVIOUS_PREGNANCY_PROMPTS.map((p) => p.tag);
+/** Valid prompt tags for server-side validation (the 7 chips + the loss note). */
+export const PREVIOUS_PREGNANCY_PROMPT_TAGS: PreviousPregnancyPromptTag[] = [
+  ...PREVIOUS_PREGNANCY_PROMPTS.map((p) => p.tag),
+  LOSS_NOTE_TAG,
+];
 
 /** The plain label for a tag (falls back to the tag itself if unknown). */
 export function promptLabel(tag: string): string {

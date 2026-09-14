@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Toaster, toast } from "sonner";
 import { useEffect, useState } from "react";
 import { AppShell, PageHeader } from "@/components/bumpnotes/AppShell";
+import { PreviousPregnanciesCard } from "@/components/bumpnotes/PreviousPregnanciesCard";
 import { useT } from "@/lib/bumpnotes/i18n";
 import { useTester, isTester } from "@/lib/bumpnotes/tester";
 import { AppRepository } from "@/lib/data/capture";
@@ -172,6 +173,7 @@ function DetailsInner() {
           >
             {t("det.save")}
           </button>
+          <PreviousPregnanciesCard />
         </div>
       </AppShell>
     </>
