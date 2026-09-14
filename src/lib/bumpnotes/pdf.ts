@@ -7,6 +7,8 @@ import {
   gestationFromDueDate,
 } from "./gestation";
 import { buildPregnancySummaryWeeks, type PregnancySummarySection } from "./pregnancy-summary";
+import { summarisePreviousPregnancies } from "./previous-pregnancies";
+import type { PreviousPregnancies } from "../domain/types";
 import { t as tFn } from "./i18n";
 
 type PdfOptions = {
@@ -14,6 +16,7 @@ type PdfOptions = {
   entries: Entry[];
   groupMeasurements: boolean;
   hiddenItemKeys?: Set<string>;
+  previousPregnancies?: PreviousPregnancies;
 };
 
 const PAGE_W = 210;
@@ -64,6 +67,20 @@ export function downloadSummaryPdf(opts: PdfOptions) {
   compressedHeader(doc, opts.profile, formatGestation(g));
   y = MARGIN_TOP + 24;
   rule();
+
+  // Previous pregnancies (ARCH §3.4 / §6) — her words only, G/P as arithmetic.
+  const prev = summarisePreviousPregnancies(opts.previousPregnancies);
+  if (prev) {
+    text("Previous pregnancies", { size: 12, bold: true, color: [180, 80, 100], gap: 2 });
+    if (prev.gp) text(`${prev.gp.notation} — ${prev.gp.plain}`, { size: 9, gap: 0.7 });
+    if (prev.loss) text(prev.loss, { size: 9, gap: 0.7 });
+    prev.notes.forEach((n) => {
+      text(n.label, { size: 9, bold: true, color: [110, 110, 120], gap: 0.5 });
+      text(n.text, { size: 9, gap: 0.7 });
+    });
+    y += 2;
+    rule();
+  }
 
   buildPregnancySummaryWeeks(opts.entries, {
     hiddenItemKeys: opts.hiddenItemKeys,

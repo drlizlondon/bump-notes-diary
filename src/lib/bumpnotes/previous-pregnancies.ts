@@ -12,6 +12,8 @@
 // Framework-free by design: imported by the data layer (server + local repos,
 // for prompt-tag validation) AND by React surfaces, so it must not import React.
 
+import type { PreviousPregnancies } from "../domain/types";
+
 /**
  * The tags stored in previous_pregnancy_notes.prompt_tag. Seven are the memory
  * prompts shown as chips; `loss` is the free-text under the loss line (§3.4
@@ -29,6 +31,13 @@ export type PreviousPregnancyPromptTag =
 
 /** The loss-line free-text tag — stored like a note, but not a memory prompt. */
 export const LOSS_NOTE_TAG: PreviousPregnancyPromptTag = "loss";
+
+/**
+ * The onboarding "first pregnancy?" answer. Three states must be representable —
+ * never coerce a skip into a false "yes" (ARCH §4.1). Flushed post-onboarding:
+ * yes → header {0,0}; no → header {null,null}; unknown → no header row written.
+ */
+export type FirstPregnancyAnswer = "yes" | "no" | "unknown";
 
 /** Prompts in display order. `label` is the reviewed, user-facing wording. */
 export const PREVIOUS_PREGNANCY_PROMPTS: {
@@ -53,6 +62,52 @@ export const PREVIOUS_PREGNANCY_PROMPT_TAGS: PreviousPregnancyPromptTag[] = [
 /** The plain label for a tag (falls back to the tag itself if unknown). */
 export function promptLabel(tag: string): string {
   return PREVIOUS_PREGNANCY_PROMPTS.find((p) => p.tag === tag)?.label ?? tag;
+}
+
+/**
+ * Gravidity/parity for the summary header — transcription arithmetic (permitted
+ * under §2.1), never interpretation. `previousPregnancies` counts pregnancies
+ * BEFORE the current one, so gravida adds the current pregnancy. Renders the
+ * notation AND plain words, because notation conventions vary internationally.
+ */
+export function gravidaPara(
+  previousPregnancies: number,
+  births: number,
+): { notation: string; plain: string } {
+  const gravida = previousPregnancies + 1; // + the current pregnancy
+  const para = births;
+  const preg = gravida === 1 ? "pregnancy" : "pregnancies";
+  const birth = para === 1 ? "birth" : "births";
+  return { notation: `G${gravida} · P${para}`, plain: `${gravida} ${preg}, ${para} ${birth}` };
+}
+
+export interface PreviousPregnanciesSummaryData {
+  gp: { notation: string; plain: string } | null;
+  loss: string | null;
+  notes: { label: string; text: string }[];
+}
+
+/**
+ * The single shaping of previous pregnancies for every summary surface (in-app
+ * preview, copied text, PDF). Her own words only — no bare flags, no
+ * app-authored phrasing. Returns null when she has recorded nothing to show.
+ */
+export function summarisePreviousPregnancies(
+  data?: PreviousPregnancies,
+): PreviousPregnanciesSummaryData | null {
+  if (!data) return null;
+  const prev = data.header?.pregnancyCount ?? null;
+  const gp =
+    prev != null && prev > 0 && data.header?.birthCount != null
+      ? gravidaPara(prev, data.header.birthCount)
+      : null;
+  const loss = data.notes.find((n) => n.promptTag === LOSS_NOTE_TAG)?.text?.trim() || null;
+  const notes = PREVIOUS_PREGNANCY_PROMPTS.map((p) => {
+    const text = data.notes.find((n) => n.promptTag === p.tag)?.text?.trim();
+    return text ? { label: p.label, text } : null;
+  }).filter((x): x is { label: string; text: string } => x !== null);
+  if (!gp && !loss && notes.length === 0) return null;
+  return { gp, loss, notes };
 }
 
 // --- The reviewed copy (verbatim / founder-edited) -------------------------

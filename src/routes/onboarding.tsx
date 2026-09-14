@@ -7,7 +7,13 @@ import type { Profile } from "@/lib/bumpnotes/types";
 import { useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { AppRepository } from "@/lib/data/capture";
-import { useActivePregnancy, useCreatePregnancy, useUpsertProfile } from "@/lib/data/hooks";
+import {
+  useActivePregnancy,
+  useCreatePregnancy,
+  useUpsertPreviousPregnancyHeader,
+  useUpsertProfile,
+} from "@/lib/data/hooks";
+import type { FirstPregnancyAnswer } from "@/lib/bumpnotes/previous-pregnancies";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({ meta: [{ title: "Get started — BumpNotes" }] }),
@@ -48,6 +54,7 @@ function OnboardingInner() {
   const { data: pregnancy, isLoading } = useActivePregnancy();
   const upsertProfile = useUpsertProfile();
   const createPregnancy = useCreatePregnancy();
+  const upsertPrevPregHeader = useUpsertPreviousPregnancyHeader();
 
   // Already has an active pregnancy -> straight to the dashboard.
   useEffect(() => {
@@ -57,12 +64,20 @@ function OnboardingInner() {
   // D3: split the old single "profile" into a Profile (identity) + an active
   // Pregnancy (the due date + nickname). displayName <- userName; the due date
   // and nickname live on the pregnancy.
-  async function handleDone(p: Profile) {
+  async function handleDone(p: Profile, firstPregnancy: FirstPregnancyAnswer) {
     await upsertProfile.mutateAsync({ displayName: p.userName || null });
     await createPregnancy.mutateAsync({
       edd: p.dueDateISO.slice(0, 10),
       nickname: p.babyNickname ? p.babyNickname : null,
     });
+    // Flush the first-pregnancy answer (ARCH §4.1). Encoded in the counts header:
+    // yes -> 0 previous; no -> "not first", number deferred to About Me; unknown
+    // (skipped) -> nothing written, so it is never coerced into a false "yes".
+    if (firstPregnancy === "yes") {
+      await upsertPrevPregHeader.mutateAsync({ pregnancyCount: 0, birthCount: 0 });
+    } else if (firstPregnancy === "no") {
+      await upsertPrevPregHeader.mutateAsync({ pregnancyCount: null, birthCount: null });
+    }
     trackEvent("onboarding_completed");
     navigate({ to: "/", replace: true });
   }
@@ -73,8 +88,8 @@ function OnboardingInner() {
     <>
       <Toaster position="top-center" />
       <Onboarding
-        onDone={(p) => {
-          void handleDone(p);
+        onDone={(p, firstPregnancy) => {
+          void handleDone(p, firstPregnancy);
         }}
       />
     </>
