@@ -20,6 +20,9 @@ import type {
   Person,
   Preferences,
   Pregnancy,
+  PreviousPregnancies,
+  PreviousPregnancyHeader,
+  PreviousPregnancyNote,
   Profile,
 } from "../domain/types";
 
@@ -89,6 +92,17 @@ export interface Repository {
   upsertPreferences(
     patch: Partial<Pick<Preferences, "items" | "anythingElse">>,
   ): Promise<Preferences>;
+
+  // --- Previous Pregnancies (About Me §3.4; edited in place, §3.1) ---
+  getPreviousPregnancies(): Promise<PreviousPregnancies>;
+  upsertPreviousPregnancyHeader(
+    patch: Pick<PreviousPregnancyHeader, "pregnancyCount" | "birthCount">,
+  ): Promise<PreviousPregnancyHeader>;
+  upsertPreviousPregnancyNote(input: {
+    promptTag: string;
+    text: string;
+  }): Promise<PreviousPregnancyNote>;
+  deletePreviousPregnancyNote(promptTag: string): Promise<void>;
 
   // --- Attachments (blob metadata; binary in Blob Storage) ---
   listAttachments(entryId: string): Promise<Attachment[]>;

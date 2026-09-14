@@ -7,7 +7,14 @@
 // keep working). Optimistic/outbox layering can wrap these later (task 3.3).
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { HealthItem, Person, Preferences, Pregnancy, Profile } from "../domain/types";
+import type {
+  HealthItem,
+  Person,
+  Preferences,
+  Pregnancy,
+  PreviousPregnancyHeader,
+  Profile,
+} from "../domain/types";
 import { useRepository, type RepositoryMode } from "./repository-context";
 import type { CreateEntryInput, ListEntriesParams, UploadAttachmentInput } from "./repository";
 import { deleteOwnAccount, exportMyData } from "../azure/account.functions";
@@ -25,6 +32,7 @@ const keys = {
   people: (m: RepositoryMode) => [m, "people"] as const,
   healthItems: (m: RepositoryMode) => [m, "healthItems"] as const,
   preferences: (m: RepositoryMode) => [m, "preferences"] as const,
+  previousPregnancies: (m: RepositoryMode) => [m, "previousPregnancies"] as const,
   attachments: (m: RepositoryMode, entryId: string) => [m, "attachments", entryId] as const,
 };
 
@@ -184,6 +192,46 @@ export function useUpsertPreferences() {
     mutationFn: (patch: Partial<Pick<Preferences, "items" | "anythingElse">>) =>
       repository.upsertPreferences(patch),
     onSuccess: (prefs) => qc.setQueryData(keys.preferences(mode), prefs),
+  });
+}
+
+// --- Previous Pregnancies --------------------------------------------------
+export function usePreviousPregnancies(enabled = true) {
+  const { repository, mode } = useRepository();
+  return useQuery({
+    queryKey: keys.previousPregnancies(mode),
+    queryFn: () => repository.getPreviousPregnancies(),
+    enabled,
+    staleTime: STALE,
+  });
+}
+
+export function useUpsertPreviousPregnancyHeader() {
+  const { repository, mode } = useRepository();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: Pick<PreviousPregnancyHeader, "pregnancyCount" | "birthCount">) =>
+      repository.upsertPreviousPregnancyHeader(patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.previousPregnancies(mode) }),
+  });
+}
+
+export function useUpsertPreviousPregnancyNote() {
+  const { repository, mode } = useRepository();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { promptTag: string; text: string }) =>
+      repository.upsertPreviousPregnancyNote(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.previousPregnancies(mode) }),
+  });
+}
+
+export function useDeletePreviousPregnancyNote() {
+  const { repository, mode } = useRepository();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (promptTag: string) => repository.deletePreviousPregnancyNote(promptTag),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.previousPregnancies(mode) }),
   });
 }
 

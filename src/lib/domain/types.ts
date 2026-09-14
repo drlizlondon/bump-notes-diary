@@ -100,6 +100,37 @@ export interface Preferences {
   updatedAt: string;
 }
 
+/**
+ * previous_pregnancy_notes (001) — About Me → Previous Pregnancies (ARCH §3.4).
+ * One table, two row shapes: the single `is_header` row per user holds the
+ * counts; prompt-tagged rows hold her own words for a memory prompt.
+ *
+ * About Me is STATE — edited in place (§3.1). The append-a-correction rule is a
+ * Record-stream (health-event) concept and does NOT apply here: this table has
+ * no soft-delete column and the header is unique per user, so in-place edit is
+ * both correct and the only representable path. `pregnancyCount` counts
+ * pregnancies BEFORE the current one — 0 means first pregnancy (none previous);
+ * null (with the row present) means "not first" but the number is not yet given;
+ * no header row at all means the question is unanswered ("unknown"/skipped).
+ */
+export interface PreviousPregnancyHeader {
+  pregnancyCount: number | null;
+  birthCount: number | null;
+  updatedAt: string;
+}
+export interface PreviousPregnancyNote {
+  id: string;
+  promptTag: string;
+  text: string;
+  sort: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface PreviousPregnancies {
+  header: PreviousPregnancyHeader | null;
+  notes: PreviousPregnancyNote[];
+}
+
 export type EntryType =
   | "symptom"
   | "question"
