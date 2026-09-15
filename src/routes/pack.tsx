@@ -6,10 +6,17 @@ import { AppShell, PageHeader, PregnancySummaryAside } from "@/components/bumpno
 import { useTester, isTester } from "@/lib/bumpnotes/tester";
 import { AppRepository, useCapture } from "@/lib/data/capture";
 import { useAppSession } from "@/lib/data/session";
-import { useActivePregnancy, useEntries, useProfile, useSoftDeleteEntry } from "@/lib/data/hooks";
+import {
+  useActivePregnancy,
+  useEntries,
+  usePreviousPregnancies,
+  useProfile,
+  useSoftDeleteEntry,
+} from "@/lib/data/hooks";
 import { storeEntryFromV2, storeProfileFromV2 } from "@/lib/data/entry-adapter";
 import { EntryEditDialog } from "@/components/bumpnotes/EntryEditDialog";
-import type { Entry as V2Entry } from "@/lib/domain/types";
+import type { Entry as V2Entry, PreviousPregnancies } from "@/lib/domain/types";
+import { summarisePreviousPregnancies } from "@/lib/bumpnotes/previous-pregnancies";
 import {
   formatGestation,
   formatUKDate,
@@ -103,6 +110,7 @@ function SummaryInner() {
     { pregnancyId: pregnancy?.id ?? "" },
     { enabled: !!pregnancy?.id },
   );
+  const { data: previousPregnancies } = usePreviousPregnancies();
   const profile = storeProfileFromV2(profileV2 ?? null, pregnancy ?? null);
   const entries = useMemo<Entry[]>(
     () => (v2entries ?? []).map(storeEntryFromV2).filter((e): e is Entry => e !== null),
@@ -198,6 +206,7 @@ function SummaryInner() {
             <StepReviewCustomise
               profile={profile}
               entries={selected}
+              previousPregnancies={previousPregnancies}
               included={included}
               setIncluded={setIncluded}
               groupMeasurements={groupMeasurements}
@@ -221,11 +230,18 @@ function SummaryInner() {
             <StepCreate
               profile={profile}
               entries={selected}
+              previousPregnancies={previousPregnancies}
               groupMeasurements={groupMeasurements}
               hiddenItemKeys={hiddenSummaryItems}
               onBack={() => setStep(2)}
               onCopy={() => {
-                const txt = buildText(profile, selected, groupMeasurements, hiddenSummaryItems);
+                const txt = buildText(
+                  profile,
+                  selected,
+                  groupMeasurements,
+                  hiddenSummaryItems,
+                  previousPregnancies,
+                );
                 navigator.clipboard.writeText(txt).then(() => toast.success(t("sum.copied")));
               }}
               onPrint={() => {
@@ -234,10 +250,19 @@ function SummaryInner() {
                   entries: selected,
                   groupMeasurements,
                   hiddenItemKeys: hiddenSummaryItems,
+                  previousPregnancies,
                 });
                 toast.success("PDF downloaded");
               }}
-              onShare={() => sharePack(profile, selected, groupMeasurements, hiddenSummaryItems)}
+              onShare={() =>
+                sharePack(
+                  profile,
+                  selected,
+                  groupMeasurements,
+                  hiddenSummaryItems,
+                  previousPregnancies,
+                )
+              }
             />
           )}
         </div>
@@ -347,6 +372,7 @@ function StepWeeks({
 function StepReviewCustomise({
   profile,
   entries,
+  previousPregnancies,
   included,
   setIncluded,
   groupMeasurements,
@@ -360,6 +386,7 @@ function StepReviewCustomise({
 }: {
   profile: Profile;
   entries: Entry[];
+  previousPregnancies?: PreviousPregnancies;
   included: Record<EntryType, boolean>;
   setIncluded: (r: Record<EntryType, boolean>) => void;
   groupMeasurements: boolean;
@@ -428,6 +455,7 @@ function StepReviewCustomise({
       <PreviewCard
         profile={profile}
         entries={entries}
+        previousPregnancies={previousPregnancies}
         groupMeasurements={groupMeasurements}
         hiddenItemKeys={hiddenItemKeys}
         onHideItem={onHideItem}
@@ -456,6 +484,7 @@ function StepReviewCustomise({
 function StepCreate({
   profile,
   entries,
+  previousPregnancies,
   groupMeasurements,
   hiddenItemKeys,
   onBack,
@@ -465,6 +494,7 @@ function StepCreate({
 }: {
   profile: Profile;
   entries: Entry[];
+  previousPregnancies?: PreviousPregnancies;
   groupMeasurements: boolean;
   hiddenItemKeys: Set<string>;
   onBack: () => void;
@@ -478,6 +508,7 @@ function StepCreate({
       <PreviewCard
         profile={profile}
         entries={entries}
+        previousPregnancies={previousPregnancies}
         groupMeasurements={groupMeasurements}
         hiddenItemKeys={hiddenItemKeys}
       />
@@ -514,6 +545,7 @@ function StepCreate({
 function PreviewCard(props: {
   profile: Profile;
   entries: Entry[];
+  previousPregnancies?: PreviousPregnancies;
   groupMeasurements: boolean;
   hiddenItemKeys?: Set<string>;
   onHideItem?: (key: string) => void;
@@ -528,6 +560,7 @@ function buildText(
   entries: Entry[],
   _groupMeasurements: boolean,
   hiddenItemKeys?: Set<string>,
+  previousPregnancies?: PreviousPregnancies,
 ) {
   const lines: string[] = [];
   lines.push(tFn("sum.header.title"));
@@ -541,6 +574,18 @@ function buildText(
   );
   lines.push(`${tFn("sum.field.generated")}: ${formatUKDateTime(new Date())}`);
   lines.push("");
+
+  const prev = summarisePreviousPregnancies(previousPregnancies);
+  if (prev) {
+    lines.push("Previous pregnancies");
+    if (prev.gp) lines.push(`${prev.gp.notation} — ${prev.gp.plain}`);
+    if (prev.loss) lines.push(prev.loss);
+    prev.notes.forEach((n) => {
+      lines.push(n.label);
+      lines.push(`  ${n.text}`);
+    });
+    lines.push("");
+  }
 
   buildPregnancySummaryWeeks(entries, { hiddenItemKeys }).forEach((week) => {
     lines.push(`${tFn("home.week")} ${week.week}`);
@@ -673,8 +718,9 @@ async function sharePack(
   entries: Entry[],
   groupMeasurements: boolean,
   hiddenItemKeys?: Set<string>,
+  previousPregnancies?: PreviousPregnancies,
 ) {
-  const text = buildText(profile, entries, groupMeasurements, hiddenItemKeys);
+  const text = buildText(profile, entries, groupMeasurements, hiddenItemKeys, previousPregnancies);
   if (typeof navigator !== "undefined" && navigator.share) {
     try {
       await navigator.share({ title: tFn("sum.header.title"), text });

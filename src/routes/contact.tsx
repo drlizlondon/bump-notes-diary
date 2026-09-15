@@ -51,6 +51,16 @@ function Contact() {
           For private feedback inside the app there is also a small button in the corner once you're
           using BumpNotes.
         </p>
+        <p className="text-ink-soft mt-3 leading-relaxed">
+          Prefer email? Write to us directly at{" "}
+          <a
+            href="mailto:hello@bumpnotes.co.uk"
+            className="font-semibold text-primary underline underline-offset-2"
+          >
+            hello@bumpnotes.co.uk
+          </a>
+          .
+        </p>
 
         {sent ? (
           <div className="surface-card p-5 mt-6 blush-bg">

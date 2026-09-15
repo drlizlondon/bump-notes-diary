@@ -13,6 +13,8 @@ import {
   type SymptomSummaryItem,
 } from "@/lib/bumpnotes/pregnancy-summary";
 import type { Entry, Profile } from "@/lib/bumpnotes/types";
+import type { PreviousPregnancies } from "@/lib/domain/types";
+import { summarisePreviousPregnancies } from "@/lib/bumpnotes/previous-pregnancies";
 import { useT } from "@/lib/bumpnotes/i18n";
 
 /**
@@ -26,6 +28,7 @@ export function PregnancySummaryPreview({
   onHideItem,
   onUnhideItem,
   onReviewItem,
+  previousPregnancies,
 }: {
   profile: Profile;
   entries: Entry[];
@@ -34,6 +37,7 @@ export function PregnancySummaryPreview({
   onHideItem?: (key: string) => void;
   onUnhideItem?: (key: string) => void;
   onReviewItem?: (title: string, entryIds: string[]) => void;
+  previousPregnancies?: PreviousPregnancies;
 }) {
   const t = useT();
   const weeks = buildPregnancySummaryWeeks(entries, { hiddenItemKeys });
@@ -62,6 +66,8 @@ export function PregnancySummaryPreview({
         <dt className="text-ink-soft">{t("sum.field.generated")}</dt>
         <dd className="font-medium break-words">{formatUKDateTime(new Date())}</dd>
       </dl>
+
+      <PreviousPregnanciesSummary data={previousPregnancies} />
 
       <div className="mt-5 space-y-5">
         {weeks.map((week) => (
@@ -105,6 +111,42 @@ export function PregnancySummaryPreview({
         {t("sum.foot").replace("{name}", profile.userName)}
       </p>
     </div>
+  );
+}
+
+/**
+ * Previous Pregnancies in the summary (ARCH §3.4 / §6). Her own words only —
+ * no bare flags, and (founder edit 2026-09-13) no "(noted by her)" fallback,
+ * so an empty prompt simply does not appear. G/P is transcription arithmetic
+ * shown as notation AND plain words.
+ */
+function PreviousPregnanciesSummary({ data }: { data?: PreviousPregnancies }) {
+  const summary = summarisePreviousPregnancies(data);
+  if (!summary) return null;
+  const { gp, loss, notes } = summary;
+  return (
+    <section className="mt-5 border-t border-border pt-4 space-y-3">
+      <h3 className="text-sm font-serif font-semibold text-primary">Previous pregnancies</h3>
+      {gp && (
+        <p className="text-xs">
+          <span className="font-mono tracking-wide">{gp.notation}</span>
+          <span className="text-ink-soft"> · {gp.plain}</span>
+        </p>
+      )}
+      {loss && <p className="text-xs italic text-ink-soft break-words">{loss}</p>}
+      {notes.length > 0 && (
+        <dl className="space-y-2">
+          {notes.map((n) => (
+            <div key={n.label}>
+              <dt className="text-[11px] font-mono uppercase tracking-widest text-ink-soft">
+                {n.label}
+              </dt>
+              <dd className="text-xs break-words mt-0.5">{n.text}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </section>
   );
 }
 

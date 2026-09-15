@@ -3,6 +3,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { LogoBadge } from "./Logo";
 import { TesterPasswordModal } from "./TesterPasswordModal";
+import { BetaBanner } from "./BetaBanner";
 
 export function PublicShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -11,6 +12,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
   const isWelcome = location.pathname === "/welcome";
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
+      <BetaBanner />
       <header className="lg:sticky lg:top-0 z-20 bg-white/85 backdrop-blur border-b border-border print:hidden">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <Link

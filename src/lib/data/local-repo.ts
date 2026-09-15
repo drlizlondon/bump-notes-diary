@@ -13,6 +13,9 @@ import type {
   Person,
   Preferences,
   Pregnancy,
+  PreviousPregnancies,
+  PreviousPregnancyHeader,
+  PreviousPregnancyNote,
   Profile,
 } from "../domain/types";
 import type {
@@ -286,6 +289,56 @@ export class LocalRepository implements Repository {
     };
     this.write("preferences", merged);
     return merged;
+  }
+
+  // --- Previous Pregnancies (About Me §3.4; edited in place) ---
+  async getPreviousPregnancies(): Promise<PreviousPregnancies> {
+    return {
+      header: this.read<PreviousPregnancyHeader | null>("prevPregHeader", null),
+      notes: this.read<PreviousPregnancyNote[]>("prevPregNotes", []),
+    };
+  }
+  async upsertPreviousPregnancyHeader(
+    patch: Pick<PreviousPregnancyHeader, "pregnancyCount" | "birthCount">,
+  ): Promise<PreviousPregnancyHeader> {
+    const header: PreviousPregnancyHeader = {
+      pregnancyCount: patch.pregnancyCount,
+      birthCount: patch.birthCount,
+      updatedAt: now(),
+    };
+    this.write("prevPregHeader", header);
+    return header;
+  }
+  async upsertPreviousPregnancyNote(input: {
+    promptTag: string;
+    text: string;
+  }): Promise<PreviousPregnancyNote> {
+    const list = this.read<PreviousPregnancyNote[]>("prevPregNotes", []);
+    const existing = list.find((n) => n.promptTag === input.promptTag);
+    if (existing) {
+      existing.text = input.text;
+      existing.updatedAt = now();
+      this.write("prevPregNotes", list);
+      return existing;
+    }
+    const note: PreviousPregnancyNote = {
+      id: uuid(),
+      promptTag: input.promptTag,
+      text: input.text,
+      sort: null,
+      createdAt: now(),
+      updatedAt: now(),
+    };
+    list.push(note);
+    this.write("prevPregNotes", list);
+    return note;
+  }
+  async deletePreviousPregnancyNote(promptTag: string): Promise<void> {
+    const list = this.read<PreviousPregnancyNote[]>("prevPregNotes", []);
+    this.write(
+      "prevPregNotes",
+      list.filter((n) => n.promptTag !== promptTag),
+    );
   }
 
   // --- Attachments (local: store the bytes as a data URL alongside metadata) ---

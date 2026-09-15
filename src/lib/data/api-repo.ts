@@ -34,6 +34,12 @@ import {
   upsertPreferences as upsertPreferencesFn,
 } from "../azure/preferences.functions";
 import {
+  deletePreviousPregnancyNote as deletePreviousPregnancyNoteFn,
+  getPreviousPregnancies as getPreviousPregnanciesFn,
+  upsertPreviousPregnancyHeader as upsertPreviousPregnancyHeaderFn,
+  upsertPreviousPregnancyNote as upsertPreviousPregnancyNoteFn,
+} from "../azure/previous-pregnancies.functions";
+import {
   deleteAttachment as deleteAttachmentFn,
   getAttachmentUrl as getAttachmentUrlFn,
   listAttachments as listAttachmentsFn,
@@ -46,6 +52,9 @@ import type {
   Person,
   Preferences,
   Pregnancy,
+  PreviousPregnancies,
+  PreviousPregnancyHeader,
+  PreviousPregnancyNote,
   Profile,
 } from "../domain/types";
 import type {
@@ -150,6 +159,29 @@ export class ApiRepository implements Repository {
     return upsertPreferencesFn({
       data: { items: patch.items, anythingElse: patch.anythingElse },
     });
+  }
+
+  // --- Previous Pregnancies ---
+  async getPreviousPregnancies(): Promise<PreviousPregnancies> {
+    return getPreviousPregnanciesFn();
+  }
+  async upsertPreviousPregnancyHeader(
+    patch: Pick<PreviousPregnancyHeader, "pregnancyCount" | "birthCount">,
+  ): Promise<PreviousPregnancyHeader> {
+    return upsertPreviousPregnancyHeaderFn({
+      data: { pregnancyCount: patch.pregnancyCount, birthCount: patch.birthCount },
+    });
+  }
+  async upsertPreviousPregnancyNote(input: {
+    promptTag: string;
+    text: string;
+  }): Promise<PreviousPregnancyNote> {
+    return upsertPreviousPregnancyNoteFn({
+      data: { promptTag: input.promptTag, text: input.text },
+    });
+  }
+  async deletePreviousPregnancyNote(promptTag: string): Promise<void> {
+    await deletePreviousPregnancyNoteFn({ data: { promptTag } });
   }
 
   // --- Attachments ---

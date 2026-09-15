@@ -4,12 +4,20 @@ import { CalendarIcon } from "lucide-react";
 import type { Profile } from "@/lib/bumpnotes/types";
 import { gestationFromDueDate, formatGestation } from "@/lib/bumpnotes/gestation";
 import { useT } from "@/lib/bumpnotes/i18n";
+import {
+  PREV_PREG_COPY as C,
+  type FirstPregnancyAnswer,
+} from "@/lib/bumpnotes/previous-pregnancies";
 
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
+export function Onboarding({
+  onDone,
+}: {
+  onDone: (p: Profile, firstPregnancy: FirstPregnancyAnswer) => void;
+}) {
   const [step, setStep] = useState(1);
   const [userName, setUserName] = useState("");
   const [babyNickname, setBabyNickname] = useState("");
@@ -25,6 +33,19 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
   const canFinish = userName && babyOk && dueDateISO;
 
   const gest = dueDateISO ? gestationFromDueDate(dueDateISO) : null;
+
+  function finish(firstPregnancy: FirstPregnancyAnswer) {
+    if (!canFinish) return;
+    onDone(
+      {
+        userName: userName.trim(),
+        babyNickname: babyBlank ? "" : babyNickname.trim(),
+        dueDateISO,
+        onboarded: true,
+      },
+      firstPregnancy,
+    );
+  }
 
   return (
     <div className="app-shell flex flex-col bg-background">
@@ -133,24 +154,49 @@ export function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
               </div>
             )}
             <button
-              onClick={() =>
-                canFinish &&
-                onDone({
-                  userName: userName.trim(),
-                  babyNickname: babyBlank ? "" : babyNickname.trim(),
-                  dueDateISO,
-                  onboarded: true,
-                })
-              }
+              onClick={() => canFinish && setStep(4)}
               disabled={!canFinish}
               className="mt-auto w-full max-w-[320px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
             >
-              {t("onb.finish")}
+              {t("common.continue")}
             </button>
           </div>
         )}
 
-        {step > 1 && step < 4 && (
+        {/* First pregnancy? — one optional tap; on No/Skip the flow just
+            finishes (founder edit: no deferral screen). Answer persists as
+            yes/no/unknown; skip is never coerced into a false "yes". */}
+        {step === 4 && (
+          <div className="flex-1 flex flex-col gap-6">
+            <div>
+              <h2 className="font-serif text-2xl font-semibold text-balance">
+                {C.onboardingQuestion}
+              </h2>
+            </div>
+            <div className="flex flex-col gap-3 mt-2">
+              <button
+                onClick={() => finish("yes")}
+                className="w-full max-w-[320px] mx-auto py-4 rounded-full bg-primary text-primary-foreground font-semibold"
+              >
+                {C.onboardingYes}
+              </button>
+              <button
+                onClick={() => finish("no")}
+                className="w-full max-w-[320px] mx-auto py-4 rounded-full bg-white text-ink ring-1 ring-black/10 font-semibold"
+              >
+                {C.onboardingNo}
+              </button>
+              <button
+                onClick={() => finish("unknown")}
+                className="w-full max-w-[320px] mx-auto py-3 text-ink-soft font-medium"
+              >
+                {C.onboardingSkip}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step > 1 && step < 5 && (
           <button
             onClick={() => setStep(step - 1)}
             className="mt-6 text-sm text-ink-soft self-center"
