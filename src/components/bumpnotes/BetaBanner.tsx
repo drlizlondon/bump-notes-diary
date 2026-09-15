@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 
 // A slim, honest beta strip across the public pages. Frames BumpNotes as an
@@ -39,13 +38,14 @@ export function BetaBanner() {
         <p className="flex-1 m-0">
           <span className="font-semibold">BumpNotes is in early beta.</span> We're building
           carefully and testing with a small group of women. If you're an expectant parent,
-          clinician or charity who'd like to know more, we'd love to hear from you.{" "}
-          <Link
-            to="/contact"
+          clinician or charity who'd like to know more, we'd love to hear from you at{" "}
+          <a
+            href="mailto:hello@bumpnotes.co.uk"
             className="font-semibold text-primary underline underline-offset-2 whitespace-nowrap"
           >
-            Get in touch →
-          </Link>
+            hello@bumpnotes.co.uk
+          </a>
+          .
         </p>
         <button
           type="button"
