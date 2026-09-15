@@ -18,7 +18,6 @@ export function LogoIcon({ className = "size-8", alt = "BumpNotes" }: Props) {
   );
 }
 
-
 export function LogoWordmark({ className = "h-16", alt = "BumpNotes" }: Props) {
   return <img src={WORDMARK_URL} alt={alt} className={className} draggable={false} />;
 }
