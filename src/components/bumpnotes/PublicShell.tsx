@@ -34,6 +34,9 @@ export function PublicShell({ children }: { children: ReactNode }) {
             <Link to="/our-story" className="px-3 py-1.5 text-ink-soft hover:text-ink">
               Our Story
             </Link>
+            <Link to="/trust" className="px-3 py-1.5 text-ink-soft hover:text-ink">
+              For clinicians
+            </Link>
             <Link to="/demo" className="px-3 py-1.5 text-ink-soft hover:text-ink">
               Preview
             </Link>
@@ -86,6 +89,13 @@ export function PublicShell({ children }: { children: ReactNode }) {
                 Our Story
               </Link>
               <Link
+                to="/trust"
+                onClick={() => setMenuOpen(false)}
+                className="py-2.5 text-sm text-ink"
+              >
+                For clinicians
+              </Link>
+              <Link
                 to="/demo"
                 onClick={() => setMenuOpen(false)}
                 className="py-2.5 text-sm text-ink"
@@ -117,6 +127,9 @@ export function PublicShell({ children }: { children: ReactNode }) {
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-5 sm:py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-ink-soft">
           <span>© BumpNotes</span>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link to="/trust" className="hover:text-ink">
+              For clinicians
+            </Link>
             <Link to="/privacy" className="hover:text-ink">
               Privacy
             </Link>

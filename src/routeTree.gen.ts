@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelcomeRouteImport } from './routes/welcome'
+import { Route as TrustRouteImport } from './routes/trust'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as TesterRouteImport } from './routes/tester'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -35,6 +36,11 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
   path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrustRoute = TrustRouteImport.update({
+  id: '/trust',
+  path: '/trust',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TimelineRoute = TimelineRouteImport.update({
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/tester': typeof TesterRoute
   '/timeline': typeof TimelineRoute
+  '/trust': typeof TrustRoute
   '/welcome': typeof WelcomeRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/tester': typeof TesterRoute
   '/timeline': typeof TimelineRoute
+  '/trust': typeof TrustRoute
   '/welcome': typeof WelcomeRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/tester': typeof TesterRoute
   '/timeline': typeof TimelineRoute
+  '/trust': typeof TrustRoute
   '/welcome': typeof WelcomeRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tester'
     | '/timeline'
+    | '/trust'
     | '/welcome'
     | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tester'
     | '/timeline'
+    | '/trust'
     | '/welcome'
     | '/auth/callback'
   id:
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tester'
     | '/timeline'
+    | '/trust'
     | '/welcome'
     | '/auth/callback'
   fileRoutesById: FileRoutesById
@@ -312,6 +324,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   TesterRoute: typeof TesterRoute
   TimelineRoute: typeof TimelineRoute
+  TrustRoute: typeof TrustRoute
   WelcomeRoute: typeof WelcomeRoute
 }
 
@@ -322,6 +335,13 @@ declare module '@tanstack/react-router' {
       path: '/welcome'
       fullPath: '/welcome'
       preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trust': {
+      id: '/trust'
+      path: '/trust'
+      fullPath: '/trust'
+      preLoaderRoute: typeof TrustRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/timeline': {
@@ -505,8 +525,19 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   TesterRoute: TesterRoute,
   TimelineRoute: TimelineRoute,
+  TrustRoute: TrustRoute,
   WelcomeRoute: WelcomeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
