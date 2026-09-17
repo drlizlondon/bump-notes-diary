@@ -16,7 +16,6 @@ import { Route as TesterRouteImport } from './routes/tester'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SafetyRouteImport } from './routes/safety'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PackRouteImport } from './routes/pack'
@@ -25,6 +24,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LabourRouteImport } from './routes/labour'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as EntraRouteImport } from './routes/entra'
+import { Route as EducationRouteImport } from './routes/education'
 import { Route as DetailsRouteImport } from './routes/details'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -68,11 +68,6 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SafetyRoute = SafetyRouteImport.update({
-  id: '/safety',
-  path: '/safety',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -111,6 +106,11 @@ const FeaturesRoute = FeaturesRouteImport.update({
 const EntraRoute = EntraRouteImport.update({
   id: '/entra',
   path: '/entra',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EducationRoute = EducationRouteImport.update({
+  id: '/education',
+  path: '/education',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DetailsRoute = DetailsRouteImport.update({
@@ -156,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
   '/details': typeof DetailsRoute
+  '/education': typeof EducationRoute
   '/entra': typeof EntraRoute
   '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
@@ -164,7 +165,6 @@ export interface FileRoutesByFullPath {
   '/pack': typeof PackRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/safety': typeof SafetyRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
@@ -181,6 +181,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
   '/details': typeof DetailsRoute
+  '/education': typeof EducationRoute
   '/entra': typeof EntraRoute
   '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
@@ -189,7 +190,6 @@ export interface FileRoutesByTo {
   '/pack': typeof PackRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/safety': typeof SafetyRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
@@ -207,6 +207,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
   '/details': typeof DetailsRoute
+  '/education': typeof EducationRoute
   '/entra': typeof EntraRoute
   '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
@@ -215,7 +216,6 @@ export interface FileRoutesById {
   '/pack': typeof PackRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/safety': typeof SafetyRoute
   '/settings': typeof SettingsRoute
   '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
@@ -234,6 +234,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/demo'
     | '/details'
+    | '/education'
     | '/entra'
     | '/features'
     | '/labour'
@@ -242,7 +243,6 @@ export interface FileRouteTypes {
     | '/pack'
     | '/privacy'
     | '/reset-password'
-    | '/safety'
     | '/settings'
     | '/signin'
     | '/terms'
@@ -259,6 +259,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/demo'
     | '/details'
+    | '/education'
     | '/entra'
     | '/features'
     | '/labour'
@@ -267,7 +268,6 @@ export interface FileRouteTypes {
     | '/pack'
     | '/privacy'
     | '/reset-password'
-    | '/safety'
     | '/settings'
     | '/signin'
     | '/terms'
@@ -284,6 +284,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/demo'
     | '/details'
+    | '/education'
     | '/entra'
     | '/features'
     | '/labour'
@@ -292,7 +293,6 @@ export interface FileRouteTypes {
     | '/pack'
     | '/privacy'
     | '/reset-password'
-    | '/safety'
     | '/settings'
     | '/signin'
     | '/terms'
@@ -310,6 +310,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DemoRoute: typeof DemoRoute
   DetailsRoute: typeof DetailsRoute
+  EducationRoute: typeof EducationRoute
   EntraRoute: typeof EntraRoute
   FeaturesRoute: typeof FeaturesRoute
   LabourRoute: typeof LabourRoute
@@ -318,7 +319,6 @@ export interface RootRouteChildren {
   PackRoute: typeof PackRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  SafetyRoute: typeof SafetyRoute
   SettingsRoute: typeof SettingsRoute
   SigninRoute: typeof SigninRoute
   TermsRoute: typeof TermsRoute
@@ -379,13 +379,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/safety': {
-      id: '/safety'
-      path: '/safety'
-      fullPath: '/safety'
-      preLoaderRoute: typeof SafetyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -440,6 +433,13 @@ declare module '@tanstack/react-router' {
       path: '/entra'
       fullPath: '/entra'
       preLoaderRoute: typeof EntraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/education': {
+      id: '/education'
+      path: '/education'
+      fullPath: '/education'
+      preLoaderRoute: typeof EducationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/details': {
@@ -511,6 +511,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DemoRoute: DemoRoute,
   DetailsRoute: DetailsRoute,
+  EducationRoute: EducationRoute,
   EntraRoute: EntraRoute,
   FeaturesRoute: FeaturesRoute,
   LabourRoute: LabourRoute,
@@ -519,7 +520,6 @@ const rootRouteChildren: RootRouteChildren = {
   PackRoute: PackRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  SafetyRoute: SafetyRoute,
   SettingsRoute: SettingsRoute,
   SigninRoute: SigninRoute,
   TermsRoute: TermsRoute,

@@ -20,10 +20,16 @@ export interface RedFlagItem {
   signOf: string;
   /** The get-help action. Always a signpost to a human, never a verdict (AC-4). */
   action: string;
-  /** Optional "read a little more" detail, shown when the item is opened. */
+  /** Optional definition / "read a little more" detail, shown when opened. */
   detail?: string;
+  /** An optional plain-language figure, e.g. "Affects 2 to 8 in 100 pregnancies". */
+  stat?: string;
   /** Per-item provenance shown with the item, e.g. "NICE", "RCOG", "NHS" (AC-3). */
   source?: string;
+  /** An optional live link to an authoritative patient page to read more. */
+  readMoreUrl?: string;
+  /** The label for the read-more link, naming its source, e.g. "NHS: Pre-eclampsia". */
+  readMoreLabel?: string;
 }
 
 export interface RedFlagGuidance {
@@ -56,72 +62,101 @@ export const DEFAULT_RED_FLAG_GUIDANCE: RedFlagGuidance = {
       signOf: "A change in your baby's usual pattern of movements can matter at any stage.",
       action: "Contact your maternity unit the same day — do not wait. They would rather check.",
       detail:
-        "There is no set number of normal movements — what matters is any change from your baby's usual pattern. Don't wait until the next day, and please don't rely on a home doppler to reassure yourself.",
+        "Feeling your baby move is a sign they are well. There is no set number of normal movements — what matters is any change from your baby's usual pattern. Please don't wait until the next day, and don't rely on a home doppler to reassure yourself.",
+      stat: "In around half of stillbirths, reduced movements had been noticed beforehand — which is why it is always worth checking.",
       source: "NHS · RCOG",
+      readMoreLabel: "NHS: Your baby's movements",
+      readMoreUrl: "https://www.nhs.uk/pregnancy/keeping-well/your-babys-movements/",
     },
     {
       title: "Vaginal bleeding",
       signOf: "Bleeding in pregnancy can have many causes and should always be checked.",
       action: "Contact your maternity unit or triage. Call 999 if the bleeding is heavy.",
       detail:
-        "Bleeding can be light or heavy and can happen at any stage. It is often not serious, but it always needs checking so the cause can be found.",
+        "Any bleeding from the vagina in pregnancy. It can be light or heavy and can happen at any stage. It is often not serious, but the cause always needs checking.",
+      stat: "Around 1 in 4 women have some bleeding in early pregnancy.",
       source: "NHS · NICE",
+      readMoreLabel: "NHS: Vaginal bleeding in pregnancy",
+      readMoreUrl:
+        "https://www.nhs.uk/pregnancy/related-conditions/common-symptoms/vaginal-bleeding/",
     },
     {
       title: "Waters breaking or fluid leaking",
       signOf: "A gush or trickle of fluid, especially before 37 weeks, needs checking.",
       action: "Contact your maternity unit or triage.",
       detail:
-        "This can be a sudden gush or a slow trickle. Before 37 weeks it is especially important to be checked promptly.",
-      source: "NICE",
+        "Fluid leaking — a sudden gush or a slow trickle — can mean your waters have broken. Before 37 weeks it is especially important to be checked promptly.",
+      stat: "About 8 in 100 babies are born prematurely (before 37 weeks).",
+      source: "NHS · NICE",
+      readMoreLabel: "NHS: Premature labour and birth",
+      readMoreUrl:
+        "https://www.nhs.uk/pregnancy/labour-and-birth/signs-of-labour/premature-labour-and-birth/",
     },
     {
       title: "Severe or persistent headache, or changes to your vision",
       signOf: "A bad headache, or flashing or blurred vision, can be a sign of pre-eclampsia.",
       action: "Contact your maternity unit or triage, or NHS 111, straight away.",
       detail:
-        "A headache that won't go away, or seeing flashing lights or blurring, can be a sign of raised blood pressure (pre-eclampsia), usually after 20 weeks.",
+        "A headache that won't go away, or seeing flashing lights or blurring, can be a sign of pre-eclampsia — raised blood pressure in pregnancy, usually after 20 weeks.",
+      stat: "Pre-eclampsia affects 2 to 8 in 100 pregnancies.",
       source: "NICE · RCOG",
+      readMoreLabel: "NHS: Pre-eclampsia",
+      readMoreUrl: "https://www.nhs.uk/conditions/pre-eclampsia/",
     },
     {
       title: "Sudden swelling of your face, hands or feet",
       signOf: "Swelling that comes on suddenly can be a sign of pre-eclampsia.",
       action: "Contact your maternity unit or triage.",
       detail:
-        "Some swelling is normal in pregnancy. Swelling that comes on suddenly in your face, hands or feet is the kind to get checked.",
-      source: "NICE",
+        "Some swelling is normal in pregnancy. Swelling that comes on suddenly in your face, hands or feet is the kind to get checked, as it can be a sign of pre-eclampsia.",
+      stat: "Pre-eclampsia affects 2 to 8 in 100 pregnancies.",
+      source: "NICE · RCOG",
+      readMoreLabel: "NHS: Pre-eclampsia",
+      readMoreUrl: "https://www.nhs.uk/conditions/pre-eclampsia/",
     },
     {
       title: "Severe pain in the upper tummy or under your ribs",
       signOf: "This can be a sign of pre-eclampsia or a related condition (HELLP).",
       action: "Contact your maternity unit or triage straight away.",
       detail:
-        "Pain high in your tummy, often under the ribs on the right, can be linked to pre-eclampsia or a related condition called HELLP.",
+        "Pain high in your tummy, often under the ribs on the right, can be linked to pre-eclampsia or a related, more severe condition called HELLP.",
+      stat: "Pre-eclampsia affects 2 to 8 in 100 pregnancies; HELLP is a rarer, severe form.",
       source: "NICE · RCOG",
+      readMoreLabel: "NHS: Pre-eclampsia",
+      readMoreUrl: "https://www.nhs.uk/conditions/pre-eclampsia/",
     },
     {
       title: "A high temperature or feeling very unwell",
       signOf: "A fever or feeling very unwell can be a sign of infection.",
       action: "Contact your maternity unit or NHS 111 urgently. Call 999 if severe.",
       detail:
-        "A high temperature, shivering, or simply feeling very unwell can be a sign of infection, which can develop quickly in pregnancy.",
+        "A high temperature, shivering, or simply feeling very unwell can be a sign of infection. Sepsis is a serious, life-threatening reaction to infection that can develop quickly in pregnancy.",
       source: "NHS · RCOG",
+      readMoreLabel: "NHS: Sepsis",
+      readMoreUrl: "https://www.nhs.uk/conditions/sepsis/",
     },
     {
       title: "Intense itching, especially on your palms and soles",
       signOf: "Severe itching can be a sign of a liver condition (obstetric cholestasis).",
       action: "Contact your maternity unit — ask for a blood test.",
       detail:
-        "Itching without a rash, especially on your palms and soles and often worse at night, can be a sign of a liver condition (obstetric cholestasis). A simple blood test can check.",
-      source: "RCOG",
+        "Itching without a rash, especially on the palms and soles and often worse at night, can be a sign of a liver condition — intrahepatic cholestasis of pregnancy (ICP). A simple blood test can check.",
+      stat: "ICP affects around 7 in 1,000 pregnancies (about 1 in 140).",
+      source: "RCOG · ICP Support",
+      readMoreLabel: "Tommy's: Intrahepatic cholestasis (ICP)",
+      readMoreUrl:
+        "https://www.tommys.org/pregnancy-information/pregnancy-complications/obstetric-cholestasis",
     },
     {
       title: "Pain or swelling in your calf, chest pain, or breathlessness",
       signOf: "These can be signs of a blood clot, which needs urgent attention.",
       action: "Seek help now — contact your maternity unit or NHS 111. Call 999 if severe.",
       detail:
-        "Pain, swelling or redness in one calf, or chest pain and breathlessness, can be signs of a blood clot. This is uncommon, but it needs urgent attention.",
-      source: "RCOG",
+        "Pain, swelling or redness in one calf, or chest pain and breathlessness, can be signs of a blood clot (deep vein thrombosis). Pregnancy raises the risk, though it stays uncommon.",
+      stat: "Pregnancy increases the risk of a blood clot — it remains rare, but is worth knowing.",
+      source: "NHS · RCOG",
+      readMoreLabel: "NHS: DVT (blood clots)",
+      readMoreUrl: "https://www.nhs.uk/conditions/deep-vein-thrombosis-dvt/",
     },
     {
       title: "Regular tightenings or pain before 37 weeks",
@@ -129,14 +164,19 @@ export const DEFAULT_RED_FLAG_GUIDANCE: RedFlagGuidance = {
       action: "Contact your maternity unit or triage.",
       detail:
         "Regular tightenings, cramping or low back pain before 37 weeks can be a sign of labour starting early, and should be checked.",
+      stat: "About 8 in 100 babies are born prematurely (before 37 weeks).",
       source: "NICE",
+      readMoreLabel: "NHS: Premature labour and birth",
+      readMoreUrl:
+        "https://www.nhs.uk/pregnancy/labour-and-birth/signs-of-labour/premature-labour-and-birth/",
     },
     {
       title: "Something just doesn't feel right",
       signOf: "You know your body and your pregnancy best.",
       action:
         "It is always okay to call your maternity unit and ask. That is what they are there for.",
-      detail: "Trust your instincts. You will never be wasting anyone's time by calling to check.",
+      detail:
+        "Trust your instincts. You know your body and your pregnancy best, and you will never be wasting anyone's time by calling to check.",
       source: "NHS",
     },
   ],

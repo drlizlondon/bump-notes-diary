@@ -6,7 +6,7 @@ import {
   FileText,
   Baby,
   Settings as SettingsIcon,
-  ShieldPlus,
+  BookOpen,
   X,
   Sparkles,
   Menu,
@@ -90,7 +90,7 @@ function useNavItems() {
     { to: "/timeline" as const, label: t("nav.timeline"), Icon: ClipboardList, matchExact: false },
     { to: "/pack" as const, label: t("nav.summary"), Icon: FileText, matchExact: false },
     { to: "/details" as const, label: t("nav.baby"), Icon: Baby, matchExact: false },
-    { to: "/safety" as const, label: t("nav.safety"), Icon: ShieldPlus, matchExact: false },
+    { to: "/education" as const, label: t("nav.education"), Icon: BookOpen, matchExact: false },
     { to: "/settings" as const, label: t("nav.settings"), Icon: SettingsIcon, matchExact: false },
   ];
 }

@@ -59,7 +59,7 @@ const en: Dict = {
   "nav.timeline": "Timeline",
   "nav.summary": "Pregnancy Summary",
   "nav.baby": "About Me",
-  "nav.safety": "Safety",
+  "nav.education": "Education",
   "nav.settings": "Settings",
   "nav.menu": "Menu",
   "brand.tagline": "",

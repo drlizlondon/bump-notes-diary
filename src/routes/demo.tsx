@@ -102,6 +102,15 @@ function DemoInner() {
     <>
       <Toaster position="top-center" />
       <AppShell>
+        <div className="-mx-4 md:mx-0 mb-3 flex items-center justify-between gap-3 bg-blush-soft border-b md:border border-border md:rounded-xl px-4 py-2.5">
+          <span className="text-sm font-semibold text-ink">You&rsquo;re viewing a preview</span>
+          <Link
+            to="/welcome"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white border border-border px-3.5 py-1.5 text-sm font-medium text-ink"
+          >
+            <ArrowLeft className="size-4" /> Exit preview
+          </Link>
+        </div>
         <HomeHeader profile={profile} />
 
         <ThisWeekCard pregnancyId={pregnancy.id} dueDateISO={profile.dueDateISO} />

@@ -127,6 +127,9 @@ export function PublicShell({ children }: { children: ReactNode }) {
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-5 sm:py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-ink-soft">
           <span>© BumpNotes</span>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link to="/education" className="hover:text-ink">
+              Education
+            </Link>
             <Link to="/trust" className="hover:text-ink">
               For clinicians
             </Link>

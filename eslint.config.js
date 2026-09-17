@@ -45,7 +45,6 @@ export default tseslint.config(
     files: [
       "src/lib/bumpnotes/education-content.ts",
       "src/components/bumpnotes/EducationSection.tsx",
-      "src/routes/safety.tsx",
     ],
     rules: {
       "no-restricted-imports": [

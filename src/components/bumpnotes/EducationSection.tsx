@@ -5,7 +5,7 @@
 // entries/journal/repository layer (AC-1). It never reads the woman's record.
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ExternalLink } from "lucide-react";
 import { getRedFlagGuidance, type RedFlagItem } from "@/lib/bumpnotes/education-content";
 
 export function EducationSection() {
@@ -84,17 +84,34 @@ function RedFlagRow({
           {item.detail && (
             <p className="text-sm text-ink leading-relaxed break-words">{item.detail}</p>
           )}
+          {item.stat && (
+            <p className="text-sm text-ink-soft leading-relaxed break-words border-l-2 border-coral/40 pl-3">
+              {item.stat}
+            </p>
+          )}
           <div className="rounded-xl bg-blush-soft/60 p-3">
             <p className="text-[10px] font-mono uppercase tracking-widest text-primary">
               What to do
             </p>
             <p className="text-sm text-ink mt-1 break-words">{item.action}</p>
           </div>
-          {item.source && (
-            <p className="text-[11px] font-mono uppercase tracking-wider text-ink-soft">
-              Source: {item.source}
-            </p>
-          )}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+            {item.source && (
+              <p className="text-[11px] font-mono uppercase tracking-wider text-ink-soft">
+                Source: {item.source}
+              </p>
+            )}
+            {item.readMoreUrl && (
+              <a
+                href={item.readMoreUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[12px] font-semibold text-primary underline underline-offset-2"
+              >
+                {item.readMoreLabel ?? "Read more"} <ExternalLink className="size-3" />
+              </a>
+            )}
+          </div>
         </div>
       )}
     </li>
