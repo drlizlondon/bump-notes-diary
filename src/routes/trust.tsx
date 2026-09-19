@@ -1,13 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 
 // Public "for clinicians & care teams" trust page. Clinician / ICB / investor
 // audience: leads with reassurance and provenance, keeps compliance honest
-// (only true claims), and headlines the tailorable RCOG/NICE education.
-// Copy signed off with the founder 2026-09-16 (artifact v6). Honesty note:
-// "GDPR compliant" leans on the DPIA (in progress) — confirm with the DPO
-// before any further claims are added; "preparing for DTAC" is accurate today.
+// (only true claims). Copy per founder + 2026-09-19 trust/compliance research:
+// headline softened off "built to NHS standards" (read as an unearned claim);
+// added UK data-residency + key sub-processors; RCOG/NICE now linked to
+// /education. Honesty notes: "GDPR compliant" leans on the DPIA (in progress) —
+// DPO to confirm; the sub-processor list is the KEY set, not an exhaustive
+// register (DPO to confirm completeness); "preparing for DTAC" is accurate.
 export const Route = createFileRoute("/trust")({
   head: () => ({
     meta: [
@@ -15,7 +17,7 @@ export const Route = createFileRoute("/trust")({
       {
         name: "description",
         content:
-          "BumpNotes is a private pregnancy notebook, built by people from the NHS to NHS standards. Safe, credible, with education based on RCOG and NICE guidance.",
+          "BumpNotes is a private pregnancy notebook, built by people who have worked in the NHS. Safe, private, with education based on RCOG and NICE guidance.",
       },
     ],
   }),
@@ -27,7 +29,7 @@ const RECOMMEND: string[] = [
   "Private by default — nothing is shared unless your patient chooses to.",
   "Your patient stays in control of her own data.",
   "Trusted safety information, based on RCOG and NICE guidance.",
-  "Built by people from the NHS, to NHS standards.",
+  "Built by people who have worked in the NHS.",
 ];
 
 export default function Trust() {
@@ -40,12 +42,12 @@ export default function Trust() {
             For clinicians &amp; care teams
           </p>
           <h1 className="mt-3 font-serif text-[32px] sm:text-4xl lg:text-[46px] font-semibold leading-[1.1] tracking-tight text-ink text-balance">
-            Safe, credible, and built to NHS standards.
+            Safe, private, and built with care.
           </h1>
           <p className="mt-4 text-[17px] sm:text-lg text-ink-soft leading-relaxed max-w-[60ch]">
             BumpNotes is a private pregnancy notebook your patients keep in their own words — clear,
-            calm and theirs. It&rsquo;s built by people who have worked in the NHS, to NHS
-            standards. Safety and privacy matter to us, and it shows.
+            calm and theirs. It&rsquo;s built by people who have worked in the NHS, and safety and
+            privacy matter to us in everything we do.
           </p>
         </section>
 
@@ -88,6 +90,19 @@ export default function Trust() {
           </p>
         </section>
 
+        {/* Where your data lives */}
+        <section className="px-5 sm:px-8 pb-8">
+          <h2 className="font-serif text-xl font-semibold text-ink">Where your data lives</h2>
+          <p className="mt-3 text-[15.5px] text-ink leading-relaxed">
+            Your patients&rsquo; data is held{" "}
+            <strong className="font-semibold">in the UK, on Microsoft Azure</strong>. Our key
+            sub-processors are <strong className="font-semibold">Microsoft Azure</strong> (UK
+            hosting and storage) and <strong className="font-semibold">Cloudflare</strong> (security
+            and delivery). Analytics are opt-in and never receive health data. The full, current
+            sub-processor list and our DPIA are available to your team on request.
+          </p>
+        </section>
+
         {/* Education value */}
         <section className="px-5 sm:px-8 pb-8">
           <div className="rounded-2xl bg-blush-soft p-6 sm:p-8 ring-1 ring-coral/15">
@@ -100,9 +115,13 @@ export default function Trust() {
             <p className="mt-3 text-[15.5px] text-ink leading-relaxed">
               BumpNotes includes a clear, plain-language library of pregnancy conditions and warning
               signs — what they are, and when to get further help. Every item is{" "}
-              <strong className="font-semibold">
-                based on RCOG and NICE guidance and fully referenced
-              </strong>
+              <strong className="font-semibold">based on RCOG and NICE guidance</strong> and{" "}
+              <Link
+                to="/education"
+                className="text-primary font-semibold underline underline-offset-2"
+              >
+                fully referenced
+              </Link>
               , so your patients can read a little more and know what to do.
             </p>
             <p className="mt-3 text-[15.5px] text-ink leading-relaxed">
