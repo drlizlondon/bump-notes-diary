@@ -32,6 +32,26 @@ const RECOMMEND: string[] = [
   "Built by people who have worked in the NHS.",
 ];
 
+const TECH_SECURITY: [string, string][] = [
+  ["Encrypted", "Your patients' data is encrypted in transit and at rest."],
+  [
+    "Modern sign-in",
+    "Access is via Microsoft Entra identity, with a separate, protected area for staff and admin.",
+  ],
+  [
+    "No shared keys",
+    "Our systems connect using managed identities, not shared passwords or account keys.",
+  ],
+  ["Tamper-evident audit", "Sensitive actions are recorded in an append-only audit trail."],
+];
+
+const ASSURANCE: [string, string, string][] = [
+  ["DTAC", "NHS Digital Technology Assessment Criteria", "Preparing"],
+  ["Clinical safety (DCB0129)", "Clinical risk management", "In progress"],
+  ["Data security (DSPT)", "NHS Data Security & Protection Toolkit", "In progress"],
+  ["Cyber Essentials", "UK government security scheme", "Planned"],
+];
+
 export default function Trust() {
   return (
     <PublicShell>
@@ -82,12 +102,6 @@ export default function Trust() {
               detail="Nothing shared without your patient's choice"
             />
           </div>
-          <p className="mt-4 text-sm text-ink-soft leading-relaxed">
-            We&rsquo;re{" "}
-            <strong className="text-ink font-semibold">preparing for DTAC verification</strong> —
-            the NHS&rsquo;s assessment for digital health tools — and build to NHS standards
-            throughout. We&rsquo;re glad to share our progress with your team.
-          </p>
         </section>
 
         {/* Where your data lives */}
@@ -101,6 +115,46 @@ export default function Trust() {
             and delivery). Analytics are opt-in and never receive health data. The full, current
             sub-processor list and our DPIA are available to your team on request.
           </p>
+        </section>
+
+        {/* Technical security */}
+        <section className="px-5 sm:px-8 pb-8">
+          <h2 className="font-serif text-xl font-semibold text-ink">Technical security</h2>
+          <ul className="mt-4 space-y-3">
+            {TECH_SECURITY.map(([t, d]) => (
+              <li key={t} className="flex gap-3 items-start">
+                <span className="mt-0.5 shrink-0 size-6 rounded-full bg-mint-soft grid place-items-center">
+                  <Check className="size-3.5 text-ink" />
+                </span>
+                <span className="text-[15px] text-ink leading-relaxed">
+                  <strong className="font-semibold">{t}.</strong> {d}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Assurance roadmap */}
+        <section className="px-5 sm:px-8 pb-8">
+          <h2 className="font-serif text-xl font-semibold text-ink">Our assurance roadmap</h2>
+          <p className="mt-2 text-sm text-ink-soft leading-relaxed">
+            We&rsquo;re actively working toward the standards NHS teams look for. Here&rsquo;s where
+            we are — we publish outcomes, not promises, and we&rsquo;ll never claim a certification
+            we haven&rsquo;t earned.
+          </p>
+          <div className="mt-4 grid sm:grid-cols-2 gap-3">
+            {ASSURANCE.map(([title, note, status]) => (
+              <div key={title} className="rounded-xl border border-border p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-ink text-[15px]">{title}</span>
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-ink bg-butter-soft rounded-full px-2.5 py-1">
+                    {status}
+                  </span>
+                </div>
+                <p className="text-xs text-ink-soft mt-1">{note}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* Education value */}
