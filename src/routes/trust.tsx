@@ -36,7 +36,7 @@ const TECH_SECURITY: [string, string][] = [
   ["Encrypted", "Your patients' data is encrypted in transit and at rest."],
   [
     "Modern sign-in",
-    "Access is via Microsoft Entra identity, with a separate, protected area for staff and admin.",
+    "Access is via Microsoft Entra identity, and admin tools are kept separate from patient accounts.",
   ],
   [
     "No shared keys",
