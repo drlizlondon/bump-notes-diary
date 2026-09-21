@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FlaskConical, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { submitTesterFeedback } from "@/lib/bumpnotes/tester-feedback.functions";
+import { submitTesterFeedback } from "@/lib/azure/tester.functions";
 import { getTesterSessionId } from "@/lib/bumpnotes/tester";
 
 type Yes = "yes" | "no";

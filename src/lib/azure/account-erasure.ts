@@ -73,12 +73,23 @@ export interface SupabaseErasureStep {
  *  - bumpnotes_state, feedback_submissions.user_id, user_roles, profiles
  *    (legacy Supabase table) — all keyed by the Supabase auth user id.
  *  - contact_messages, feedback_submissions.reply_email — keyed only by a
- *    free-text email address.
+ *    free-text email address. Since Supabase retirement Phase 1
+ *    (2026-09-21), the app no longer writes to either Supabase table (the
+ *    contact form emails hello@bumpnotes.co.uk directly, and the in-app
+ *    feedback button writes to the new Azure `feedback_submissions` table
+ *    instead — see src/lib/azure/feedback.functions.ts). These two Supabase
+ *    deletes are kept here deliberately: any row written before the cutover
+ *    is still real personal data sitting in Supabase until the project
+ *    itself is retired (plan Phase 8), so this step must keep running (and
+ *    will simply match zero rows for anyone who joined afterwards) until
+ *    then. The NEW Azure feedback_submissions row is erased automatically by
+ *    step 4 below (`users.id` cascade), not by this function.
  *  - tester_access_codes / tester_sessions / feedback_responses —
  *    deliberately NOT touched: these hold anonymous tester-session data
  *    keyed by access code / session id, with no user_id or email column at
  *    all (tester mode is explicitly unauthenticated,
- *    src/lib/bumpnotes/tester-feedback.functions.ts). There is no reliable
+ *    src/lib/azure/tester.functions.ts, re-homed from Supabase 2026-09-21).
+ *    There is no reliable
  *    key to attribute a row to this specific account, so guessing would risk
  *    deleting nothing or the wrong thing; flagged here rather than silently
  *    matched — [Founder/DPO to confirm this residual gap is acceptable].

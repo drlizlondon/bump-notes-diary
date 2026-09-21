@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getAzurePgPool } from "@/lib/azure/pg-pool";
 
 async function assertAdmin(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -61,13 +62,9 @@ export const listAccessCodes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("tester_access_codes")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return { codes: data ?? [] };
+    const pool = getAzurePgPool();
+    const { rows } = await pool.query("SELECT * FROM tester_access_codes ORDER BY created_at DESC");
+    return { codes: rows };
   });
 
 export const generateAccessCodeBatch = createServerFn({ method: "POST" })
@@ -84,30 +81,31 @@ export const generateAccessCodeBatch = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const pool = getAzurePgPool();
     // find existing codes with this prefix to avoid collisions
-    const { data: existing } = await supabaseAdmin
-      .from("tester_access_codes")
-      .select("code")
-      .ilike("code", `${data.prefix}%`);
-    const used = new Set((existing ?? []).map((r) => String(r.code).toUpperCase()));
-    const rows: { code: string; label: string | null; created_by: string }[] = [];
+    const { rows: existing } = await pool.query<{ code: string }>(
+      "SELECT code FROM tester_access_codes WHERE code ILIKE $1",
+      [`${data.prefix}%`],
+    );
+    const used = new Set(existing.map((r) => r.code.toUpperCase()));
+    const codes: string[] = [];
     let n = data.startAt;
-    while (rows.length < data.count) {
+    while (codes.length < data.count) {
       const candidate = generateCodeString(data.prefix, n);
       if (!used.has(candidate)) {
-        rows.push({ code: candidate, label: data.label, created_by: context.userId });
+        codes.push(candidate);
         used.add(candidate);
       }
       n += 1;
       if (n > 9999) break;
     }
-    const { data: inserted, error } = await supabaseAdmin
-      .from("tester_access_codes")
-      .insert(rows)
-      .select("*");
-    if (error) throw new Error(error.message);
-    return { inserted: inserted ?? [] };
+    const { rows: inserted } = await pool.query(
+      `INSERT INTO tester_access_codes (code, label, created_by)
+       SELECT * FROM unnest($1::text[], $2::text[], $3::uuid[])
+       RETURNING *`,
+      [codes, codes.map(() => data.label), codes.map(() => context.userId)],
+    );
+    return { inserted };
   });
 
 export const createCustomAccessCode = createServerFn({ method: "POST" })
@@ -123,14 +121,13 @@ export const createCustomAccessCode = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     if (!data.code) throw new Error("Code is required");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
-      .from("tester_access_codes")
-      .insert({ code: data.code, label: data.label, notes: data.notes, created_by: context.userId })
-      .select("*")
-      .single();
-    if (error) throw new Error(error.message);
-    return { code: row };
+    const pool = getAzurePgPool();
+    const { rows } = await pool.query(
+      `INSERT INTO tester_access_codes (code, label, notes, created_by)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [data.code, data.label, data.notes, context.userId],
+    );
+    return { code: rows[0] };
   });
 
 export const setAccessCodeStatus = createServerFn({ method: "POST" })
@@ -141,28 +138,23 @@ export const setAccessCodeStatus = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("tester_access_codes")
-      .update({ status: data.status })
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
+    const pool = getAzurePgPool();
+    await pool.query("UPDATE tester_access_codes SET status = $1 WHERE id = $2", [
+      data.status,
+      data.id,
+    ]);
     return { ok: true };
   });
 
-/** Permanently delete an access code (and any tester sessions / feedback that reference it via cascade). */
+/** Permanently delete an access code (tester sessions / feedback responses cascade). */
 export const deleteAccessCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => ({ id: String(d.id ?? "") }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     if (!data.id) throw new Error("id required");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Remove dependent rows first in case FK is not ON DELETE CASCADE.
-    await supabaseAdmin.from("feedback_responses").delete().eq("access_code_id", data.id);
-    await supabaseAdmin.from("tester_sessions").delete().eq("access_code_id", data.id);
-    const { error } = await supabaseAdmin.from("tester_access_codes").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    const pool = getAzurePgPool();
+    await pool.query("DELETE FROM tester_access_codes WHERE id = $1", [data.id]);
     return { ok: true };
   });
 
@@ -171,73 +163,55 @@ export const deleteUnusedAccessCodes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("tester_access_codes")
-      .delete()
-      .is("first_used_at", null)
-      .select("id");
-    if (error) throw new Error(error.message);
-    return { deleted: data?.length ?? 0 };
+    const pool = getAzurePgPool();
+    const { rows } = await pool.query(
+      "DELETE FROM tester_access_codes WHERE first_used_at IS NULL RETURNING id",
+    );
+    return { deleted: rows.length };
   });
 
 export const listFeedbackResponses = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("feedback_responses")
-      .select("*, tester_access_codes(code, label)")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return { responses: data ?? [] };
+    const pool = getAzurePgPool();
+    const { rows } = await pool.query(
+      `SELECT fr.*, tac.code AS tac_code, tac.label AS tac_label
+       FROM feedback_responses fr
+       LEFT JOIN tester_access_codes tac ON tac.id = fr.access_code_id
+       ORDER BY fr.created_at DESC`,
+    );
+    const responses = rows.map((r) => {
+      const { tac_code, tac_label, ...rest } = r;
+      return {
+        ...rest,
+        tester_access_codes: tac_code != null ? { code: tac_code, label: tac_label } : null,
+      };
+    });
+    return { responses };
   });
 
 export const adminDashboardSummary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [{ data: codes }, { data: responses }, { count: sessionCount }] = await Promise.all([
-      supabaseAdmin.from("tester_access_codes").select("*"),
-      supabaseAdmin.from("feedback_responses").select("*"),
-      supabaseAdmin.from("tester_sessions").select("*", { count: "exact", head: true }),
+    const pool = getAzurePgPool();
+    const [
+      { rows: codes },
+      { rows: responses },
+      {
+        rows: [{ count: sessionCount }],
+      },
+    ] = await Promise.all([
+      pool.query("SELECT * FROM tester_access_codes"),
+      pool.query("SELECT * FROM feedback_responses"),
+      pool.query<{ count: string }>("SELECT count(*) FROM tester_sessions"),
     ]);
     return {
-      codes: codes ?? [],
-      responses: responses ?? [],
-      sessionCount: sessionCount ?? 0,
+      codes,
+      responses,
+      sessionCount: Number(sessionCount),
     };
-  });
-
-/* ============================================================
-   Contact messages
-   ============================================================ */
-
-export const listContactMessages = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("contact_messages")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return { messages: data ?? [] };
-  });
-
-export const deleteContactMessage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => ({ id: String(d.id ?? "") }))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
-    if (!data.id) throw new Error("id required");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("contact_messages").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
   });
 
 /* ============================================================
@@ -248,13 +222,11 @@ export const listFeedbackSubmissions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("feedback_submissions")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return { submissions: data ?? [] };
+    const pool = getAzurePgPool();
+    const { rows } = await pool.query(
+      "SELECT * FROM feedback_submissions ORDER BY created_at DESC",
+    );
+    return { submissions: rows };
   });
 
 export const deleteFeedbackSubmission = createServerFn({ method: "POST" })
@@ -263,9 +235,8 @@ export const deleteFeedbackSubmission = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     if (!data.id) throw new Error("id required");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("feedback_submissions").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    const pool = getAzurePgPool();
+    await pool.query("DELETE FROM feedback_submissions WHERE id = $1", [data.id]);
     return { ok: true };
   });
 

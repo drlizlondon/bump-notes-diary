@@ -1,6 +1,7 @@
-import { supabase } from "@/integrations/supabase/client";
-import { getUserId } from "./sync";
+import { submitFeedbackAuthed, submitFeedbackPublic } from "@/lib/azure/feedback.functions";
 import { isTester, getTesterSessionId } from "./tester";
+import { ENTRA_NATIVE_ENABLED, getNativeAccessToken } from "@/lib/azure/entra-native";
+import { getEntraAccessToken } from "@/lib/azure/entra-auth";
 
 export type FeedbackCategory = "improvement" | "problem" | "love" | "question" | "other";
 
@@ -11,23 +12,33 @@ export async function submitFeedback(input: {
   message: string;
   replyEmail?: string;
 }) {
-  const tester = isTester();
-  const payload = {
+  const fields = {
     category: input.category,
     message: input.message.slice(0, 5000),
-    reply_email: input.replyEmail?.trim() || null,
-    user_id: getUserId(),
-    tester_session_id: tester ? getTesterSessionId() : null,
-    is_tester: tester,
-    page_path: typeof window !== "undefined" ? window.location.pathname : null,
-    app_version: APP_VERSION,
-    user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+    replyEmail: input.replyEmail?.trim() || null,
+    pagePath: typeof window !== "undefined" ? window.location.pathname : null,
+    appVersion: APP_VERSION,
+    userAgent: typeof navigator !== "undefined" ? navigator.userAgent : null,
     viewport: typeof window !== "undefined" ? `${window.innerWidth}x${window.innerHeight}` : null,
-    context: {
-      language: typeof navigator !== "undefined" ? navigator.language : null,
-      timestamp: new Date().toISOString(),
-    },
+    language: typeof navigator !== "undefined" ? navigator.language : null,
   };
-  const { error } = await supabase.from("feedback_submissions").insert(payload);
-  if (error) throw error;
+
+  // Mirrors attachEntraAuth's own check (src/lib/azure/entra-auth-attacher.ts):
+  // only route to the authed fn when a real access token is actually
+  // available. Tester-mode AND signed-out demo-mode visitors (both reach
+  // this same FeedbackButton via AppShell) have no token and must use the
+  // public path — the Supabase original handled all three the same way via
+  // RLS-permitted anonymous inserts, so this preserves that behaviour.
+  const token = isTester()
+    ? null
+    : ((ENTRA_NATIVE_ENABLED ? await getNativeAccessToken() : null) ??
+      (await getEntraAccessToken()));
+
+  if (token) {
+    await submitFeedbackAuthed({ data: fields });
+  } else {
+    await submitFeedbackPublic({
+      data: { ...fields, testerSessionId: isTester() ? getTesterSessionId() : null },
+    });
+  }
 }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FlaskConical, X, Eye, EyeOff } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
-import { verifyTesterCode } from "@/lib/bumpnotes/tester-feedback.functions";
+import { verifyTesterCode } from "@/lib/azure/tester.functions";
 import { enterTesterMode } from "@/lib/bumpnotes/tester";
 
 export function TesterPasswordModal({ onClose }: { onClose: () => void }) {

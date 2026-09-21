@@ -11,7 +11,6 @@ import {
   RefreshCcw,
   MessageSquareHeart,
   Trash2,
-  Mail,
   Bug,
   Users,
   UserPlus,
@@ -32,8 +31,6 @@ import {
   deleteUnusedAccessCodes,
   listFeedbackResponses,
   adminDashboardSummary,
-  listContactMessages,
-  deleteContactMessage,
   listFeedbackSubmissions,
   deleteFeedbackSubmission,
   listUserAccounts,
@@ -368,7 +365,6 @@ function AdminDashboard() {
 
       <FeedbackPanel feedback={feedback} />
 
-      <ContactMessagesPanel />
       <FeedbackSubmissionsPanel />
       <UsersPanel />
 
@@ -378,94 +374,6 @@ function AdminDashboard() {
         </Link>
       </p>
     </div>
-  );
-}
-
-function ContactMessagesPanel() {
-  const fetchAll = useServerFn(listContactMessages);
-  const removeOne = useServerFn(deleteContactMessage);
-  const [items, setItems] = useState<
-    Array<{
-      id: string;
-      created_at: string;
-      name: string | null;
-      email: string | null;
-      message: string;
-    }>
-  >([]);
-  const [loading, setLoading] = useState(true);
-
-  async function refresh() {
-    setLoading(true);
-    try {
-      const r = await fetchAll({ data: undefined } as never);
-      setItems(r.messages as never);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't load");
-    } finally {
-      setLoading(false);
-    }
-  }
-  useEffect(() => {
-    refresh(); /* eslint-disable-next-line */
-  }, []);
-
-  async function del(id: string) {
-    if (!confirm("Delete this contact message?")) return;
-    try {
-      await removeOne({ data: { id } });
-      setItems((x) => x.filter((m) => m.id !== id));
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't delete");
-    }
-  }
-
-  return (
-    <section className="surface-card p-4">
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 className="font-serif text-xl font-semibold flex items-center gap-2">
-          <Mail className="size-5 text-primary" /> Contact messages
-        </h2>
-        <button
-          onClick={refresh}
-          className="px-2.5 py-1 rounded-full text-xs border border-border hover:bg-blush-soft"
-        >
-          <RefreshCcw className="size-3 inline mr-1" />
-          Refresh
-        </button>
-      </div>
-      {loading ? (
-        <p className="text-sm text-ink-soft">Loading…</p>
-      ) : items.length === 0 ? (
-        <p className="text-sm text-ink-soft">No contact messages yet.</p>
-      ) : (
-        <ul className="space-y-2">
-          {items.map((m) => (
-            <li key={m.id} className="rounded-xl border border-border bg-white p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {m.name || "Anonymous"}{" "}
-                    <span className="text-ink-soft font-normal">· {m.email || "no email"}</span>
-                  </p>
-                  <p className="text-[11px] text-ink-soft">
-                    {new Date(m.created_at).toLocaleString("en-GB")}
-                  </p>
-                </div>
-                <button
-                  onClick={() => del(m.id)}
-                  className="p-1.5 rounded-full hover:bg-blush-soft text-ink-soft"
-                  title="Delete"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              </div>
-              <p className="text-sm mt-2 whitespace-pre-wrap">{m.message}</p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
   );
 }
 
