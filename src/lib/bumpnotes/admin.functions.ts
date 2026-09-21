@@ -326,18 +326,11 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Self-service: a signed-in user permanently deletes their own account. */
-export const deleteOwnAccount = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const uid = context.userId;
-    await supabaseAdmin.from("bumpnotes_state").delete().eq("user_id", uid);
-    await supabaseAdmin.from("feedback_submissions").delete().eq("user_id", uid);
-    await supabaseAdmin.from("contact_messages").delete().eq("user_id", uid);
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
-    await supabaseAdmin.from("profiles").delete().eq("id", uid);
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(uid);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
+// The self-service `deleteOwnAccount` that used to live here (Supabase-only,
+// never wired into the live Settings screen) was removed as part of the
+// unified-erasure fix — the live self-service erasure path is
+// `deleteOwnAccount` in src/lib/azure/account.functions.ts, which now also
+// covers Supabase (see `eraseSupabaseUserData` in src/lib/azure/account-erasure.ts).
+// Keeping two same-named functions that each cleared only one datastore was
+// exactly the bug: neither erasure path cleared the other store (DPIA
+// 2026-09-21 §4.8 R3).

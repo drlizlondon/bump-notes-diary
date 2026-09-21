@@ -4,8 +4,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireApiAuth } from "./api-auth-middleware";
 import { getAzurePgPool } from "./pg-pool";
-import { deleteAllUserBlobs, issueDownloadSas } from "./blob-helpers";
-import { deleteEntraUser, type EntraDeleteResult } from "./entra-admin";
+import { issueDownloadSas } from "./blob-helpers";
+// `performAccountErasure` is imported (never re-exported) rather than
+// inlined here — see the top-of-file note in ./account-erasure for why this
+// split is load-bearing, not stylistic.
+import { performAccountErasure } from "./account-erasure";
 
 async function writeAudit(
   pool: { query: (q: string, p: unknown[]) => Promise<unknown> },
@@ -91,43 +94,16 @@ export const exportMyData = createServerFn({ method: "POST" })
   });
 
 /**
- * GDPR-2 — Right to erasure (Art 17). Irreversibly deletes the user's data from
- * Postgres (cascades from the users row), every blob under their prefix, and
- * their Entra identity (via Graph, when configured). A de-identified erasure
- * record persists (the audit row's actor is nulled by the cascade). The client
- * should sign the user out after this resolves.
+ * GDPR-2 — Right to erasure (Art 17), unified across every store that holds
+ * this user's data (Postgres, Blob, Supabase, Entra). See
+ * ./account-erasure.ts (`performAccountErasure`) for the full implementation
+ * and the ordering/partial-failure design — kept in its own module for
+ * reasons explained at the top of that file (client-bundle safety, not
+ * style). The client should sign the user out after this resolves.
  */
 export const deleteOwnAccount = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .handler(async ({ context }) => {
     const pool = getAzurePgPool();
-    const uid = context.userId;
-
-    // The Entra object id, captured before the row is deleted.
-    const userRow = await pool.query<{ external_identity_id: string | null }>(
-      "SELECT external_identity_id FROM users WHERE id = $1",
-      [uid],
-    );
-    const entraObjectId = userRow.rows[0]?.external_identity_id ?? null;
-
-    // 1) Record the erasure first (actor is nulled when the user row is deleted,
-    //    leaving a de-identified accountability record — Art 17(3)/Art 30).
-    await writeAudit(pool, uid, "account_erasure", uid);
-
-    // 2) Blobs.
-    const { deleted: blobsDeleted } = await deleteAllUserBlobs(uid);
-
-    // 3) Postgres — cascades to every owned table.
-    await pool.query("DELETE FROM users WHERE id = $1", [uid]);
-
-    // 4) Entra identity (best-effort: unconfigured => recorded as pending).
-    let entra: EntraDeleteResult;
-    try {
-      entra = await deleteEntraUser(entraObjectId);
-    } catch (error) {
-      console.error("Entra account deletion failed (data already erased):", error);
-      entra = { deleted: false, reason: "not_configured" };
-    }
-
-    return { erased: true, blobsDeleted, entra };
+    return performAccountErasure(pool, context.userId);
   });
