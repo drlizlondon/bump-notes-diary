@@ -110,10 +110,12 @@ export default function Trust() {
           <p className="mt-3 text-[15.5px] text-ink leading-relaxed">
             Your patients&rsquo; data is held{" "}
             <strong className="font-semibold">in the UK, on Microsoft Azure</strong>. Our key
-            sub-processors are <strong className="font-semibold">Microsoft Azure</strong> (UK
-            hosting and storage) and <strong className="font-semibold">Cloudflare</strong> (security
-            and delivery). Analytics are opt-in and never receive health data. The full, current
-            sub-processor list and our DPIA are available to your team on request.
+            sub-processors include <strong className="font-semibold">Microsoft Azure</strong> (UK
+            hosting and storage), <strong className="font-semibold">Cloudflare</strong> (security
+            and delivery) and <strong className="font-semibold">Supabase</strong> (authentication).
+            Analytics are opt-in and never receive health data. The full, current sub-processor
+            list is available to your team on request; our DPIA is in progress and we will share
+            it once complete.
           </p>
         </section>
 
@@ -209,8 +211,9 @@ export default function Trust() {
               For your information-governance &amp; technical colleagues
             </h3>
             <p className="text-sm text-ink-soft mt-1 leading-relaxed">
-              The detail they&rsquo;ll want — data residency, identity, encryption, sub-processors,
-              audit trail and our DPIA — is documented. Ask us for the evidence pack.{" "}
+              The detail they&rsquo;ll want — data residency, identity, encryption, sub-processors
+              and audit trail — is documented; our DPIA is in progress. Ask us for the evidence
+              pack.{" "}
               <a
                 href="mailto:hello@bumpnotes.co.uk"
                 className="text-primary font-semibold underline underline-offset-2"
