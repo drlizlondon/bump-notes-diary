@@ -21,6 +21,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PackRouteImport } from './routes/pack'
 import { Route as OurStoryRouteImport } from './routes/our-story'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as MaternityServicesRouteImport } from './routes/maternity-services'
 import { Route as LabourRouteImport } from './routes/labour'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as EntraRouteImport } from './routes/entra'
@@ -93,6 +94,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MaternityServicesRoute = MaternityServicesRouteImport.update({
+  id: '/maternity-services',
+  path: '/maternity-services',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LabourRoute = LabourRouteImport.update({
   id: '/labour',
   path: '/labour',
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/entra': typeof EntraRoute
   '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
+  '/maternity-services': typeof MaternityServicesRoute
   '/onboarding': typeof OnboardingRoute
   '/our-story': typeof OurStoryRoute
   '/pack': typeof PackRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/entra': typeof EntraRoute
   '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
+  '/maternity-services': typeof MaternityServicesRoute
   '/onboarding': typeof OnboardingRoute
   '/our-story': typeof OurStoryRoute
   '/pack': typeof PackRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/entra': typeof EntraRoute
   '/features': typeof FeaturesRoute
   '/labour': typeof LabourRoute
+  '/maternity-services': typeof MaternityServicesRoute
   '/onboarding': typeof OnboardingRoute
   '/our-story': typeof OurStoryRoute
   '/pack': typeof PackRoute
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
     | '/entra'
     | '/features'
     | '/labour'
+    | '/maternity-services'
     | '/onboarding'
     | '/our-story'
     | '/pack'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/entra'
     | '/features'
     | '/labour'
+    | '/maternity-services'
     | '/onboarding'
     | '/our-story'
     | '/pack'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/entra'
     | '/features'
     | '/labour'
+    | '/maternity-services'
     | '/onboarding'
     | '/our-story'
     | '/pack'
@@ -314,6 +326,7 @@ export interface RootRouteChildren {
   EntraRoute: typeof EntraRoute
   FeaturesRoute: typeof FeaturesRoute
   LabourRoute: typeof LabourRoute
+  MaternityServicesRoute: typeof MaternityServicesRoute
   OnboardingRoute: typeof OnboardingRoute
   OurStoryRoute: typeof OurStoryRoute
   PackRoute: typeof PackRoute
@@ -412,6 +425,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/maternity-services': {
+      id: '/maternity-services'
+      path: '/maternity-services'
+      fullPath: '/maternity-services'
+      preLoaderRoute: typeof MaternityServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/labour': {
@@ -515,6 +535,7 @@ const rootRouteChildren: RootRouteChildren = {
   EntraRoute: EntraRoute,
   FeaturesRoute: FeaturesRoute,
   LabourRoute: LabourRoute,
+  MaternityServicesRoute: MaternityServicesRoute,
   OnboardingRoute: OnboardingRoute,
   OurStoryRoute: OurStoryRoute,
   PackRoute: PackRoute,
