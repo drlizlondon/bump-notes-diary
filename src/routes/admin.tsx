@@ -487,6 +487,7 @@ function FeedbackSubmissionsPanel() {
       reply_email: string | null;
       is_tester: boolean;
       page_path: string | null;
+       context?: { formType?: string; firstName?: string; role?: string; organisation?: string; contactPreference?: string; validationInterest?: string; pilotUpdates?: boolean } | null;
     }>
   >([]);
   const [loading, setLoading] = useState(true);
@@ -520,7 +521,7 @@ function FeedbackSubmissionsPanel() {
     <section className="surface-card p-4">
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="font-serif text-xl font-semibold flex items-center gap-2">
-          <Bug className="size-5 text-primary" /> Feedback submissions
+          <Bug className="size-5 text-primary" /> Feedback and service validation
         </h2>
         <button
           onClick={refresh}
@@ -549,6 +550,11 @@ function FeedbackSubmissionsPanel() {
                         Tester
                       </span>
                     )}
+                     {m.context?.formType === "maternity-service-validation" && (
+                       <span className="inline-block px-2 py-0.5 rounded-full bg-lavender-soft text-[11px] mr-2">
+                         Maternity services
+                       </span>
+                     )}
                     {m.reply_email || "no reply email"}
                   </p>
                   <p className="text-[11px] text-ink-soft">
@@ -564,6 +570,16 @@ function FeedbackSubmissionsPanel() {
                 </button>
               </div>
               <p className="text-sm mt-2 whitespace-pre-wrap">{m.message}</p>
+               {m.context?.formType === "maternity-service-validation" && (
+                 <div className="mt-3 grid sm:grid-cols-2 gap-2 rounded-lg bg-lavender-soft/45 p-3 text-xs">
+                   <p><strong>Name:</strong> {m.context.firstName || "—"}</p>
+                   <p><strong>Role:</strong> {m.context.role || "—"}</p>
+                   <p><strong>Organisation:</strong> {m.context.organisation || "—"}</p>
+                   <p><strong>Response:</strong> {m.context.contactPreference || "—"}</p>
+                   <p><strong>Validation:</strong> {m.context.validationInterest || "—"}</p>
+                   <p><strong>Pilot updates:</strong> {m.context.pilotUpdates ? "Yes" : "No"}</p>
+                 </div>
+               )}
             </li>
           ))}
         </ul>

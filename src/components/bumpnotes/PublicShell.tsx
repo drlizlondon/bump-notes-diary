@@ -37,6 +37,12 @@ export function PublicShell({ children }: { children: ReactNode }) {
             <Link to="/trust" className="px-3 py-1.5 text-ink-soft hover:text-ink">
               For clinicians
             </Link>
+            <Link
+              to="/maternity-services"
+              className="px-3 py-1.5 text-ink-soft hover:text-ink"
+            >
+              For Maternity Services
+            </Link>
             <Link to="/demo" className="px-3 py-1.5 text-ink-soft hover:text-ink">
               Preview
             </Link>
@@ -96,6 +102,13 @@ export function PublicShell({ children }: { children: ReactNode }) {
                 For clinicians
               </Link>
               <Link
+                to="/maternity-services"
+                onClick={() => setMenuOpen(false)}
+                className="py-2.5 text-sm text-ink"
+              >
+                For Maternity Services
+              </Link>
+              <Link
                 to="/demo"
                 onClick={() => setMenuOpen(false)}
                 className="py-2.5 text-sm text-ink"
@@ -132,6 +145,9 @@ export function PublicShell({ children }: { children: ReactNode }) {
             </Link>
             <Link to="/trust" className="hover:text-ink">
               For clinicians
+            </Link>
+            <Link to="/maternity-services" className="hover:text-ink">
+              For Maternity Services
             </Link>
             <Link to="/privacy" className="hover:text-ink">
               Privacy

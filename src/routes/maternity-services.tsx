@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -14,7 +14,6 @@ import {
   Inbox,
   Lightbulb,
   LockKeyhole,
-  MessageSquareText,
   Pencil,
   Save,
   Send,
@@ -256,7 +255,7 @@ function GuidedDemo({ onValidate }: { onValidate: () => void }) {
   );
 }
 
-function DemoFrame({ children, area }: { children: React.ReactNode; area: "woman" | "team" }) {
+function DemoFrame({ children, area }: { children: ReactNode; area: "woman" | "team" }) {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -271,6 +270,12 @@ function DemoFrame({ children, area }: { children: React.ReactNode; area: "woman
 }
 
 function WomanJournal({ onNext }: { onNext: () => void }) {
+  const toneClasses = {
+    coral: "bg-coral-soft",
+    mint: "bg-mint-soft",
+    butter: "bg-butter-soft",
+    lavender: "bg-lavender-soft",
+  } as const;
   return (
     <DemoFrame area="woman">
       <div className="grid lg:grid-cols-[260px_1fr] gap-5">
@@ -291,7 +296,7 @@ function WomanJournal({ onNext }: { onNext: () => void }) {
           </div>
           <div className="mt-4 grid sm:grid-cols-2 gap-3">
             {maternityDemo.journal.map((item) => (
-              <div key={item.type} className={`rounded-xl border border-border p-4 bg-${item.tone}-soft`}>
+              <div key={item.type} className={`rounded-xl border border-border p-4 ${toneClasses[item.tone]}`}>
                 <p className="text-sm font-semibold">{item.type}</p><p className="mt-1 text-sm leading-relaxed text-ink-soft">{item.detail}</p><p className="mt-3 text-[11px] text-ink-soft">{item.date}</p>
               </div>
             ))}
@@ -319,10 +324,10 @@ function SummaryBuilder({ selected, onToggle, onNext }: { selected: Set<string>;
           {maternityDemo.summarySections.map((section) => {
             const active = selected.has(section.id);
             return (
-              <button key={section.id} type="button" onClick={() => onToggle(section.id)} className={`w-full text-left rounded-xl border p-4 transition ${active ? "border-primary/35 bg-white" : "border-border bg-muted opacity-60"}`}>
+              <Button key={section.id} type="button" variant="ghost" onClick={() => onToggle(section.id)} className={`h-auto w-full whitespace-normal text-left items-start justify-start rounded-xl border p-4 transition ${active ? "border-primary/35 bg-white" : "border-border bg-muted opacity-60"}`}>
                 <span className="flex items-center justify-between gap-3"><span className="font-serif text-lg font-semibold">{section.title}</span><span className={`size-6 rounded-full grid place-items-center ${active ? "bg-primary text-primary-foreground" : "bg-white border border-border"}`}>{active && <Check className="size-3.5" />}</span></span>
                 {active && <ul className="mt-3 space-y-1.5">{section.lines.map((line) => <li key={line} className="text-sm text-ink-soft">“{line}”</li>)}</ul>}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -375,7 +380,7 @@ function TeamInbox(props: { reviewed: boolean; setReviewed: (v: boolean) => void
           <div className="flex items-center justify-between"><div><p className="text-xs font-semibold text-primary">Patient-generated summaries</p><h3 className="font-serif text-2xl font-semibold">Maternity team inbox</h3></div><span className="text-xs bg-lavender-soft rounded-full px-3 py-1">3 example summaries</span></div>
           {!open ? (
             <div className="mt-5 overflow-hidden rounded-xl border border-border bg-white">
-              {maternityDemo.inbox.map((row, index) => <button key={row.name} type="button" onClick={() => index === 0 && setOpen(true)} className="w-full text-left p-4 border-b border-border last:border-0 flex items-center justify-between gap-3 hover:bg-blush-soft"><div><p className="font-semibold text-sm">{row.name}</p><p className="text-xs text-ink-soft mt-1">{row.detail}</p></div><span className={`text-[10px] font-bold rounded-full px-2.5 py-1 ${row.status === "New" ? "bg-coral-soft" : "bg-mint-soft"}`}>{row.status}</span></button>)}
+              {maternityDemo.inbox.map((row, index) => <Button key={row.name} type="button" variant="ghost" onClick={() => index === 0 && setOpen(true)} className="h-auto w-full whitespace-normal text-left p-4 rounded-none border-b border-border last:border-0 flex items-center justify-between gap-3 hover:bg-blush-soft"><div><p className="font-semibold text-sm">{row.name}</p><p className="text-xs text-ink-soft mt-1">{row.detail}</p></div><span className={`text-[10px] font-bold rounded-full px-2.5 py-1 ${row.status === "New" ? "bg-coral-soft" : "bg-mint-soft"}`}>{row.status}</span></Button>)}
             </div>
           ) : (
             <div className="mt-5 rounded-xl border border-border bg-white p-5">
@@ -399,7 +404,7 @@ function ServiceDashboard({ onNext }: { onNext: () => void }) {
       <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold text-primary">Example service activity</p><h3 className="font-serif text-2xl sm:text-3xl font-semibold">Service dashboard</h3></div><Button variant="outline" onClick={onNext}><Lightbulb /> View insights</Button></div>
       <p className="mt-2 text-sm text-ink-soft">Fictional demonstration metrics. They are not live service data or performance measures.</p>
       <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-3">{maternityDemo.metrics.map((metric) => <div key={metric.label} className="rounded-xl border border-border bg-white p-4"><p className="font-serif text-2xl sm:text-3xl font-semibold">{metric.value}</p><p className="mt-1 text-sm font-semibold">{metric.label}</p><p className="mt-1 text-[11px] text-ink-soft">{metric.note}</p></div>)}</div>
-      <div className="mt-5 grid lg:grid-cols-2 gap-4"><div className="rounded-xl border border-border bg-white p-5"><p className="font-serif text-lg font-semibold">Example adoption funnel</p>{[["Invited to BumpNotes", 100], ["Started a journal", 74], ["Prepared a summary", 46], ["Chose to share", 31]].map(([label, value]) => <div key={String(label)} className="mt-4"><div className="flex justify-between text-xs"><span>{label}</span><span>{value}%</span></div><div className="mt-1.5 h-2 rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${value}%` }} /></div></div>)}</div><div className="rounded-xl border border-border bg-white p-5"><p className="font-serif text-lg font-semibold">Example sharing activity</p><div className="mt-5 grid grid-cols-7 gap-2 items-end h-40">{[35, 55, 42, 76, 61, 88, 70].map((value, i) => <div key={i} className="h-full flex items-end"><div className="w-full rounded-t bg-mint" style={{ height: `${value}%` }} /></div>)}</div><p className="mt-3 text-xs text-ink-soft">Among fictional BumpNotes users · last seven days</p></div></div>
+      <div className="mt-5 grid lg:grid-cols-2 gap-4"><div className="rounded-xl border border-border bg-white p-5"><p className="font-serif text-lg font-semibold">Example adoption funnel</p>{[["Invited to BumpNotes", "w-full", 100], ["Started a journal", "w-[74%]", 74], ["Prepared a summary", "w-[46%]", 46], ["Chose to share", "w-[31%]", 31]].map(([label, width, value]) => <div key={String(label)} className="mt-4"><div className="flex justify-between text-xs"><span>{label}</span><span>{value}%</span></div><div className="mt-1.5 h-2 rounded-full bg-muted"><div className={`h-full rounded-full bg-primary ${width}`} /></div></div>)}</div><div className="rounded-xl border border-border bg-white p-5"><p className="font-serif text-lg font-semibold">Example sharing activity</p><div className="mt-5 grid grid-cols-7 gap-2 items-end h-40">{["h-[35%]", "h-[55%]", "h-[42%]", "h-[76%]", "h-[61%]", "h-[88%]", "h-[70%]"].map((height, i) => <div key={i} className="h-full flex items-end"><div className={`w-full rounded-t bg-mint ${height}`} /></div>)}</div><p className="mt-3 text-xs text-ink-soft">Among fictional BumpNotes users · last seven days</p></div></div>
     </DemoFrame>
   );
 }
@@ -408,7 +413,7 @@ function Insights({ onValidate }: { onValidate: () => void }) {
   return (
     <DemoFrame area="team">
       <div className="max-w-[900px] mx-auto"><p className="text-xs font-semibold text-primary">Example aggregate insight</p><h3 className="font-serif text-2xl sm:text-3xl font-semibold mt-1">What BumpNotes users chose to record and share</h3><p className="mt-2 text-sm text-ink-soft">Descriptive themes only. BumpNotes does not infer clinical meaning, risk or service recommendations.</p>
-        <div className="mt-5 space-y-4">{maternityDemo.themes.map((theme) => <div key={theme.label}><div className="flex justify-between gap-3 text-sm"><span className="font-medium">{theme.label}</span><span>{theme.value}%</span></div><div className="mt-2 h-3 rounded-full bg-muted"><div className="h-full rounded-full bg-lavender" style={{ width: `${theme.value}%` }} /></div></div>)}</div>
+        <div className="mt-5 space-y-4">{maternityDemo.themes.map((theme, index) => <div key={theme.label}><div className="flex justify-between gap-3 text-sm"><span className="font-medium">{theme.label}</span><span>{theme.value}%</span></div><div className="mt-2 h-3 rounded-full bg-muted"><div className={`h-full rounded-full bg-lavender ${["w-[68%]", "w-[54%]", "w-[39%]", "w-[31%]"][index]}`} /></div></div>)}</div>
         <div className="mt-8 rounded-xl bg-blush-soft p-5"><p className="text-xs uppercase tracking-wider font-bold text-primary">Journey complete</p><div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2">{["WOMAN", "SHARE", "MATERNITY TEAM", "MATERNITY SERVICE"].map((item) => <div key={item} className="rounded-lg bg-white border border-border p-3 text-center text-xs font-bold">{item}</div>)}</div><p className="mt-4 text-sm text-ink-soft leading-relaxed">The woman records and chooses. The team receives her selected information. The service sees carefully qualified aggregate patterns. BumpNotes records information; it does not interpret it.</p></div>
         <Button onClick={onValidate} className="mt-6 h-12 rounded-full px-6"><HeartHandshake /> Help us validate this</Button>
       </div>
