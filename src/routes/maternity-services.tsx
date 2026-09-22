@@ -187,7 +187,9 @@ function JourneyMap() {
 
 function GuidedDemo({ onValidate }: { onValidate: () => void }) {
   const [stage, setStage] = useState(0);
-  const [selected, setSelected] = useState(() => new Set(maternityDemo.summarySections.map((x) => x.id)));
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(maternityDemo.summarySections.map((x) => x.id)),
+  );
   const [shared, setShared] = useState(false);
   const [reviewed, setReviewed] = useState(false);
   const [archived, setArchived] = useState(false);
