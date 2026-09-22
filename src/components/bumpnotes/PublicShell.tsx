@@ -27,7 +27,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1 text-sm shrink-0">
+          <nav className="hidden lg:flex items-center gap-1 text-sm shrink-0">
             <Link to="/features" className="px-3 py-1.5 text-ink-soft hover:text-ink">
               Features
             </Link>
@@ -58,7 +58,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
           </nav>
 
           {/* Mobile nav */}
-          <div className="flex md:hidden items-center gap-1.5 shrink-0">
+          <div className="flex lg:hidden items-center gap-1.5 shrink-0">
             <Link
               to="/signin"
               className="px-3 py-1.5 rounded-full bg-white border border-border text-sm font-medium"
@@ -78,7 +78,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
         </div>
 
         {menuOpen && (
-          <div className="md:hidden border-t border-border bg-white">
+          <div className="lg:hidden border-t border-border bg-white">
             <div className="max-w-[1200px] mx-auto px-4 py-2 flex flex-col">
               <Link
                 to="/features"

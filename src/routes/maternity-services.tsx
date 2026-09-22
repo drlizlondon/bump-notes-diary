@@ -326,7 +326,7 @@ function SummaryBuilder({ selected, onToggle, onNext }: { selected: Set<string>;
           {maternityDemo.summarySections.map((section) => {
             const active = selected.has(section.id);
             return (
-              <Button key={section.id} type="button" variant="ghost" onClick={() => onToggle(section.id)} className={`h-auto w-full whitespace-normal text-left items-start justify-start rounded-xl border p-4 transition ${active ? "border-primary/35 bg-white" : "border-border bg-muted opacity-60"}`}>
+              <Button key={section.id} type="button" variant="ghost" onClick={() => onToggle(section.id)} className={`h-auto w-full whitespace-normal text-left flex-col items-stretch justify-start rounded-xl border p-4 transition ${active ? "border-primary/35 bg-white" : "border-border bg-muted opacity-60"}`}>
                 <span className="flex items-center justify-between gap-3"><span className="font-serif text-lg font-semibold">{section.title}</span><span className={`size-6 rounded-full grid place-items-center ${active ? "bg-primary text-primary-foreground" : "bg-white border border-border"}`}>{active && <Check className="size-3.5" />}</span></span>
                 {active && <ul className="mt-3 space-y-1.5">{section.lines.map((line) => <li key={line} className="text-sm text-ink-soft">“{line}”</li>)}</ul>}
               </Button>
