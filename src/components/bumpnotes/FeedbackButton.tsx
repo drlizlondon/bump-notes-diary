@@ -49,7 +49,12 @@ export function FeedbackButton() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Send feedback"
-        className="fixed z-40 right-3 lg:right-6 bottom-[calc(env(safe-area-inset-bottom)+72px)] lg:bottom-6 size-12 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 grid place-items-center active:scale-95 transition print:hidden"
+        // fix/mobile-demo-polish-2026-09-26: card rows put their expand
+        // chevron flush against the right edge, so a right-anchored floating
+        // button always sits on top of one. Anchored bottom-left on mobile
+        // (nothing else lives there); desktop keeps the original bottom-right
+        // spot since the sidebar layout doesn't have edge-to-edge cards.
+        className="fixed z-40 left-3 lg:left-auto lg:right-6 bottom-[calc(env(safe-area-inset-bottom)+16px)] lg:bottom-6 size-12 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 grid place-items-center active:scale-95 transition print:hidden"
       >
         <MessageCircleHeart className="size-5" />
       </button>

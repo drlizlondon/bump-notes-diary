@@ -150,6 +150,15 @@
     border-color: var(--color-border);
   }
 
+  html {
+    /* fix/mobile-demo-polish-2026-09-26: iOS Safari inflates text past its
+       CSS size on rotation/zoom heuristics; this is invisible in any
+       emulator and only reproduces on a real iPhone (founder report:
+       "too large, doesn't fit"). Pin the adjustment off. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   html, body, #app {
     background-color: var(--color-background);
     color: var(--color-foreground);

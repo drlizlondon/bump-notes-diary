@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   Home,
@@ -21,15 +21,22 @@ export function AppShell({
   children,
   hideNav = false,
   right,
+  banner,
 }: {
   children: ReactNode;
   hideNav?: boolean;
   right?: ReactNode;
+  banner?: ReactNode;
 }) {
   return (
     <>
+      {banner}
       <TesterBanner />
-      <DemoBanner />
+      {/* fix/mobile-demo-polish-2026-09-26: /demo supplies its own preview
+          banner via `banner` — showing the generic DemoBanner underneath it
+          duplicated the same "you're in a demo, exit here" message and
+          doubled the Exit controls stacked at the top of the screen. */}
+      {!banner && <DemoBanner />}
       <div className="app-shell flex flex-col lg:hidden">
         {!hideNav && <MobileTopBar />}
         <div className="flex-1 flex flex-col" data-clarity-mask="True">
@@ -100,44 +107,56 @@ function MobileTopBar() {
   const location = useLocation();
   const items = useNavItems();
   const t = useT();
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   // Close menu on route change
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
 
+  function close() {
+    setOpen(false);
+    menuButtonRef.current?.focus();
+  }
+
+  // fix/mobile-demo-polish-2026-09-26: Escape closes the menu and returns
+  // focus to the toggle button, matching the tap-outside backdrop below.
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
   const current = items.find((i) =>
     i.matchExact ? location.pathname === i.to : location.pathname.startsWith(i.to),
   );
 
   return (
-    <div className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-border print:hidden">
-      <div className="flex items-center gap-2 px-3 h-12">
-        <Link to="/" aria-label="Home" className="flex items-center gap-2 min-w-0">
-          <LogoIcon className="size-7" />
-          <span className="font-serif text-[15px] font-semibold text-ink truncate">
-            {current?.label ?? "BumpNotes"}
-          </span>
-        </Link>
-        <div className="flex-1" />
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-label={open ? "Close menu" : t("nav.menu")}
-          aria-expanded={open}
-          className="size-9 grid place-items-center rounded-full border border-border bg-white"
-        >
-          {open ? <X className="size-4" /> : <Menu className="size-4" />}
-        </button>
-      </div>
-      {open && (
-        <>
+    <>
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-border print:hidden">
+        <div className="flex items-center gap-2 px-3 h-12">
+          <Link to="/" aria-label="Home" className="flex items-center gap-2 min-w-0">
+            <LogoIcon className="size-7" />
+            <span className="font-serif text-[15px] font-semibold text-ink truncate">
+              {current?.label ?? "BumpNotes"}
+            </span>
+          </Link>
+          <div className="flex-1" />
           <button
+            ref={menuButtonRef}
             type="button"
-            aria-label="Close menu"
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 top-12 z-20 bg-ink/20"
-          />
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? "Close menu" : t("nav.menu")}
+            aria-expanded={open}
+            className="size-9 grid place-items-center rounded-full border border-border bg-white"
+          >
+            <Menu className="size-4" />
+          </button>
+        </div>
+        {open && (
           <nav
             aria-label="Primary"
             className="absolute left-0 right-0 top-full z-30 bg-white border-b border-border shadow-lg"
@@ -151,7 +170,7 @@ function MobileTopBar() {
                   <li key={to}>
                     <Link
                       to={to}
-                      onClick={() => setOpen(false)}
+                      onClick={close}
                       className={`flex items-center gap-3 px-3 py-3 rounded-xl text-[15px] font-medium ${
                         active ? "bg-primary/10 text-primary" : "text-ink hover:bg-blush-soft"
                       }`}
@@ -164,9 +183,23 @@ function MobileTopBar() {
               })}
             </ul>
           </nav>
-        </>
+        )}
+      </div>
+      {/* Tap-outside backdrop closes the menu (fix/mobile-demo-polish-2026-09-26).
+        Rendered OUTSIDE the bar above deliberately: that bar has
+        `backdrop-blur` (backdrop-filter), which creates a new containing
+        block for `position: fixed` descendants in every real browser — a
+        fixed backdrop nested inside it only covers the bar's own box, not
+        the viewport, so tapping the rest of the screen never closed the menu. */}
+      {open && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          onClick={close}
+          className="fixed inset-0 top-12 z-20 bg-ink/20"
+        />
       )}
-    </div>
+    </>
   );
 }
 

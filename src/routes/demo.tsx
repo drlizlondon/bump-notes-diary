@@ -58,6 +58,31 @@ export const Route = createFileRoute("/demo")({
 
 type PanelKey = "symptom" | "question" | "people" | "measurement" | "photo" | "note" | "feeling";
 
+// fix/mobile-demo-polish-2026-09-26: rendered via AppShell's `banner` slot so it
+// sits above the nav bar (same sticky-stack pattern as TesterBanner/DemoBanner),
+// not inside the scrollable content where it used to sit below the nav bar and
+// clip "Exit preview" off the right edge on a real iPhone.
+function PreviewBanner() {
+  return (
+    <div
+      className="sticky top-0 z-30 w-full bg-blush-soft border-b border-border print:hidden"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
+      <div className="max-w-[1200px] mx-auto pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] py-2 flex flex-wrap items-center gap-2">
+        <span className="text-sm font-semibold text-ink min-w-0 flex-1 break-words">
+          You&rsquo;re viewing a preview
+        </span>
+        <Link
+          to="/welcome"
+          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-white border border-border px-3 py-1.5 text-xs sm:text-sm font-medium text-ink"
+        >
+          <ArrowLeft className="size-4" /> Exit preview
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 // A5: the demo runs entirely on the on-device LocalRepository (demo mode →
 // sessionStorage, seeded fixtures) via the Repository, proving the V2 read+write
 // path with zero real-data risk. RepositoryCaptureProvider makes the shared
@@ -111,16 +136,7 @@ function DemoInner() {
   return (
     <>
       <Toaster position="top-center" />
-      <AppShell>
-        <div className="-mx-4 md:mx-0 mb-3 flex items-center justify-between gap-3 bg-blush-soft border-b md:border border-border md:rounded-xl px-4 py-2.5">
-          <span className="text-sm font-semibold text-ink">You&rsquo;re viewing a preview</span>
-          <Link
-            to="/welcome"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white border border-border px-3.5 py-1.5 text-sm font-medium text-ink"
-          >
-            <ArrowLeft className="size-4" /> Exit preview
-          </Link>
-        </div>
+      <AppShell banner={<PreviewBanner />}>
         <HomeHeader profile={profile} />
 
         <ThisWeekCard pregnancyId={pregnancy.id} dueDateISO={profile.dueDateISO} />

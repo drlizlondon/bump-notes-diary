@@ -1,6 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 import { LogoBadge } from "./Logo";
 import { TesterPasswordModal } from "./TesterPasswordModal";
 import { BetaBanner } from "./BetaBanner";
@@ -10,6 +10,24 @@ export function PublicShell({ children }: { children: ReactNode }) {
   const [showTesterModal, setShowTesterModal] = useState(false);
   const location = useLocation();
   const isWelcome = location.pathname === "/welcome";
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  function closeMenu() {
+    setMenuOpen(false);
+    menuButtonRef.current?.focus();
+  }
+
+  // fix/mobile-demo-polish-2026-09-26: Escape closes the open mobile nav and
+  // returns focus to the toggle button (accessibility parity with the
+  // tap-outside backdrop below).
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") closeMenu();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen]);
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
       <BetaBanner />
@@ -60,66 +78,59 @@ export function PublicShell({ children }: { children: ReactNode }) {
               Sign in
             </Link>
             <button
+              ref={menuButtonRef}
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
               className="size-9 grid place-items-center rounded-full border border-border bg-white"
             >
-              {menuOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+              <Menu className="size-4" />
             </button>
           </div>
         </div>
 
         {menuOpen && (
-          <div className="md:hidden border-t border-border bg-white">
+          <div className="lg:hidden relative z-20 border-t border-border bg-white">
             <div className="max-w-[1200px] mx-auto px-4 py-2 flex flex-col">
-              <Link
-                to="/features"
-                onClick={() => setMenuOpen(false)}
-                className="py-2.5 text-sm text-ink"
-              >
+              <Link to="/features" onClick={closeMenu} className="py-2.5 text-sm text-ink">
                 Features
               </Link>
-              <Link
-                to="/our-story"
-                onClick={() => setMenuOpen(false)}
-                className="py-2.5 text-sm text-ink"
-              >
+              <Link to="/our-story" onClick={closeMenu} className="py-2.5 text-sm text-ink">
                 Our Story
               </Link>
-              <Link
-                to="/trust"
-                onClick={() => setMenuOpen(false)}
-                className="py-2.5 text-sm text-ink"
-              >
+              <Link to="/trust" onClick={closeMenu} className="py-2.5 text-sm text-ink">
                 For clinicians
               </Link>
-              <Link
-                to="/demo"
-                onClick={() => setMenuOpen(false)}
-                className="py-2.5 text-sm text-ink"
-              >
+              <Link to="/demo" onClick={closeMenu} className="py-2.5 text-sm text-ink">
                 Preview
               </Link>
-              <Link
-                to="/privacy"
-                onClick={() => setMenuOpen(false)}
-                className="py-2.5 text-sm text-ink"
-              >
+              <Link to="/privacy" onClick={closeMenu} className="py-2.5 text-sm text-ink">
                 Privacy
               </Link>
-              <Link
-                to="/contact"
-                onClick={() => setMenuOpen(false)}
-                className="py-2.5 text-sm text-ink"
-              >
+              <Link to="/contact" onClick={closeMenu} className="py-2.5 text-sm text-ink">
                 Get in contact
               </Link>
             </div>
           </div>
         )}
       </header>
+
+      {/* Tap-outside backdrop closes the menu (fix/mobile-demo-polish-2026-09-26).
+          Rendered OUTSIDE <header> deliberately: <header> has `backdrop-blur`
+          (backdrop-filter), which creates a new containing block for
+          `position: fixed` descendants in every real browser — a fixed
+          backdrop nested inside it only covers the header's own box (it
+          measured ~300px tall in testing, not the viewport), so tapping the
+          rest of the screen never reached it and the menu wouldn't close. */}
+      {menuOpen && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          onClick={closeMenu}
+          className="lg:hidden fixed inset-0 top-14 z-10 bg-ink/20"
+        />
+      )}
 
       <main className="flex-1">{children}</main>
 
