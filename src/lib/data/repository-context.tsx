@@ -11,6 +11,7 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { isTester } from "../bumpnotes/tester";
+import { isDemoSession } from "../bumpnotes/demo-session";
 import { apiRepository } from "./api-repo";
 import { LocalRepository } from "./local-repo";
 import type { Repository } from "./repository";
@@ -28,9 +29,17 @@ export function createRepository(mode: RepositoryMode): Repository {
   }
 }
 
-/** The app's default mode outside an explicit provider: tester flag wins, else authed API. */
+/**
+ * The app's default mode outside an explicit provider: tester flag wins,
+ * then an active demo session (fix/demo-summary-2026-09-26 — set by /demo on
+ * mount so Timeline/Pregnancy Summary/Baby details/Settings, reached via the
+ * nav while previewing, read the same seeded on-device demo data instead of
+ * falling through to the authed API), else authed API.
+ */
 export function resolveDefaultMode(): RepositoryMode {
-  return isTester() ? "tester" : "api";
+  if (isTester()) return "tester";
+  if (isDemoSession()) return "demo";
+  return "api";
 }
 
 interface RepositoryContextValue {

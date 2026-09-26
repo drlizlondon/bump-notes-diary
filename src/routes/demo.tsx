@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import {
@@ -28,6 +28,7 @@ import { useT } from "@/lib/bumpnotes/i18n";
 import { gestationFromDueDate } from "@/lib/bumpnotes/gestation";
 import { RepositoryProvider } from "@/lib/data/repository-context";
 import { RepositoryCaptureProvider } from "@/lib/data/capture";
+import { enterDemoSession } from "@/lib/bumpnotes/demo-session";
 import { useActivePregnancy, useEntries, useProfile } from "@/lib/data/hooks";
 import { storeEntryFromV2, storeProfileFromV2 } from "@/lib/data/entry-adapter";
 import type { Entry as StoreEntry } from "@/lib/bumpnotes/types";
@@ -61,7 +62,16 @@ type PanelKey = "symptom" | "question" | "people" | "measurement" | "photo" | "n
 // sessionStorage, seeded fixtures) via the Repository, proving the V2 read+write
 // path with zero real-data risk. RepositoryCaptureProvider makes the shared
 // capture panels write V2 entries create-only (append-only ruling).
+//
+// fix/demo-summary-2026-09-26: mark the tab as "in a demo session" so the
+// other routes a demo visitor reaches through the nav (Timeline, Pregnancy
+// Summary, Baby details, Settings) also resolve to the demo LocalRepository
+// (resolveDefaultMode(), repository-context.tsx) and pass their own
+// userId/tester auth guards, instead of bouncing to /welcome.
 function Demo() {
+  useEffect(() => {
+    enterDemoSession();
+  }, []);
   return (
     <RepositoryProvider mode="demo">
       <RepositoryCaptureProvider>

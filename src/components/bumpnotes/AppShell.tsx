@@ -15,7 +15,7 @@ import { FeedbackButton } from "./FeedbackButton";
 import { TesterBanner } from "./TesterBanner";
 import { LogoIcon } from "./Logo";
 import { useT } from "@/lib/bumpnotes/i18n";
-import { store, useDemoMode } from "@/lib/bumpnotes/store";
+import { exitDemoSession, useDemoSession } from "@/lib/bumpnotes/demo-session";
 
 export function AppShell({
   children,
@@ -53,11 +53,11 @@ export function AppShell({
 }
 
 function DemoBanner() {
-  const demo = useDemoMode();
+  const demo = useDemoSession();
   const navigate = useNavigate();
   if (!demo) return null;
   function exit() {
-    store.exitDemoMode();
+    exitDemoSession();
     navigate({ to: "/welcome" });
   }
   return (
@@ -82,7 +82,7 @@ function DemoBanner() {
 }
 
 function useNavItems() {
-  const demo = useDemoMode();
+  const demo = useDemoSession();
   const t = useT();
   const homeTo = demo ? "/demo" : "/";
   return [
