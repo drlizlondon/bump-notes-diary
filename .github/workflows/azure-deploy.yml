@@ -50,7 +50,13 @@ jobs:
       - name: Build (nitro node-server preset)
         # Entra sign-in activated on the Azure instance (Phase I.1). All non-secret
         # public identifiers. VITE_ vars are inlined at build time.
+        #
+        # AZURE_BUILD=true is what vite.config.ts checks to opt into the
+        # node-server nitro preset (fix 2026-09-26 — see that file's comment).
+        # Without it, the build falls through to the default cloudflare-module
+        # preset, which is what Cloudflare Pages' own `npm run build` needs.
         env:
+          AZURE_BUILD: "true"
           VITE_ENTRA_AUTH: "true"
           # Native auth ("B" login) — on at the Azure instance so /entra proves the
           # own-form -> native-auth path. Requires native auth + public-client on the
