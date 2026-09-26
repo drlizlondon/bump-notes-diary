@@ -34,8 +34,20 @@ export function BetaBanner() {
 
   return (
     <div className="bg-blush-soft border-b border-border text-ink print:hidden">
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-2 flex items-start gap-3 text-[12.5px] sm:text-[13px] leading-snug">
-        <p className="flex-1 m-0">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-1.5 sm:py-2 flex items-center gap-3 text-[12.5px] sm:text-[13px] leading-snug">
+        {/* Compact single line below sm (390px devices): full sentence below
+            wraps to multiple lines and eats the first screen (sweep
+            2026-09-26). Same words, shortened per that sweep's copy. */}
+        <p className="flex-1 m-0 truncate sm:hidden">
+          <span className="font-semibold">Early beta.</span> Questions?{" "}
+          <a
+            href="mailto:hello@bumpnotes.co.uk"
+            className="font-semibold text-primary underline underline-offset-2"
+          >
+            hello@bumpnotes.co.uk
+          </a>
+        </p>
+        <p className="hidden sm:block flex-1 m-0">
           <span className="font-semibold">BumpNotes is in early beta.</span> We're building
           carefully and testing with a small group of women. If you're an expectant parent,
           clinician or charity who'd like to know more, we'd love to hear from you at{" "}
