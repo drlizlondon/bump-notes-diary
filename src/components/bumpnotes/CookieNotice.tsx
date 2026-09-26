@@ -35,35 +35,27 @@ export function CookieNotice() {
     <div
       role="dialog"
       aria-label="Cookie notice"
-      className="fixed inset-x-0 bottom-0 z-[60] px-3 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 print:hidden"
+      className="fixed inset-x-0 bottom-0 z-[60] px-3 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2 print:hidden"
     >
-      <div className="mx-auto max-w-[680px] rounded-2xl bg-white border border-border shadow-[0_8px_30px_rgba(36,27,28,0.08)] p-4 sm:p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="text-sm text-ink flex-1">
-            <p className="font-medium">We use essential cookies</p>
-            <p className="text-ink-soft text-[13px] mt-1 leading-relaxed">
-              BumpNotes uses essential cookies and secure storage to keep you signed in, remember
-              your choices, and protect your account. Your pregnancy record is saved securely to
-              your BumpNotes account so you can access it across devices. With your permission, we
-              use privacy-safe analytics to understand which pages and buttons are used. We do not
-              send names, notes, symptoms, health details, pregnancy records or account data to
-              analytics. See our{" "}
-              <Link to="/privacy" className="text-primary underline">
-                Privacy Policy
-              </Link>
-              .
-            </p>
-          </div>
+      <div className="mx-auto max-w-[680px] rounded-2xl bg-white border border-border shadow-[0_8px_30px_rgba(36,27,28,0.08)] p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+          <p className="text-[12.5px] sm:text-[13px] text-ink-soft leading-snug flex-1">
+            We use essential cookies to keep you signed in. Analytics stays off unless you allow it,
+            and never sees your pregnancy record.{" "}
+            <Link to="/privacy" className="text-primary underline whitespace-nowrap">
+              Privacy Policy
+            </Link>
+          </p>
           <div className="flex shrink-0 gap-2 self-end sm:self-auto">
             <button
               onClick={() => savePreference(false)}
-              className="px-4 py-2.5 rounded-full bg-white border border-border text-sm font-semibold text-ink"
+              className="px-4 py-2 rounded-full bg-white border border-border text-sm font-semibold text-ink"
             >
               Essential only
             </button>
             <button
               onClick={() => savePreference(true)}
-              className="px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+              className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
             >
               Allow analytics
             </button>
