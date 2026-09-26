@@ -9,6 +9,7 @@ import { useT } from "@/lib/bumpnotes/i18n";
 import { signOut } from "@/lib/bumpnotes/sync";
 import { supabase } from "@/integrations/supabase/client";
 import { useTester, isTester, exitTesterMode } from "@/lib/bumpnotes/tester";
+import { exitDemoSession, isDemoSession, useDemoSession } from "@/lib/bumpnotes/demo-session";
 import { AppRepository } from "@/lib/data/capture";
 import { useAppSession, refreshNativeSession } from "@/lib/data/session";
 import {
@@ -36,11 +37,16 @@ export const Route = createFileRoute("/settings")({
 function SettingsRoute() {
   const { userId, loading } = useAppSession();
   const tester = useTester();
+  const demo = useDemoSession();
   const navigate = useNavigate();
-  const authorized = !!userId || tester;
+  // useDemoSession() (useSyncExternalStore, SSR snapshot = false) — not the
+  // plain isDemoSession() read — so this render-time check matches the SSR
+  // output on first hydration and only flips true in the client re-render
+  // that follows, avoiding a hydration mismatch for demo visitors.
+  const authorized = !!userId || tester || demo;
 
   useEffect(() => {
-    const authed = !!userId || isTester();
+    const authed = !!userId || isTester() || isDemoSession();
     if (!authed && !loading) navigate({ to: "/welcome", replace: true });
   }, [userId, loading, navigate]);
 
@@ -55,6 +61,7 @@ function SettingsRoute() {
 function SettingsInner() {
   const t = useT();
   const tester = useTester();
+  const demo = useDemoSession();
   const navigate = useNavigate();
   const { email, userId } = useAppSession();
   const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
@@ -88,8 +95,8 @@ function SettingsInner() {
       }
       return;
     }
-    // Tester: assemble the on-device copy from what's loaded.
-    downloadJson(`bumpnotes-tester-${date}.json`, {
+    // Tester / demo: assemble the on-device copy from what's loaded.
+    downloadJson(`bumpnotes-${demo ? "demo" : "tester"}-${date}.json`, {
       profile: profileV2 ?? null,
       pregnancy: pregnancy ?? null,
       entries: v2entries ?? [],
@@ -123,7 +130,24 @@ function SettingsInner() {
               {t("set.account")}
             </p>
             <div className="surface-card px-5 py-4 space-y-3">
-              {tester ? (
+              {demo ? (
+                <>
+                  <p className="text-sm font-medium">Preview mode</p>
+                  <p className="text-xs text-ink-soft">
+                    You're looking at a demo. Nothing here is real and nothing is saved once you
+                    leave.
+                  </p>
+                  <button
+                    onClick={() => {
+                      exitDemoSession();
+                      navigate({ to: "/welcome" });
+                    }}
+                    className="w-full py-2.5 rounded-full bg-white border border-border text-sm font-medium"
+                  >
+                    Exit preview
+                  </button>
+                </>
+              ) : tester ? (
                 <>
                   <p className="text-sm font-medium">Tester workspace</p>
                   <p className="text-xs text-ink-soft">

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { AppShell, PageHeader, PregnancySummaryAside } from "@/components/bumpnotes/AppShell";
 import { useTester, isTester } from "@/lib/bumpnotes/tester";
+import { isDemoSession, useDemoSession } from "@/lib/bumpnotes/demo-session";
 import { AppRepository, useCapture } from "@/lib/data/capture";
 import { useAppSession } from "@/lib/data/session";
 import {
@@ -87,11 +88,16 @@ type ReviewTarget = { title: string; entryIds: string[] };
 function SummaryPage() {
   const { userId, loading } = useAppSession();
   const tester = useTester();
+  const demo = useDemoSession();
   const navigate = useNavigate();
-  const authorized = !!userId || tester;
+  // useDemoSession() (useSyncExternalStore, SSR snapshot = false) — not the
+  // plain isDemoSession() read — so this render-time check matches the SSR
+  // output on first hydration and only flips true in the client re-render
+  // that follows, avoiding a hydration mismatch for demo visitors.
+  const authorized = !!userId || tester || demo;
 
   useEffect(() => {
-    const authed = !!userId || isTester();
+    const authed = !!userId || isTester() || isDemoSession();
     if (!authed && !loading) navigate({ to: "/welcome", replace: true });
   }, [userId, loading, navigate]);
 
