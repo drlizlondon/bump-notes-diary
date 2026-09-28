@@ -271,6 +271,9 @@ function FauxBrowserChrome() {
       <span className="ml-3 text-[11px] font-mono uppercase tracking-widest text-ink-soft">
         Pregnancy Summary
       </span>
+      <span className="ml-auto inline-flex items-center rounded-full border border-ink/15 bg-butter px-2.5 py-1 text-[11px] font-semibold text-ink">
+        Sample record
+      </span>
     </div>
   );
 }
