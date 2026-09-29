@@ -3,6 +3,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { LogoBadge } from "./Logo";
 import { TesterPasswordModal } from "./TesterPasswordModal";
+import { PeerValidationDrawer } from "./PeerValidationDrawer";
 
 export function PublicShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -137,6 +138,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
         </div>
       </footer>
       {showTesterModal && <TesterPasswordModal onClose={() => setShowTesterModal(false)} />}
+      <PeerValidationDrawer />
     </div>
   );
 }
