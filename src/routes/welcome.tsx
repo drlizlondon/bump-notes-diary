@@ -33,11 +33,12 @@ export const Route = createFileRoute("/welcome")({
       },
     ],
     links: [
+      { rel: "canonical", href: "https://bumpnotes.co.uk/welcome" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
       },
     ],
   }),
@@ -68,7 +69,7 @@ function Welcome() {
 
 function Hero() {
   return (
-    <section className="px-5 sm:px-8 pt-4 sm:pt-8 lg:pt-10 pb-12 sm:pb-20">
+    <section className="px-5 sm:px-8 pt-4 sm:pt-8 lg:pt-10 pb-12 sm:pb-20 max-sm:[@media(max-height:700px)]:pt-1">
       <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[45fr_55fr] gap-8 lg:gap-14 items-center">
         {/* Copy column */}
         <div className="text-left max-w-[560px] mx-auto lg:mx-0 w-full lg:py-6">
@@ -76,13 +77,13 @@ function Hero() {
             <Lock className="size-3.5 text-primary" /> Private by default
           </span>
 
-          <h1 className="mt-5 font-serif text-[34px] sm:text-[44px] lg:text-[56px] font-semibold leading-[1.05] tracking-tight text-balance text-ink">
+          <h1 className="mt-5 max-sm:[@media(max-height:700px)]:mt-2 max-sm:[@media(max-height:700px)]:text-[27px] font-serif text-[34px] sm:text-[44px] lg:text-[56px] font-semibold leading-[1.05] tracking-tight text-balance text-ink">
             Everything about your pregnancy.
             <br className="hidden sm:block" />{" "}
             <span className="text-primary">Ready when you need it.</span>
           </h1>
 
-          <p className="mt-5 text-[15.5px] sm:text-lg text-ink-soft leading-[1.7] max-w-[520px]">
+          <p className="mt-5 text-[15.5px] sm:text-lg text-ink-soft leading-[1.7] max-w-[520px] max-sm:[@media(max-height:700px)]:mt-2 max-sm:[@media(max-height:700px)]:text-[14px] max-sm:[@media(max-height:700px)]:leading-[1.45]">
             Record what matters to you throughout your pregnancy. Create clear summaries whenever
             you need them, helping you communicate clearly and confidently with your maternity team.
           </p>
@@ -90,7 +91,7 @@ function Hero() {
           <Link
             to="/onboarding"
             onClick={() => trackEvent("cta_clicked")}
-            className="mt-7 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-primary text-primary-foreground text-[15px] font-semibold shadow-sm shadow-primary/20 hover:opacity-95"
+            className="mt-7 max-sm:[@media(max-height:700px)]:mt-3 max-sm:[@media(max-height:700px)]:py-2.5 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-primary text-primary-foreground text-[15px] font-semibold shadow-sm shadow-primary/20 hover:opacity-95"
           >
             Start your pregnancy record <ArrowRight className="size-4" />
           </Link>

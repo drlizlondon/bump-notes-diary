@@ -17,6 +17,7 @@ export const Route = createFileRoute("/our-story")({
           "Your own record of your pregnancy, helping you communicate clearly and confidently.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://bumpnotes.co.uk/our-story" }],
   }),
   component: OurStory,
 });

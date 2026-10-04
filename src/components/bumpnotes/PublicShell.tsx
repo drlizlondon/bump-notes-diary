@@ -83,7 +83,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
               onClick={() => setMenuOpen((v) => !v)}
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
-              className="size-9 grid place-items-center rounded-full border border-border bg-white"
+              className="size-11 grid place-items-center rounded-full border border-border bg-white"
             >
               <Menu className="size-4" />
             </button>
@@ -157,7 +157,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={() => setShowTesterModal(true)}
-                className="hover:text-primary hover:underline transition-colors"
+                className="inline-flex min-h-11 items-center hover:text-primary hover:underline transition-colors"
               >
                 Testing BumpNotes? Enter tester access code
               </button>

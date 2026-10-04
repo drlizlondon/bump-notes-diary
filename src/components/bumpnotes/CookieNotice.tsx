@@ -37,9 +37,9 @@ export function CookieNotice() {
       aria-label="Cookie notice"
       className="fixed inset-x-0 bottom-0 z-[60] px-3 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2 print:hidden"
     >
-      <div className="mx-auto max-w-[680px] rounded-2xl bg-white border border-border shadow-[0_8px_30px_rgba(36,27,28,0.08)] p-3 sm:p-4">
+      <div className="mx-auto max-w-[680px] rounded-2xl bg-white border border-border shadow-[0_8px_30px_rgba(36,27,28,0.08)] p-3 sm:p-4 [@media(max-height:700px)]:p-2">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
-          <p className="text-[12.5px] sm:text-[13px] text-ink-soft leading-snug flex-1">
+          <p className="text-[12.5px] sm:text-[13px] text-ink-soft leading-snug flex-1 [@media(max-height:700px)]:text-xs [@media(max-height:700px)]:leading-[1.3]">
             We use essential cookies to keep you signed in. Analytics stays off unless you allow it,
             and never sees your pregnancy record.{" "}
             <Link to="/privacy" className="text-primary underline whitespace-nowrap">

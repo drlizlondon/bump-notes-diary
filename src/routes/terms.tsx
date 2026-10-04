@@ -2,7 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PublicShell } from "@/components/bumpnotes/PublicShell";
 
 export const Route = createFileRoute("/terms")({
-  head: () => ({ meta: [{ title: "Terms of Use — BumpNotes" }] }),
+  head: () => ({
+    meta: [{ title: "Terms of Use — BumpNotes" }],
+    links: [{ rel: "canonical", href: "https://bumpnotes.co.uk/terms" }],
+  }),
   component: Terms,
 });
 
