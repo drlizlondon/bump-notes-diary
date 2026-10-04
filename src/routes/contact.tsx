@@ -8,7 +8,10 @@ import { PublicShell } from "@/components/bumpnotes/PublicShell";
 // "UK, on Azure" NHS story). A direct email to the UK inbox is more reliable
 // and cleaner to assure.
 export const Route = createFileRoute("/contact")({
-  head: () => ({ meta: [{ title: "Get in contact — BumpNotes" }] }),
+  head: () => ({
+    meta: [{ title: "Get in contact — BumpNotes" }],
+    links: [{ rel: "canonical", href: "https://bumpnotes.co.uk/contact" }],
+  }),
   component: Contact,
 });
 

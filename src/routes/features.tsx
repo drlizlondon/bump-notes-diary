@@ -31,6 +31,7 @@ export const Route = createFileRoute("/features")({
           "Pregnancy timeline, symptom and feelings tracking, saved questions, and a shareable summary.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://bumpnotes.co.uk/features" }],
   }),
   component: FeaturesPage,
 });

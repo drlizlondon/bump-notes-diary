@@ -20,6 +20,7 @@ export const Route = createFileRoute("/trust")({
           "BumpNotes is a private pregnancy notebook, built by people who have worked in the NHS. Safe, private, with education based on RCOG and NICE guidance.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://bumpnotes.co.uk/trust" }],
   }),
   component: Trust,
 });

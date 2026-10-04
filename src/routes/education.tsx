@@ -12,7 +12,10 @@ import { useTester } from "@/lib/bumpnotes/tester";
 // via EducationSection, which is fenced from the data layer (AC-1) — the shell
 // choice never feeds the user's own record into the content.
 export const Route = createFileRoute("/education")({
-  head: () => ({ meta: [{ title: "Education · BumpNotes" }] }),
+  head: () => ({
+    meta: [{ title: "Education · BumpNotes" }],
+    links: [{ rel: "canonical", href: "https://bumpnotes.co.uk/education" }],
+  }),
   component: EducationPage,
 });
 

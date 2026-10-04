@@ -63,7 +63,7 @@ export function BetaBanner() {
           type="button"
           onClick={dismiss}
           aria-label="Dismiss beta notice"
-          className="shrink-0 size-6 grid place-items-center rounded-full text-ink-soft hover:text-ink hover:bg-white/60"
+          className="shrink-0 size-11 -my-2.5 -mr-2 grid place-items-center rounded-full text-ink-soft hover:text-ink hover:bg-white/60"
         >
           <X className="size-3.5" />
         </button>
