@@ -1,4 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { SERVICE_PAUSED } from "@/lib/service-pause";
+import { PauseNotice } from "@/components/bumpnotes/PauseNotice";
 import { Toaster } from "sonner";
 import { useTester, isTester } from "@/lib/bumpnotes/tester";
 import { Onboarding } from "@/components/bumpnotes/Onboarding";
@@ -39,6 +41,16 @@ function OnboardingRoute() {
   useEffect(() => {
     trackEvent("onboarding_started");
   }, []);
+
+  // Service pause: creating a pregnancy record needs the paused backend.
+  // Testers stay on-device and keep working.
+  if (SERVICE_PAUSED && !tester) {
+    return (
+      <div className="min-h-[100dvh] flex items-center px-4">
+        <PauseNotice />
+      </div>
+    );
+  }
 
   if (!authorized) return null;
 

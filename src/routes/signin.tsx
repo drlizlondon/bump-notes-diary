@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate, Link, useSearch } from "@tanstack/react-router";
+import { PAUSE_MESSAGE, SERVICE_PAUSED } from "@/lib/service-pause";
 import { useEffect, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -142,6 +143,14 @@ function SupabaseSignInPage() {
                 ? "Sign in with your admin account to access the BumpNotes admin dashboard."
                 : "Sign in to access your pregnancy record."}
             </p>
+            {SERVICE_PAUSED && !isAdmin && (
+              <p
+                role="status"
+                className="mt-4 rounded-xl border border-border bg-white px-4 py-3 text-sm leading-relaxed text-foreground"
+              >
+                {PAUSE_MESSAGE}
+              </p>
+            )}
           </div>
 
           <div className="surface-card p-5 space-y-4">

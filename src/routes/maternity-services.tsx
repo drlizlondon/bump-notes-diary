@@ -1,4 +1,6 @@
 import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { SERVICE_PAUSED } from "@/lib/service-pause";
+import { PauseNotice } from "@/components/bumpnotes/PauseNotice";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -425,6 +427,12 @@ function Insights({ onValidate }: { onValidate: () => void }) {
 }
 
 function ValidationForm() {
+  // Service pause: responses are stored on the paused backend.
+  if (SERVICE_PAUSED) return <PauseNotice showDemoLink={false} />;
+  return <ValidationFormFields />;
+}
+
+function ValidationFormFields() {
   const submit = useServerFn(submitMaternityServiceInterest);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);

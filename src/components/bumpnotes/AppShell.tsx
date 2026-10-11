@@ -16,6 +16,9 @@ import { TesterBanner } from "./TesterBanner";
 import { LogoIcon } from "./Logo";
 import { useT } from "@/lib/bumpnotes/i18n";
 import { exitDemoSession, useDemoSession } from "@/lib/bumpnotes/demo-session";
+import { SERVICE_PAUSED } from "@/lib/service-pause";
+import { resolveDefaultMode, useRepository } from "@/lib/data/repository-context";
+import { PauseNotice } from "./PauseNotice";
 
 export function AppShell({
   children,
@@ -28,6 +31,21 @@ export function AppShell({
   right?: ReactNode;
   banner?: ReactNode;
 }) {
+  // Service pause: signed-in (API-backed) surfaces show the pause line instead of
+  // screens whose saves would fail. Demo and tester modes are on-device and keep
+  // working. Decided after mount: demo/tester flags live in browser storage.
+  const { mode } = useRepository();
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    setPaused(SERVICE_PAUSED && mode === "api" && resolveDefaultMode() === "api");
+  }, [mode]);
+  if (paused) {
+    return (
+      <div className="min-h-[100dvh] flex items-center px-4">
+        <PauseNotice />
+      </div>
+    );
+  }
   return (
     <>
       {banner}

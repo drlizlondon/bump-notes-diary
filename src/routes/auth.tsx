@@ -1,4 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { SERVICE_PAUSED } from "@/lib/service-pause";
+import { PauseNotice } from "@/components/bumpnotes/PauseNotice";
 import { useEffect, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +16,19 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+// Service pause: no new accounts while the backend is down (src/lib/service-pause.ts).
 function AuthPage() {
+  if (SERVICE_PAUSED) {
+    return (
+      <div className="min-h-[100dvh] flex items-center px-4">
+        <PauseNotice />
+      </div>
+    );
+  }
+  return <AuthForm />;
+}
+
+function AuthForm() {
   const navigate = useNavigate();
   const { userId } = useSyncSnapshot();
   const { profile } = useAppState();
