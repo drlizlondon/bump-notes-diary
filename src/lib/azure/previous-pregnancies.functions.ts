@@ -14,7 +14,7 @@ import type {
 } from "../domain/types";
 import { PREVIOUS_PREGNANCY_PROMPT_TAGS } from "../bumpnotes/previous-pregnancies";
 import { requireApiAuth } from "./api-auth-middleware";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 
 interface Row {
   id: string;
@@ -53,7 +53,7 @@ function mapNote(r: Row): PreviousPregnancyNote {
 export const getPreviousPregnancies = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .handler(async ({ context }): Promise<PreviousPregnancies> => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const res = await pool.query<Row>(
       `SELECT ${COLUMNS} FROM previous_pregnancy_notes
        WHERE user_id = $1
@@ -81,7 +81,7 @@ export const upsertPreviousPregnancyHeader = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: UpsertHeaderInput) => upsertHeaderSchema.parse(data))
   .handler(async ({ data, context }): Promise<PreviousPregnancyHeader> => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const res = await pool.query<Row>(
       `INSERT INTO previous_pregnancy_notes (user_id, is_header, pregnancy_count, birth_count)
        VALUES ($1, true, $2, $3)
@@ -107,7 +107,7 @@ export const upsertPreviousPregnancyNote = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: UpsertNoteInput) => upsertNoteSchema.parse(data))
   .handler(async ({ data, context }): Promise<PreviousPregnancyNote> => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const upd = await pool.query<Row>(
       `UPDATE previous_pregnancy_notes
        SET text = $3, updated_at = now()
@@ -134,7 +134,7 @@ export const deletePreviousPregnancyNote = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: DeleteNoteInput) => deleteNoteSchema.parse(data))
   .handler(async ({ data, context }): Promise<void> => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     await pool.query(
       `DELETE FROM previous_pregnancy_notes
        WHERE user_id = $1 AND prompt_tag = $2 AND NOT is_header`,

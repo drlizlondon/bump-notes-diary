@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 
 const interestSchema = z
   .object({
@@ -31,7 +31,7 @@ const interestSchema = z
 export const submitMaternityServiceInterest = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => interestSchema.parse(data))
   .handler(async ({ data }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const message = [
       `Name: ${data.firstName}`,
       `Role: ${data.role}`,

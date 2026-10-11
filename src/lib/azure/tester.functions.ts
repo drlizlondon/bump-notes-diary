@@ -12,7 +12,7 @@
 // (discarded, not migrated) — this starts fresh, empty Azure tables.
 
 import { createServerFn } from "@tanstack/react-start";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 
 type Answer = "yes" | "no";
 type Q1 = "yes" | "mostly" | "no";
@@ -44,7 +44,7 @@ export const verifyTesterCode = createServerFn({ method: "POST" })
     const submitted = data.code.trim();
     if (!submitted) return { ok: false as const, reason: "empty" as const };
 
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const lookup = submitted.toUpperCase();
 
     const { rows } = await pool.query<{
@@ -91,7 +91,7 @@ export const pingTesterSession = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data }) => {
     if (!data.sessionId) return { ok: false };
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const { rows } = await pool.query<{ pages_viewed_count: number }>(
       "SELECT pages_viewed_count FROM tester_sessions WHERE id = $1",
       [data.sessionId],
@@ -131,7 +131,7 @@ export const submitTesterFeedback = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     if (!data.sessionId) throw new Error("Missing tester session");
-    const pool = getAzurePgPool();
+    const pool = getDb();
 
     const { rows } = await pool.query<{ id: string; access_code_id: string }>(
       "SELECT id, access_code_id FROM tester_sessions WHERE id = $1",

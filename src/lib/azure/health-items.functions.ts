@@ -5,7 +5,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { HealthItem } from "../domain/types";
 import { requireApiAuth } from "./api-auth-middleware";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 
 interface HealthItemRow {
   id: string;
@@ -38,7 +38,7 @@ const KINDS = ["condition", "allergy", "medication", "operation"] as const;
 export const listHealthItems = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .handler(async ({ context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const res = await pool.query<HealthItemRow>(
       `SELECT ${HEALTH_ITEM_COLUMNS} FROM health_items WHERE user_id = $1 ORDER BY created_at DESC`,
       [context.userId],
@@ -62,7 +62,7 @@ export const upsertHealthItem = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: UpsertHealthItemInput) => upsertHealthItemSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     if (data.id) {
       const res = await pool.query<HealthItemRow>(
         `UPDATE health_items SET kind = $3, text = $4, active = COALESCE($5, active)

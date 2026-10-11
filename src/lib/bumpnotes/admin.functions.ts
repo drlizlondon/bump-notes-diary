@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getAzurePgPool } from "@/lib/azure/pg-pool";
+import { getDb } from "@/lib/data-store/db";
 
 async function assertAdmin(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -62,7 +62,7 @@ export const listAccessCodes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const { rows } = await pool.query("SELECT * FROM tester_access_codes ORDER BY created_at DESC");
     return { codes: rows };
   });
@@ -81,7 +81,7 @@ export const generateAccessCodeBatch = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const pool = getAzurePgPool();
+    const pool = getDb();
     // find existing codes with this prefix to avoid collisions
     const { rows: existing } = await pool.query<{ code: string }>(
       "SELECT code FROM tester_access_codes WHERE code ILIKE $1",
@@ -121,7 +121,7 @@ export const createCustomAccessCode = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     if (!data.code) throw new Error("Code is required");
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const { rows } = await pool.query(
       `INSERT INTO tester_access_codes (code, label, notes, created_by)
        VALUES ($1, $2, $3, $4) RETURNING *`,
@@ -138,7 +138,7 @@ export const setAccessCodeStatus = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const pool = getAzurePgPool();
+    const pool = getDb();
     await pool.query("UPDATE tester_access_codes SET status = $1 WHERE id = $2", [
       data.status,
       data.id,
@@ -153,7 +153,7 @@ export const deleteAccessCode = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     if (!data.id) throw new Error("id required");
-    const pool = getAzurePgPool();
+    const pool = getDb();
     await pool.query("DELETE FROM tester_access_codes WHERE id = $1", [data.id]);
     return { ok: true };
   });
@@ -163,7 +163,7 @@ export const deleteUnusedAccessCodes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const { rows } = await pool.query(
       "DELETE FROM tester_access_codes WHERE first_used_at IS NULL RETURNING id",
     );
@@ -174,7 +174,7 @@ export const listFeedbackResponses = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const { rows } = await pool.query(
       `SELECT fr.*, tac.code AS tac_code, tac.label AS tac_label
        FROM feedback_responses fr
@@ -195,7 +195,7 @@ export const adminDashboardSummary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const [
       { rows: codes },
       { rows: responses },
@@ -222,7 +222,7 @@ export const listFeedbackSubmissions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const { rows } = await pool.query(
       "SELECT * FROM feedback_submissions ORDER BY created_at DESC",
     );
@@ -235,7 +235,7 @@ export const deleteFeedbackSubmission = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     if (!data.id) throw new Error("id required");
-    const pool = getAzurePgPool();
+    const pool = getDb();
     await pool.query("DELETE FROM feedback_submissions WHERE id = $1", [data.id]);
     return { ok: true };
   });

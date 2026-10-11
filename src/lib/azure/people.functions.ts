@@ -5,7 +5,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { Person } from "../domain/types";
 import { requireApiAuth } from "./api-auth-middleware";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 
 interface PersonRow {
   id: string;
@@ -51,7 +51,7 @@ const ROLES = [
 export const listPeople = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .handler(async ({ context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const res = await pool.query<PersonRow>(
       `SELECT ${PERSON_COLUMNS} FROM people WHERE user_id = $1 ORDER BY created_at DESC`,
       [context.userId],
@@ -78,7 +78,7 @@ export const upsertPerson = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: UpsertPersonInput) => upsertPersonSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     if (data.id) {
       const res = await pool.query<PersonRow>(
         `UPDATE people SET

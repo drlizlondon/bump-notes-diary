@@ -13,7 +13,7 @@
 // BINNED (discarded, not migrated) — this starts a fresh, empty table.
 
 import { createServerFn } from "@tanstack/react-start";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 import { requireApiAuth } from "./api-auth-middleware";
 
 export type FeedbackCategory = "improvement" | "problem" | "love" | "question" | "other";
@@ -59,7 +59,7 @@ async function insertFeedback(
   extra: { userId: string | null; isTester: boolean; testerSessionId: string | null },
 ) {
   if (!fields.message.trim()) throw new Error("Message is required");
-  const pool = getAzurePgPool();
+  const pool = getDb();
   await pool.query(
     `INSERT INTO feedback_submissions
        (user_id, category, message, reply_email, tester_session_id, is_tester,
@@ -124,7 +124,7 @@ export const submitFeedbackPublic = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     let sessionId: string | null = null;
     if (data.testerSessionId) {
       const { rows } = await pool.query<{ id: string }>(

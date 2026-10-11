@@ -8,7 +8,7 @@ import { z } from "zod";
 import type { Entry, EntryPayload } from "../domain/types";
 import type { CreateEntryInput, ListEntriesParams } from "../data/repository";
 import { requireApiAuth } from "./api-auth-middleware";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 
 interface EntryRow {
   id: string;
@@ -158,7 +158,7 @@ export const listEntries = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: ListEntriesParams) => listEntriesSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const clauses = ["user_id = $1", "pregnancy_id = $2"];
     const params: unknown[] = [context.userId, data.pregnancyId];
     if (data.type) {
@@ -178,7 +178,7 @@ export const createEntry = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: CreateEntryInput) => createEntrySchema.parse(data))
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     // INSERT..SELECT FROM pregnancies guarantees the pregnancy is the user's own
     // (no row -> no insert -> RETURNING empty -> we throw).
     const res = await pool.query<EntryRow>(
@@ -212,7 +212,7 @@ export const softDeleteEntry = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: { id: string }) => softDeleteSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const res = await pool.query(
       `UPDATE entries SET deleted_at = now()
        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,

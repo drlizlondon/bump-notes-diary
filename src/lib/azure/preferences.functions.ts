@@ -5,7 +5,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { Preferences } from "../domain/types";
 import { requireApiAuth } from "./api-auth-middleware";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 
 interface PreferencesRow {
   user_id: string;
@@ -33,7 +33,7 @@ const PREFERENCES_COLUMNS = `user_id, items, anything_else, created_at, updated_
 export const getPreferences = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .handler(async ({ context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const res = await pool.query<PreferencesRow>(
       `SELECT ${PREFERENCES_COLUMNS} FROM preferences WHERE user_id = $1`,
       [context.userId],
@@ -57,7 +57,7 @@ export const upsertPreferences = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: UpsertPreferencesInput) => upsertPreferencesSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const itemsJson = data.items === undefined ? null : JSON.stringify(data.items);
     const res = await pool.query<PreferencesRow>(
       `INSERT INTO preferences (user_id, items, anything_else)

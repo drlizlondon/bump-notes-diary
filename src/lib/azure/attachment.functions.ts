@@ -13,7 +13,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { Attachment } from "../domain/types";
 import { requireApiAuth } from "./api-auth-middleware";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 import {
   buildBlobPath,
   deleteAttachment as blobDeleteAttachment,
@@ -65,7 +65,7 @@ export const listAttachments = createServerFn({ method: "POST" })
     z.object({ entryId: z.string().uuid() }).strict().parse(data),
   )
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const res = await pool.query<AttachmentRow>(
       `SELECT ${ATTACHMENT_COLUMNS} FROM attachments
        WHERE entry_id = $1 AND user_id = $2 ORDER BY uploaded_at DESC`,
@@ -98,7 +98,7 @@ export const uploadAttachment = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: UploadInput) => uploadSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     // The entry must be the user's own; we also need its pregnancy for the path.
     const entryRes = await pool.query<{ pregnancy_id: string }>(
       "SELECT pregnancy_id FROM entries WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
@@ -138,7 +138,7 @@ export const getAttachmentUrl = createServerFn({ method: "POST" })
     z.object({ attachmentId: z.string().uuid() }).strict().parse(data),
   )
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const { url, expiresAt } = await issueDownloadSas(pool, context.userId, data.attachmentId);
     return { url, expiresAt: expiresAt.toISOString() };
   });
@@ -150,6 +150,6 @@ export const deleteAttachment = createServerFn({ method: "POST" })
     z.object({ attachmentId: z.string().uuid() }).strict().parse(data),
   )
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     await blobDeleteAttachment(pool, context.userId, data.attachmentId);
   });

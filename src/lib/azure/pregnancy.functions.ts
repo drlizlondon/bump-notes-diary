@@ -8,7 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { Pregnancy } from "../domain/types";
 import { requireApiAuth } from "./api-auth-middleware";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 
 interface PregnancyRow {
   id: string;
@@ -51,7 +51,7 @@ const PREGNANCY_COLUMNS = `id, user_id, edd, lmp, nickname, birth_place, status,
 export const listPregnancies = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .handler(async ({ context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const res = await pool.query<PregnancyRow>(
       `SELECT ${PREGNANCY_COLUMNS} FROM pregnancies WHERE user_id = $1 ORDER BY created_at DESC`,
       [context.userId],
@@ -63,7 +63,7 @@ export const listPregnancies = createServerFn({ method: "POST" })
 export const getActivePregnancy = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .handler(async ({ context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const res = await pool.query<PregnancyRow>(
       `SELECT ${PREGNANCY_COLUMNS} FROM pregnancies WHERE user_id = $1 AND status = 'active' LIMIT 1`,
       [context.userId],
@@ -93,7 +93,7 @@ export const createPregnancy = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: CreatePregnancyInput) => createPregnancySchema.parse(data))
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const res = await pool.query<PregnancyRow>(
       `INSERT INTO pregnancies (user_id, edd, lmp, nickname, birth_place)
        VALUES ($1, $2::date, $3::date, $4, $5)
@@ -130,7 +130,7 @@ export const updatePregnancy = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: UpdatePregnancyInput) => updatePregnancySchema.parse(data))
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const sets: string[] = [];
     const params: unknown[] = [data.id, context.userId];
     if (data.edd !== undefined) {

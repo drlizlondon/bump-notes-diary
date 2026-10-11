@@ -14,7 +14,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { Profile } from "../domain/types";
 import { requireApiAuth } from "./api-auth-middleware";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 
 interface ProfileRow {
   user_id: string;
@@ -63,7 +63,7 @@ const PROFILE_COLUMNS = `user_id, display_name, is_tester, accepted_terms_at, ac
 export const getProfile = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .handler(async ({ context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const res = await pool.query<ProfileRow>(
       `SELECT ${PROFILE_COLUMNS} FROM profiles WHERE user_id = $1`,
       [context.userId],
@@ -95,7 +95,7 @@ export const upsertProfile = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .inputValidator((data: ProfilePatch) => profilePatchSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const p = [
       context.userId,
       data.displayName ?? null,

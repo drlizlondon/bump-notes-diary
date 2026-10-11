@@ -1,54 +1,19 @@
-// Azure Blob Storage helper endpoints (AZURE §3 task 2.7).
+// Upload helper endpoints (AZURE §3 task 2.7; store made swappable in BP-DL-01).
 //
 // The frontend never receives storage credentials (AZURE §1.3): every
 // operation here is ownership-checked against the internal `users.id` from
 // requireApiAuth (2.6) and either streams through this server or issues a
-// short-lived SAS URL. No permanent public URLs, no account keys handed out.
-//
-// AZURE §1.2 non-negotiable — NO account keys. The client authenticates with
-// `DefaultAzureCredential` (the App Service system-assigned managed identity,
-// granted Storage Blob Data Contributor), and download SAS URLs are signed with
-// a short-lived *user-delegation key* obtained via that identity — not a shared
-// account key. Nothing here reads an account key or connection string.
+// short-lived signed URL. No permanent public URLs, no keys handed out.
+// Which store holds the bytes (Azure Blob or Supabase Storage) is config only:
+// see getBlobStore in @/lib/data-store/blob-store.
 
-import { DefaultAzureCredential } from "@azure/identity";
-import {
-  BlobSASPermissions,
-  BlobServiceClient,
-  generateBlobSASQueryParameters,
-  SASProtocol,
-} from "@azure/storage-blob";
 import type pg from "pg";
+import { getBlobStore, type AttachmentContainer } from "@/lib/data-store/blob-store";
+
+export type { AttachmentContainer };
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB (AZURE plan task 2.7)
 export const SAS_TTL_SECONDS = 300; // short-lived, per AZURE §1.2
-const SAS_CLOCK_SKEW_SECONDS = 300; // allow modest clock skew on the SAS start time
-
-export type AttachmentContainer =
-  | "user-uploads"
-  | "profile-images"
-  | "generated-summaries"
-  | "exports";
-
-let blobServiceClient: BlobServiceClient | undefined;
-
-/** The storage account name (e.g. "bumpnotesproduks"); no key, ever (AZURE §1.2). */
-function getAccountName(): string {
-  const accountName = process.env.AZURE_STORAGE_ACCOUNT;
-  if (!accountName) {
-    throw new Error("AZURE_STORAGE_ACCOUNT is not set; cannot reach Blob Storage.");
-  }
-  return accountName;
-}
-
-export function getBlobServiceClient(): BlobServiceClient {
-  if (blobServiceClient) return blobServiceClient;
-  blobServiceClient = new BlobServiceClient(
-    `https://${getAccountName()}.blob.core.windows.net`,
-    new DefaultAzureCredential(),
-  );
-  return blobServiceClient;
-}
 
 /** Deterministic path per PLAN §5.8: {internalUserId}/{pregnancyId}/{filename}. */
 export function buildBlobPath(userId: string, pregnancyId: string, filename: string): string {
@@ -82,11 +47,7 @@ export async function uploadAttachment(params: UploadAttachmentParams): Promise<
     throw new Error("Forbidden: entry not found or not owned by the caller.");
   }
 
-  const containerClient = getBlobServiceClient().getContainerClient(container);
-  const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
-  await blockBlobClient.uploadData(data, {
-    blobHTTPHeaders: mime ? { blobContentType: mime } : undefined,
-  });
+  await getBlobStore().put(container, blobPath, data, mime);
 
   const inserted = await pool.query<{ id: string }>(
     `INSERT INTO attachments (user_id, entry_id, container, blob_path, mime, size_bytes, caption)
@@ -117,9 +78,9 @@ async function loadOwnedAttachment(
 }
 
 /**
- * Issues a short-lived, read-only, HTTPS-only SAS URL for an attachment the
- * caller owns. Signed with a user-delegation key from the managed identity
- * (AZURE §1.2) — never a shared account key.
+ * Issues a short-lived, read-only signed URL for an attachment the caller
+ * owns (Azure: user-delegation SAS via the managed identity, AZURE §1.2;
+ * Supabase: a Storage signed URL). Never a permanent link.
  */
 export async function issueDownloadSas(
   pool: Pick<pg.Pool, "query">,
@@ -127,30 +88,7 @@ export async function issueDownloadSas(
   attachmentId: string,
 ): Promise<{ url: string; expiresAt: Date }> {
   const { container, blob_path } = await loadOwnedAttachment(pool, userId, attachmentId);
-  const client = getBlobServiceClient();
-  const now = Date.now();
-  const startsOn = new Date(now - SAS_CLOCK_SKEW_SECONDS * 1000);
-  const expiresOn = new Date(now + SAS_TTL_SECONDS * 1000);
-
-  // The user-delegation key is itself obtained via the managed identity; it
-  // carries the same short lifetime and cannot outlive the identity's grant.
-  const userDelegationKey = await client.getUserDelegationKey(startsOn, expiresOn);
-
-  const sas = generateBlobSASQueryParameters(
-    {
-      containerName: container,
-      blobName: blob_path,
-      permissions: BlobSASPermissions.parse("r"),
-      protocol: SASProtocol.Https,
-      startsOn,
-      expiresOn,
-    },
-    userDelegationKey,
-    getAccountName(),
-  ).toString();
-
-  const blobUrl = client.getContainerClient(container).getBlockBlobClient(blob_path).url;
-  return { url: `${blobUrl}?${sas}`, expiresAt: expiresOn };
+  return getBlobStore().signedUrl(container, blob_path, SAS_TTL_SECONDS);
 }
 
 /** All containers that may hold user-owned blobs, keyed under a `{userId}/` prefix. */
@@ -163,23 +101,16 @@ const USER_BLOB_CONTAINERS: AttachmentContainer[] = [
 
 /**
  * Deletes EVERY blob under the user's `{userId}/` prefix across all containers
- * (GDPR erasure — Art 17). Best-effort per container (a missing/empty container
- * is skipped); returns the count deleted. Callers own the DB-row deletion.
+ * (GDPR erasure, Art 17); returns the count deleted. Azure skips a missing
+ * container (unchanged); Supabase throws on any failure, so erasure stops
+ * before the database row goes. Callers own the DB-row deletion.
  */
 export async function deleteAllUserBlobs(userId: string): Promise<{ deleted: number }> {
-  const client = getBlobServiceClient();
+  const store = getBlobStore();
   const prefix = `${userId}/`;
   let deleted = 0;
   for (const container of USER_BLOB_CONTAINERS) {
-    const containerClient = client.getContainerClient(container);
-    try {
-      for await (const blob of containerClient.listBlobsFlat({ prefix })) {
-        await containerClient.getBlockBlobClient(blob.name).deleteIfExists();
-        deleted += 1;
-      }
-    } catch {
-      // container may not exist / be inaccessible — skip, keep erasing the rest
-    }
+    deleted += await store.deletePrefix(container, prefix);
   }
   return { deleted };
 }
@@ -191,8 +122,7 @@ export async function deleteAttachment(
   attachmentId: string,
 ): Promise<void> {
   const { container, blob_path } = await loadOwnedAttachment(pool, userId, attachmentId);
-  const containerClient = getBlobServiceClient().getContainerClient(container);
-  await containerClient.getBlockBlobClient(blob_path).deleteIfExists();
+  await getBlobStore().delete(container, blob_path);
   await pool.query("DELETE FROM attachments WHERE id = $1 AND user_id = $2", [
     attachmentId,
     userId,

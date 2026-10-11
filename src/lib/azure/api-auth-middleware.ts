@@ -13,7 +13,7 @@ import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import type pg from "pg";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 
 export interface ResolvedIdentity {
   source: "supabase" | "entra";
@@ -115,7 +115,7 @@ export const requireApiAuth = createMiddleware({ type: "function" }).server(asyn
   if (!token) throw new Error("Unauthorized: empty token");
 
   const identity = await resolveIdentity(token);
-  const pool = getAzurePgPool();
+  const pool = getDb();
   const userId = await resolveOrCreateUser(pool, identity);
 
   return next({ context: { userId, identitySource: identity.source } });

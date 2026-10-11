@@ -3,7 +3,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { requireApiAuth } from "./api-auth-middleware";
-import { getAzurePgPool } from "./pg-pool";
+import { getDb } from "@/lib/data-store/db";
 import { issueDownloadSas } from "./blob-helpers";
 // `performAccountErasure` is imported (never re-exported) rather than
 // inlined here — see the top-of-file note in ./account-erasure for why this
@@ -31,7 +31,7 @@ async function writeAudit(
 export const exportMyData = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .handler(async ({ context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     const uid = context.userId;
     const one = async (sql: string) => (await pool.query(sql, [uid])).rows;
 
@@ -104,6 +104,6 @@ export const exportMyData = createServerFn({ method: "POST" })
 export const deleteOwnAccount = createServerFn({ method: "POST" })
   .middleware([requireApiAuth])
   .handler(async ({ context }) => {
-    const pool = getAzurePgPool();
+    const pool = getDb();
     return performAccountErasure(pool, context.userId);
   });
