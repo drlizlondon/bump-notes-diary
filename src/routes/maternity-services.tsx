@@ -47,6 +47,7 @@ export const Route = createFileRoute("/maternity-services")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: "https://bumpnotes.co.uk/maternity-services" }],
   }),
   component: MaternityServicesPage,
 });
