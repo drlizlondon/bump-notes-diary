@@ -31,9 +31,13 @@ vi.mock("pg", () => {
   return { default: { Client }, Client };
 });
 
+vi.mock("./supabase-db", () => ({
+  createSupabaseDb: () => ({ query: async () => ({ rows: [{ via: "supabase" }], rowCount: 1 }) }),
+}));
+
 const { getDb } = await import("./db");
 
-const ENV_KEYS = ["DATABASE_URL", "AZURE_PG_URL", "DB_SCHEMA", "__FAIL_SQL"] as const;
+const ENV_KEYS = ["DATABASE_URL", "AZURE_PG_URL", "DB_SCHEMA", "DB_DRIVER", "__FAIL_SQL"] as const;
 let saved: Record<string, string | undefined>;
 
 beforeEach(() => {
@@ -98,5 +102,25 @@ describe("getDb", () => {
     process.env.DATABASE_URL = "postgres://new";
     process.env.DB_SCHEMA = "bn; drop table x";
     expect(() => getDb()).toThrow(/DB_SCHEMA/);
+  });
+
+  it("DB_DRIVER=supabase uses the service-role RPC Db and needs no connection string", async () => {
+    process.env.DB_DRIVER = "supabase";
+    const res = await getDb().query("SELECT 1");
+    expect(res.rows).toEqual([{ via: "supabase" }]);
+    expect(clients).toHaveLength(0);
+  });
+
+  it("DB_DRIVER=pg is the default behaviour", async () => {
+    process.env.DB_DRIVER = "pg";
+    process.env.DATABASE_URL = "postgres://new";
+    await getDb().query("SELECT 1");
+    expect(clients[0].connectionString).toBe("postgres://new");
+  });
+
+  it("rejects an unknown DB_DRIVER", () => {
+    process.env.DB_DRIVER = "sqlite";
+    process.env.DATABASE_URL = "postgres://new";
+    expect(() => getDb()).toThrow(/DB_DRIVER/);
   });
 });

@@ -11,15 +11,24 @@
 // module-level pool would fail there; there are no transactions in this app,
 // so nothing needs a held connection.
 //
+// DB_DRIVER=supabase swaps in the HTTPS service-role RPC driver
+// (supabase-db.ts, BP-DL-04a) for hosts that expose no connection string;
+// the default "pg" is everything above.
+//
 // Connection strings come from the environment only; never commit one.
 
 import pg from "pg";
+import { createSupabaseDb } from "./supabase-db";
 
 export type Db = Pick<pg.Pool, "query">;
 
 const SAFE_SCHEMA = /^[a-z_][a-z0-9_]*$/;
 
 export function getDb(): Db {
+  const driver = process.env.DB_DRIVER ?? "pg";
+  if (driver === "supabase") return createSupabaseDb();
+  if (driver !== "pg") throw new Error('DB_DRIVER must be "pg" or "supabase".');
+
   const connectionString = process.env.DATABASE_URL ?? process.env.AZURE_PG_URL;
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set; the data layer cannot reach Postgres.");
