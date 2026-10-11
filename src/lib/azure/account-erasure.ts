@@ -199,11 +199,31 @@ export async function eraseSupabaseUserData(
   return steps;
 }
 
+export type SupabaseAuthErasure = { deleted: true } | { deleted: false; reason: "no_identity" };
+
+/**
+ * BP-DL-03: deletes the Supabase sign-in account (auth.users, which holds the
+ * email). "User not found" means an earlier attempt already did it, so a retry
+ * can finish. Any other failure throws.
+ */
+export async function eraseSupabaseAuthUser(
+  supabaseUserId: string | null,
+): Promise<SupabaseAuthErasure> {
+  if (!supabaseUserId) return { deleted: false, reason: "no_identity" };
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(supabaseUserId);
+  if (error && !(error.status === 404 || /not found/i.test(error.message))) {
+    throw new Error(`Account erasure failed deleting the sign-in account: ${error.message}`);
+  }
+  return { deleted: true };
+}
+
 export interface AccountErasureResult {
   erased: true;
   blobsDeleted: number;
   entra: EntraDeleteResult;
   supabase: SupabaseErasureStep[];
+  supabaseAuth: SupabaseAuthErasure;
 }
 
 /**
@@ -256,6 +276,10 @@ export async function performAccountErasure(
   //    ordering note above. Throws (propagates) on any failure.
   const supabase = await eraseSupabaseUserData(row.email, row.supabase_user_id);
 
+  // 3b) The Supabase sign-in account itself. Also before the Postgres delete,
+  //     for the same reason: a failure leaves supabase_user_id for a retry.
+  const supabaseAuth = await eraseSupabaseAuthUser(row.supabase_user_id);
+
   // 4) Postgres — cascades to every owned table.
   await pool.query("DELETE FROM users WHERE id = $1", [uid]);
 
@@ -269,5 +293,5 @@ export async function performAccountErasure(
     entra = { deleted: false, reason: "not_configured" };
   }
 
-  return { erased: true, blobsDeleted, entra, supabase };
+  return { erased: true, blobsDeleted, entra, supabase, supabaseAuth };
 }

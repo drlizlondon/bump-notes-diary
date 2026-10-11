@@ -20,13 +20,28 @@ import type { PgQueryable } from "./account-erasure";
 // --- Supabase admin client mock -------------------------------------------
 // Hoisted so the vi.mock factory below (which runs before imports) can close
 // over the same call log / error map the tests configure.
-const { supabaseCalls, supabaseErrors } = vi.hoisted(() => ({
+const { supabaseCalls, supabaseErrors, authDeletes, authError } = vi.hoisted(() => ({
   supabaseCalls: [] as { table: string; column: string; value: string }[],
   supabaseErrors: new Map<string, string>(), // key: `${table}:${column}`
+  authDeletes: [] as string[],
+  authError: { message: null as string | null, status: 500 },
 }));
 
 vi.mock("@/integrations/supabase/client.server", () => ({
   supabaseAdmin: {
+    auth: {
+      admin: {
+        async deleteUser(id: string) {
+          authDeletes.push(id);
+          return {
+            data: null,
+            error: authError.message
+              ? { message: authError.message, status: authError.status }
+              : null,
+          };
+        },
+      },
+    },
     from(table: string) {
       return {
         delete() {
@@ -79,6 +94,9 @@ function makePool(row: UserRow | null) {
 beforeEach(() => {
   supabaseCalls.length = 0;
   supabaseErrors.clear();
+  authDeletes.length = 0;
+  authError.message = null;
+  authError.status = 500;
 });
 
 describe("eraseSupabaseUserData", () => {
@@ -175,5 +193,40 @@ describe("performAccountErasure", () => {
     await expect(performAccountErasure(pool, "missing-uid")).rejects.toThrow(/no users row/);
     // Never even reaches Supabase deletion for a user we can't identify.
     expect(supabaseCalls).toHaveLength(0);
+  });
+
+  // BP-DL-03: the Supabase sign-in account itself (auth.users) is personal
+  // data too: erasure must delete it, not just the rows.
+  it("deletes the Supabase sign-in account exactly once, before the Postgres row", async () => {
+    const { pool, queries } = makePool(row);
+    const result = await performAccountErasure(pool, "azure-uid-1");
+    expect(authDeletes).toEqual(["sb-uid-1"]);
+    expect(result.supabaseAuth).toEqual({ deleted: true });
+    expect(queries.some((q) => q.sql.includes("DELETE FROM users"))).toBe(true);
+  });
+
+  it("skips the sign-in delete (never guesses) when the account has no Supabase identity", async () => {
+    const { pool } = makePool({ ...row, supabase_user_id: null });
+    const result = await performAccountErasure(pool, "azure-uid-1");
+    expect(authDeletes).toHaveLength(0);
+    expect(result.supabaseAuth).toEqual({ deleted: false, reason: "no_identity" });
+  });
+
+  it("treats an already-deleted sign-in account as done, so a retry can finish", async () => {
+    authError.message = "User not found";
+    authError.status = 404;
+    const { pool, queries } = makePool(row);
+    const result = await performAccountErasure(pool, "azure-uid-1");
+    expect(result.supabaseAuth).toEqual({ deleted: true });
+    expect(queries.some((q) => q.sql.includes("DELETE FROM users"))).toBe(true);
+  });
+
+  it("keeps the Postgres row and throws when the sign-in delete fails", async () => {
+    authError.message = "service unavailable";
+    const { pool, queries } = makePool(row);
+    await expect(performAccountErasure(pool, "azure-uid-1")).rejects.toThrow(
+      /sign-in account.*service unavailable/,
+    );
+    expect(queries.some((q) => q.sql.includes("DELETE FROM users"))).toBe(false);
   });
 });

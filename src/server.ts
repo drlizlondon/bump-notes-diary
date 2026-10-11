@@ -209,10 +209,8 @@ function injectClientInfo(bodyText: string): string {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     if (isHealthCheck(request)) {
-      return new Response(JSON.stringify({ status: "ok" }), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      });
+      const { healthResponse } = await import("./lib/data-store/health");
+      return healthResponse();
     }
     if (isCiamProxy(request)) {
       return proxyCiam(request);
