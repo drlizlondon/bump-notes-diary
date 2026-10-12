@@ -165,7 +165,7 @@ let azure: AzureBlobStore | undefined;
 let supabase: SupabaseBlobStore | undefined;
 
 export function getBlobStore(): BlobStore {
-  const which = process.env.BLOB_STORE ?? "azure";
+  const which = process.env.BLOB_STORE ?? "supabase";
   if (which === "azure") return (azure ??= new AzureBlobStore());
   if (which === "supabase") return (supabase ??= new SupabaseBlobStore());
   throw new Error(`BLOB_STORE must be "azure" or "supabase", got "${which}".`);

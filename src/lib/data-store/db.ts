@@ -25,7 +25,7 @@ export type Db = Pick<pg.Pool, "query">;
 const SAFE_SCHEMA = /^[a-z_][a-z0-9_]*$/;
 
 export function getDb(): Db {
-  const driver = process.env.DB_DRIVER ?? "pg";
+  const driver = process.env.DB_DRIVER ?? "supabase";
   if (driver === "supabase") return createSupabaseDb();
   if (driver !== "pg") throw new Error('DB_DRIVER must be "pg" or "supabase".');
 

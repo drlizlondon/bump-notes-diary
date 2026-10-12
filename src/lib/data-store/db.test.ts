@@ -53,7 +53,14 @@ afterEach(() => {
 });
 
 describe("getDb", () => {
-  it("prefers DATABASE_URL over AZURE_PG_URL", async () => {
+  it("defaults to DB_DRIVER=supabase (needs no connection string)", async () => {
+    const res = await getDb().query("SELECT 1");
+    expect(res.rows).toEqual([{ via: "supabase" }]);
+    expect(clients).toHaveLength(0);
+  });
+
+  it("prefers DATABASE_URL over AZURE_PG_URL when DB_DRIVER=pg", async () => {
+    process.env.DB_DRIVER = "pg";
     process.env.DATABASE_URL = "postgres://new";
     process.env.AZURE_PG_URL = "postgres://azure";
     await getDb().query("SELECT 1");
@@ -61,16 +68,19 @@ describe("getDb", () => {
   });
 
   it("falls back to AZURE_PG_URL so Azure stays a config-only switch", async () => {
+    process.env.DB_DRIVER = "pg";
     process.env.AZURE_PG_URL = "postgres://azure";
     await getDb().query("SELECT 1");
     expect(clients[0].connectionString).toBe("postgres://azure");
   });
 
-  it("throws a clear error when neither is set", () => {
+  it("throws a clear error when neither is set (under DB_DRIVER=pg)", () => {
+    process.env.DB_DRIVER = "pg";
     expect(() => getDb()).toThrow(/DATABASE_URL is not set/);
   });
 
   it("uses a fresh client per query and always ends it (Workers forbid cross-request sockets)", async () => {
+    process.env.DB_DRIVER = "pg";
     process.env.DATABASE_URL = "postgres://new";
     const db = getDb();
     const result = await db.query("SELECT $1", [1]);
@@ -82,6 +92,7 @@ describe("getDb", () => {
   });
 
   it("ends the client even when the query throws", async () => {
+    process.env.DB_DRIVER = "pg";
     process.env.DATABASE_URL = "postgres://new";
     process.env.__FAIL_SQL = "BAD";
     await expect(getDb().query("BAD SQL")).rejects.toThrow("boom");
@@ -89,6 +100,7 @@ describe("getDb", () => {
   });
 
   it("sets search_path first when DB_SCHEMA is set, and not otherwise", async () => {
+    process.env.DB_DRIVER = "pg";
     process.env.DATABASE_URL = "postgres://new";
     process.env.DB_SCHEMA = "bn";
     await getDb().query("SELECT 1");
@@ -99,28 +111,21 @@ describe("getDb", () => {
   });
 
   it("rejects an unsafe DB_SCHEMA value", () => {
+    process.env.DB_DRIVER = "pg";
     process.env.DATABASE_URL = "postgres://new";
     process.env.DB_SCHEMA = "bn; drop table x";
     expect(() => getDb()).toThrow(/DB_SCHEMA/);
   });
 
-  it("DB_DRIVER=supabase uses the service-role RPC Db and needs no connection string", async () => {
+  it("DB_DRIVER=supabase explicitly uses the service-role RPC Db", async () => {
     process.env.DB_DRIVER = "supabase";
     const res = await getDb().query("SELECT 1");
     expect(res.rows).toEqual([{ via: "supabase" }]);
     expect(clients).toHaveLength(0);
   });
 
-  it("DB_DRIVER=pg is the default behaviour", async () => {
-    process.env.DB_DRIVER = "pg";
-    process.env.DATABASE_URL = "postgres://new";
-    await getDb().query("SELECT 1");
-    expect(clients[0].connectionString).toBe("postgres://new");
-  });
-
   it("rejects an unknown DB_DRIVER", () => {
     process.env.DB_DRIVER = "sqlite";
-    process.env.DATABASE_URL = "postgres://new";
     expect(() => getDb()).toThrow(/DB_DRIVER/);
   });
 });

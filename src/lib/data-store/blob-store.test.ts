@@ -56,13 +56,13 @@ afterEach(() => {
 });
 
 describe("getBlobStore", () => {
-  it("defaults to Azure so nothing changes until config says otherwise", () => {
+  it("defaults to Supabase so it connects to the new store out of the box", () => {
     delete process.env.BLOB_STORE;
-    expect(getBlobStore()).toBeInstanceOf(AzureBlobStore);
-  });
-  it("returns Supabase when BLOB_STORE=supabase", () => {
-    process.env.BLOB_STORE = "supabase";
     expect(getBlobStore()).toBeInstanceOf(SupabaseBlobStore);
+  });
+  it("returns Azure when BLOB_STORE=azure", () => {
+    process.env.BLOB_STORE = "azure";
+    expect(getBlobStore()).toBeInstanceOf(AzureBlobStore);
   });
   it("rejects an unknown store name", () => {
     process.env.BLOB_STORE = "s3";
