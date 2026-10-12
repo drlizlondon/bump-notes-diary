@@ -208,8 +208,12 @@ function injectClientInfo(bodyText: string): string {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
-    if (env && typeof env === "object") {
-      for (const [k, v] of Object.entries(env as Record<string, unknown>)) {
+    const cfEnv =
+      (env && typeof env === "object" ? (env as Record<string, unknown>) : undefined) ??
+      (request as unknown as { runtime?: { cloudflare?: { env?: Record<string, unknown> } } }).runtime?.cloudflare?.env ??
+      (request as unknown as { env?: Record<string, unknown> }).env;
+    if (cfEnv && typeof cfEnv === "object") {
+      for (const [k, v] of Object.entries(cfEnv)) {
         if (typeof v === "string") {
           process.env[k] = v;
         }
