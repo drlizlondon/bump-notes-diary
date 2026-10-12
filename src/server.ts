@@ -208,6 +208,13 @@ function injectClientInfo(bodyText: string): string {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    if (env && typeof env === "object") {
+      for (const [k, v] of Object.entries(env as Record<string, unknown>)) {
+        if (typeof v === "string") {
+          process.env[k] = v;
+        }
+      }
+    }
     if (isHealthCheck(request)) {
       const { healthResponse } = await import("./lib/data-store/health");
       return healthResponse();

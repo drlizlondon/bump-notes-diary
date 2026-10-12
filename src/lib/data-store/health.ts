@@ -20,7 +20,8 @@ export async function healthResponse(
   let ok = true;
   try {
     await Promise.race([probe(), timeout]);
-  } catch {
+  } catch (err) {
+    console.error("[health]", err);
     ok = false;
   } finally {
     clearTimeout(timer);
