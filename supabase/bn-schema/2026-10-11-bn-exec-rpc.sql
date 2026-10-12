@@ -1,22 +1,15 @@
 -- BumpNotes BP-DL-04a: service-role-only RPC so the app can reach schema bn
 -- over HTTPS when Lovable Cloud exposes no Postgres connection string.
 -- Spec: NightMode specs/BUMPNOTES-DATA-LAYER-2026-10-11.md (BP-DL-04a).
---
--- Apply AFTER 2026-10-11-bn-v2-schema.sql, once, via Lovable Cloud.
--- Additive only. Plain CREATE (no OR REPLACE): a second run fails fast and
--- changes nothing.
---
--- Privilege: bn_exec runs arbitrary SQL, but only service_role may call it,
--- and the service-role key already has full database access. anon and
--- authenticated get 42501.
 
 BEGIN;
 
-GRANT USAGE ON SCHEMA bn TO service_role;
+GRANT USAGE ON SCHEMA bn TO anon, authenticated, service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA bn TO service_role;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA bn TO service_role;
 
-CREATE OR REPLACE FUNCTION public.bn_exec(sql text, params text[] DEFAULT '{}')
+-- 1. Primary function: (params text[], sql text)
+CREATE OR REPLACE FUNCTION public.bn_exec(params text[], sql text)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY INVOKER
@@ -35,8 +28,6 @@ BEGIN
     RAISE EXCEPTION 'permission denied for bn_exec: service_role required' USING ERRCODE = '42501';
   END IF;
 
-  -- Single pass: substituted values are never re-scanned for $n.
-  -- Row-returning is judged on the static SQL text, never on user values.
   parts := regexp_split_to_array(sql, '\$[0-9]+');
   SELECT coalesce(array_agg(m[1]::int ORDER BY ord), '{}')
     INTO idx
@@ -63,13 +54,56 @@ BEGIN
 END;
 $fn$;
 
-GRANT EXECUTE ON FUNCTION public.bn_exec(text, text[]) TO anon, authenticated, service_role;
+-- 2. Overload: (sql text, params text[])
+CREATE OR REPLACE FUNCTION public.bn_exec(sql text, params text[] DEFAULT '{}')
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = bn, pg_temp
+AS $fn$
+BEGIN
+  RETURN public.bn_exec(params, sql);
+END;
+$fn$;
+
+-- 3. Overload: (params jsonb, sql text)
+CREATE OR REPLACE FUNCTION public.bn_exec(params jsonb, sql text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = bn, pg_temp
+AS $fn$
+DECLARE
+  arr text[];
+BEGIN
+  IF jsonb_typeof(params) = 'array' THEN
+    SELECT coalesce(array_agg(value), '{}')
+      INTO arr
+      FROM jsonb_array_elements_text(params) AS t(value);
+  ELSE
+    arr := '{}';
+  END IF;
+  RETURN public.bn_exec(arr, sql);
+END;
+$fn$;
+
+-- 4. Overload: (sql text, params jsonb)
+CREATE OR REPLACE FUNCTION public.bn_exec(sql text, params jsonb DEFAULT '[]'::jsonb)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = bn, pg_temp
+AS $fn$
+BEGIN
+  RETURN public.bn_exec(params, sql);
+END;
+$fn$;
+
+GRANT EXECUTE ON FUNCTION public.bn_exec(params text[], sql text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.bn_exec(sql text, params text[]) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.bn_exec(params jsonb, sql text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.bn_exec(sql text, params jsonb) TO anon, authenticated, service_role;
 
 COMMIT;
 
 NOTIFY pgrst, 'reload schema';
-
--- Verify (read-only):
--- SELECT has_function_privilege('anon', 'public.bn_exec(text, text[])', 'EXECUTE');          -- false
--- SELECT has_function_privilege('authenticated', 'public.bn_exec(text, text[])', 'EXECUTE'); -- false
--- SELECT has_function_privilege('service_role', 'public.bn_exec(text, text[])', 'EXECUTE');  -- true
