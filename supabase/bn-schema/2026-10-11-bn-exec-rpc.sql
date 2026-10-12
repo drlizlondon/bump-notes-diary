@@ -1,10 +1,15 @@
 -- BumpNotes BP-DL-04a: service-role-only RPC so the app can reach schema bn
 -- over HTTPS when Lovable Cloud exposes no Postgres connection string.
 -- Spec: NightMode specs/BUMPNOTES-DATA-LAYER-2026-10-11.md (BP-DL-04a).
+--
+-- Target project: zsmusjlipihurchkmbwk (the one live uses). Apply AFTER
+-- 2026-10-11-bn-v2-schema.sql. Only service_role may execute bn_exec: the
+-- REVOKEs undo Supabase's default EXECUTE grant to anon/authenticated, and the
+-- in-function role check stays as a second line of defence.
 
 BEGIN;
 
-GRANT USAGE ON SCHEMA bn TO anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA bn TO service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA bn TO service_role;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA bn TO service_role;
 
@@ -99,10 +104,14 @@ BEGIN
 END;
 $fn$;
 
-GRANT EXECUTE ON FUNCTION public.bn_exec(params text[], sql text) TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.bn_exec(sql text, params text[]) TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.bn_exec(params jsonb, sql text) TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.bn_exec(sql text, params jsonb) TO anon, authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION public.bn_exec(params text[], sql text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.bn_exec(params text[], sql text) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.bn_exec(sql text, params text[]) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.bn_exec(sql text, params text[]) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.bn_exec(params jsonb, sql text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.bn_exec(params jsonb, sql text) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.bn_exec(sql text, params jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.bn_exec(sql text, params jsonb) TO service_role;
 
 COMMIT;
 

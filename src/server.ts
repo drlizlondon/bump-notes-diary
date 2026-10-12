@@ -221,8 +221,7 @@ export default {
     }
     if (isHealthCheck(request)) {
       const { healthResponse } = await import("./lib/data-store/health");
-      const debug = new URL(request.url).searchParams.has("debug");
-      return healthResponse(undefined, undefined, debug);
+      return healthResponse();
     }
     if (isCiamProxy(request)) {
       return proxyCiam(request);

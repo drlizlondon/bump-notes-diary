@@ -19,6 +19,20 @@ describe("healthResponse", () => {
     expect(text).not.toContain("secret_user");
   });
 
+  it("has no debug switch: extra arguments never add the error text", async () => {
+    const withExtra = healthResponse as unknown as (...args: unknown[]) => Promise<Response>;
+    const res = await withExtra(
+      async () => {
+        throw new Error("Could not find the function public.bn_exec");
+      },
+      undefined,
+      true,
+    );
+    const text = await res.text();
+    expect(JSON.parse(text)).toEqual({ status: "degraded", db: "down" });
+    expect(text).not.toContain("bn_exec");
+  });
+
   it("is 503 when the probe hangs past the timeout", async () => {
     const res = await healthResponse(() => new Promise(() => undefined), 20);
     expect(res.status).toBe(503);
