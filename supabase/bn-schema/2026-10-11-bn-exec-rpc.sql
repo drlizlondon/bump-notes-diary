@@ -16,7 +16,7 @@ GRANT USAGE ON SCHEMA bn TO service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA bn TO service_role;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA bn TO service_role;
 
-CREATE FUNCTION public.bn_exec(sql text, params text[] DEFAULT '{}')
+CREATE OR REPLACE FUNCTION public.bn_exec(sql text, params text[] DEFAULT '{}')
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY INVOKER
@@ -31,6 +31,10 @@ DECLARE
   rows_json jsonb;
   rc bigint;
 BEGIN
+  IF coalesce(auth.role(), '') != 'service_role' AND current_user != 'service_role' THEN
+    RAISE EXCEPTION 'permission denied for bn_exec: service_role required' USING ERRCODE = '42501';
+  END IF;
+
   -- Single pass: substituted values are never re-scanned for $n.
   -- Row-returning is judged on the static SQL text, never on user values.
   parts := regexp_split_to_array(sql, '\$[0-9]+');
@@ -59,10 +63,11 @@ BEGIN
 END;
 $fn$;
 
-REVOKE ALL ON FUNCTION public.bn_exec(text, text[]) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.bn_exec(text, text[]) TO service_role;
+GRANT EXECUTE ON FUNCTION public.bn_exec(text, text[]) TO anon, authenticated, service_role;
 
 COMMIT;
+
+NOTIFY pgrst, 'reload schema';
 
 -- Verify (read-only):
 -- SELECT has_function_privilege('anon', 'public.bn_exec(text, text[])', 'EXECUTE');          -- false
