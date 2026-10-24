@@ -125,7 +125,7 @@ export function TesterPasswordModal({ onClose }: { onClose: () => void }) {
         ) : (
           <div>
             <h3 className="font-serif text-lg sm:text-xl font-semibold">
-              You're in. Thank you for testing 💛
+              You're in. Thank you for testing
             </h3>
             <div className="mt-3 text-sm text-ink-soft leading-relaxed space-y-3">
               <p>

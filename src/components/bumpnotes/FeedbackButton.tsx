@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { MessageCircleHeart, X } from "lucide-react";
+import { Bandage, Heart, MessageCircle, MessageCircleHeart, Sparkles, X } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { submitFeedback, type FeedbackCategory } from "@/lib/bumpnotes/feedback";
 
-const CATEGORIES: { value: FeedbackCategory; label: string; emoji: string }[] = [
-  { value: "improvement", label: "Suggest an improvement", emoji: "✨" },
-  { value: "problem", label: "Report a problem", emoji: "🩹" },
-  { value: "love", label: "Tell us what you love", emoji: "💛" },
-  { value: "question", label: "Ask a question", emoji: "💬" },
+const CATEGORIES: { value: FeedbackCategory; label: string; Icon: LucideIcon }[] = [
+  { value: "improvement", label: "Suggest an improvement", Icon: Sparkles },
+  { value: "problem", label: "Report a problem", Icon: Bandage },
+  { value: "love", label: "Tell us what you love", Icon: Heart },
+  { value: "question", label: "Ask a question", Icon: MessageCircle },
 ];
 
 export function FeedbackButton() {
@@ -96,7 +97,11 @@ export function FeedbackButton() {
                       : "border-border bg-white text-ink hover:border-primary/40"
                   }`}
                 >
-                  <span className="mr-1.5">{c.emoji}</span>
+                  <c.Icon
+                    className="mr-1.5 inline size-4 align-text-bottom"
+                    strokeWidth={1.5}
+                    aria-hidden
+                  />
                   {c.label}
                 </button>
               ))}

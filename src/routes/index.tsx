@@ -247,7 +247,7 @@ function ThisWeekCard({ pregnancyId, dueDateISO }: { pregnancyId: string; dueDat
         </div>
         {stats.total === 0 ? (
           <p className="mt-2 text-sm text-ink-soft leading-relaxed break-words">
-            Nothing recorded yet this week. Tap anything below to start — we'll save it
+            Nothing recorded yet this week. Tap anything below to start. We'll save it
             automatically.
           </p>
         ) : (

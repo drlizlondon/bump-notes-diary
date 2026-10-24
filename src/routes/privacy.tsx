@@ -3,7 +3,7 @@ import { PublicShell } from "@/components/bumpnotes/PublicShell";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
-    meta: [{ title: "Privacy Policy — BumpNotes" }],
+    meta: [{ title: "Privacy Policy | BumpNotes" }],
     links: [{ rel: "canonical", href: "https://bumpnotes.co.uk/privacy" }],
   }),
   component: Privacy,

@@ -94,15 +94,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "A private pregnancy journal for recording symptoms, questions, appointments, and uploads.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "BumpNotes" },
       {
         name: "twitter:description",
         content:
           "A private pregnancy journal for recording symptoms, questions, appointments, and uploads.",
       },
-      { property: "og:image", content: "/bumpnotes-wordmark.png" },
-      { name: "twitter:image", content: "/bumpnotes-wordmark.png" },
+      { property: "og:image", content: "https://bumpnotes.co.uk/bumpnotes-share.png" },
+      { name: "twitter:image", content: "https://bumpnotes.co.uk/bumpnotes-share.png" },
     ],
     links: [
       {

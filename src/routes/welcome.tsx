@@ -12,20 +12,20 @@ import { trackEvent } from "@/lib/analytics";
 export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
-      { title: "BumpNotes — your pregnancy, clearly organised" },
+      { title: "BumpNotes: your pregnancy, clearly organised" },
       {
         name: "description",
         content:
           "Record pregnancy symptoms, appointments and questions privately. Share a clear summary with your care team when you need it.",
       },
       { name: "theme-color", content: "#ffffff" },
-      { property: "og:title", content: "BumpNotes — your pregnancy, clearly organised" },
+      { property: "og:title", content: "BumpNotes: your pregnancy, clearly organised" },
       {
         property: "og:description",
         content:
           "Private pregnancy notebook. Share a clear summary with your care team when you need it.",
       },
-      { name: "twitter:title", content: "BumpNotes — your pregnancy, clearly organised" },
+      { name: "twitter:title", content: "BumpNotes: your pregnancy, clearly organised" },
       {
         name: "twitter:description",
         content:
@@ -133,8 +133,8 @@ function EmpowermentSection() {
 function ReassuranceCards() {
   return (
     <section className="px-5 sm:px-8 pb-16 sm:pb-20">
-      <div className="max-w-[1120px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-        <div className="rounded-2xl bg-white border border-border p-6 sm:p-8">
+      <div className="max-w-[1120px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+        <div className="border-t border-border pt-6">
           <h3 className="font-serif text-lg sm:text-xl font-semibold leading-tight text-ink">
             When everything is going well...
           </h3>
@@ -142,7 +142,7 @@ function ReassuranceCards() {
             BumpNotes helps you keep your pregnancy organised.
           </p>
         </div>
-        <div className="rounded-2xl bg-white border border-border p-6 sm:p-8">
+        <div className="border-t border-border pt-6">
           <h3 className="font-serif text-lg sm:text-xl font-semibold leading-tight text-ink">
             If things become more complicated...
           </h3>
@@ -266,10 +266,7 @@ function SummaryShowcase() {
 function FauxBrowserChrome() {
   return (
     <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-blush-soft/60">
-      <span className="size-2.5 rounded-full bg-coral-soft" />
-      <span className="size-2.5 rounded-full bg-butter-soft" />
-      <span className="size-2.5 rounded-full bg-mint-soft" />
-      <span className="ml-3 text-[11px] font-mono uppercase tracking-widest text-ink-soft">
+      <span className="text-[11px] font-mono uppercase tracking-widest text-ink-soft">
         Pregnancy Summary
       </span>
       <span className="ml-auto inline-flex items-center rounded-full border border-ink/15 bg-butter px-2.5 py-1 text-[11px] font-semibold text-ink">
