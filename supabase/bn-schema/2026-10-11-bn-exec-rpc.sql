@@ -59,59 +59,12 @@ BEGIN
 END;
 $fn$;
 
--- 2. Overload: (sql text, params text[])
-CREATE OR REPLACE FUNCTION public.bn_exec(sql text, params text[] DEFAULT '{}')
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path = bn, pg_temp
-AS $fn$
-BEGIN
-  RETURN public.bn_exec(params, sql);
-END;
-$fn$;
-
--- 3. Overload: (params jsonb, sql text)
-CREATE OR REPLACE FUNCTION public.bn_exec(params jsonb, sql text)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path = bn, pg_temp
-AS $fn$
-DECLARE
-  arr text[];
-BEGIN
-  IF jsonb_typeof(params) = 'array' THEN
-    SELECT coalesce(array_agg(value), '{}')
-      INTO arr
-      FROM jsonb_array_elements_text(params) AS t(value);
-  ELSE
-    arr := '{}';
-  END IF;
-  RETURN public.bn_exec(arr, sql);
-END;
-$fn$;
-
--- 4. Overload: (sql text, params jsonb)
-CREATE OR REPLACE FUNCTION public.bn_exec(sql text, params jsonb DEFAULT '[]'::jsonb)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path = bn, pg_temp
-AS $fn$
-BEGIN
-  RETURN public.bn_exec(params, sql);
-END;
-$fn$;
+-- Overloads 2-4 were removed on 2026-10-29: they shared the argument names
+-- (sql, params), so PostgREST refused every call (PGRST203). One function only;
+-- see 2026-10-29-bn-exec-one-function.sql.
 
 REVOKE EXECUTE ON FUNCTION public.bn_exec(params text[], sql text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.bn_exec(params text[], sql text) TO service_role;
-REVOKE EXECUTE ON FUNCTION public.bn_exec(sql text, params text[]) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.bn_exec(sql text, params text[]) TO service_role;
-REVOKE EXECUTE ON FUNCTION public.bn_exec(params jsonb, sql text) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.bn_exec(params jsonb, sql text) TO service_role;
-REVOKE EXECUTE ON FUNCTION public.bn_exec(sql text, params jsonb) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.bn_exec(sql text, params jsonb) TO service_role;
 
 COMMIT;
 
