@@ -33,6 +33,7 @@ CREATE UNIQUE INDEX access_requests_email_key ON access_requests (lower(email));
 ALTER TABLE bn.account_invites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bn.access_requests ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON bn.account_invites, bn.access_requests FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON bn.account_invites, bn.access_requests TO service_role;
 
 COMMIT;
 
