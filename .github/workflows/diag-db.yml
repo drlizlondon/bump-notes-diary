@@ -1,0 +1,25 @@
+# Temporary (2026-10-29): which Supabase project has bn_exec? Public data only;
+# prints status codes and error codes, never keys. Delete this branch after.
+name: Diagnose BumpNotes database
+on:
+  push:
+    branches: [diag-db-2026-10-29]
+permissions: {}
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - run: |
+          set +e
+          curl -s https://bumpnotes.co.uk/ -o home.html
+          for js in $(grep -oE '/assets/[^"]+\.js' home.html | sort -u); do curl -s "https://bumpnotes.co.uk$js" >> all.js; done
+          echo "Projects named in the live bundle:"; grep -oE '[a-z]{20}\.supabase\.co' all.js | sort | uniq -c
+          for ref in zsmusjlipihurchkmbwk emyajhwcynmybiimszfs; do
+            key=$(grep -oE "https://$ref\.supabase\.co.{0,400}" all.js | grep -oE 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' | head -1)
+            [ -z "$key" ] && key=$(grep -oE 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' all.js | while read k; do echo "$k" | cut -d. -f2 | base64 -d 2>/dev/null | grep -q "$ref" && echo "$k"; done | head -1)
+            echo "== $ref (anon key found: $([ -n "$key" ] && echo yes || echo no))"
+            echo -n "auth health: "; curl -s -o /dev/null -w '%{http_code}\n' "https://$ref.supabase.co/auth/v1/health" -H "apikey: $key"
+            echo -n "bn_exec as anon (42501 = exists, PGRST202 = missing): "
+            curl -s -X POST "https://$ref.supabase.co/rest/v1/rpc/bn_exec" -H "apikey: $key" -H "Authorization: Bearer $key" -H 'content-type: application/json' -d '{"sql":"select 1","params":[]}' | grep -oE '"code":"[^"]*"|"message":"[^"]{0,120}' | tr '\n' ' '; echo
+          done
