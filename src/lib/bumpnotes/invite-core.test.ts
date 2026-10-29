@@ -108,6 +108,23 @@ describe("redeemCode", () => {
     expect(await redeemCode(db, "u1", "bnab12cd")).toEqual({ ok: true, already: true });
     expect(s.codes[0].use_count).toBe(1);
   });
+  it("lets one shared code open many separate accounts", async () => {
+    const s = base();
+    const db = fakeDb(s);
+    expect(await redeemCode(db, "u1", "BNAB12CD")).toEqual({ ok: true, already: false });
+    expect(await redeemCode(db, "u2", "bnab12cd")).toEqual({ ok: true, already: false });
+    expect(await isInvited(db, "u1")).toBe(true);
+    expect(await isInvited(db, "u2")).toBe(true);
+    expect(s.codes[0].use_count).toBe(2);
+  });
+  it("keeps existing accounts working after the shared code is switched off", async () => {
+    const s = base();
+    const db = fakeDb(s);
+    await redeemCode(db, "u1", "BNAB12CD");
+    s.codes[0].status = "inactive";
+    expect(await isInvited(db, "u1")).toBe(true);
+    expect(await redeemCode(db, "u3", "BNAB12CD")).toEqual({ ok: false, reason: "inactive" });
+  });
   it("refuses unknown, inactive and empty codes", async () => {
     const db = fakeDb(base());
     expect(await redeemCode(db, "u1", "NOPE")).toEqual({ ok: false, reason: "unknown" });

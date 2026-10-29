@@ -69,8 +69,9 @@ export function AdminInvites() {
     <section className="surface-card p-4 space-y-4">
       <h2 className="font-serif text-xl font-semibold">Invites</h2>
       <p className="text-xs text-ink-soft">
-        Real accounts need a code while BumpNotes is invite-only. Make one per person here or under
-        Access codes below. Requests with no code are deleted after 90 days.
+        Real accounts need a code while BumpNotes is invite-only. One shared code works for everyone
+        (each person still makes their own login); switch it off under Access codes below and
+        existing accounts keep working. Requests with no code are deleted after 90 days.
       </p>
 
       <div>
