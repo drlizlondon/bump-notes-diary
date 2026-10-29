@@ -15,7 +15,7 @@ jobs:
           npm init -y >/dev/null && npm i playwright@1.48.2 2>&1 | tail -1
           cat > t.cjs <<'JS'
           const pw = require('playwright');
-          const sites = { before: 'https://bumpnotes.co.uk', after: 'https://554c7120.bump-notes-diary.pages.dev' };
+          const sites = { after: 'https://bumpnotes.co.uk' };
           const sizes = [['iPad landscape (yours)', 1000, 565, 'webkit'], ['laptop', 1366, 768, 'webkit'], ['iPhone', 390, 664, 'webkit']];
           (async () => {
             for (const [label, w, h, eng] of sizes) {
