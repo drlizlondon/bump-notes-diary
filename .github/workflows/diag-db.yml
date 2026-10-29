@@ -1,5 +1,5 @@
-# Temporary (2026-10-29): which Supabase project has bn_exec? Public data only;
-# prints status codes and error codes, never keys. Delete this branch after.
+# Temporary (2026-10-29): wait for the unpause deploy, then report what the live
+# sign-up pages say. Public pages only. Delete this branch after.
 name: Diagnose BumpNotes database
 on:
   push:
@@ -8,18 +8,17 @@ permissions: {}
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 12
     steps:
       - run: |
           set +e
-          curl -s https://bumpnotes.co.uk/ -o home.html
-          for js in $(grep -oE '/assets/[^"]+\.js' home.html | sort -u); do curl -s "https://bumpnotes.co.uk$js" >> all.js; done
-          echo "JS files: $(grep -oE '/assets/[^\"]+\.js' home.html | sort -u | wc -l), bytes $(wc -c < all.js)"; echo "key shapes: sb_publishable=$(grep -c sb_publishable_ all.js) eyJ=$(grep -oE 'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' all.js | wc -l)"; echo "Projects named in the live bundle:"; grep -oE '[a-z]{20}\.supabase\.co' all.js | sort | uniq -c
-          for ref in zsmusjlipihurchkmbwk emyajhwcynmybiimszfs; do
-            key=$(grep -oE 'sb_publishable_[A-Za-z0-9_-]+' all.js | head -1)
-            [ -z "$key" ] && key=$(grep -oE 'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' all.js | head -1)
-            echo "== $ref (anon key found: $([ -n "$key" ] && echo yes || echo no))"
-            echo -n "auth health: "; curl -s -o /dev/null -w '%{http_code}\n' "https://$ref.supabase.co/auth/v1/health" -H "apikey: $key"
-            echo -n "bn_exec as anon (42501 = exists, PGRST202 = missing): "
-            curl -s -X POST "https://$ref.supabase.co/rest/v1/rpc/bn_exec" -H "apikey: $key" -H "Authorization: Bearer $key" -H 'content-type: application/json' -d '{"sql":"select 1","params":[]}' | grep -oE '"code":"[^"]*"|"message":"[^"]{0,120}' | tr '\n' ' '; echo
+          for i in $(seq 1 40); do
+            curl -s https://bumpnotes.co.uk/auth -o auth.html
+            if ! grep -q "paused while we move" auth.html; then echo "attempt $i: pause message gone"; break; fi
+            echo "attempt $i: still paused"; sleep 15
+          done
+          for path in /auth /signin /request-access /api/health; do
+            code=$(curl -s -o page.html -w '%{http_code}' "https://bumpnotes.co.uk$path")
+            echo "== $path HTTP $code"
+            grep -oiE "paused while we move|invite code|request access|have a code|create (an |your )?account|sign up|db\":\"[a-z]+" page.html | sort | uniq -c
           done
