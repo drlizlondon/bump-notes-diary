@@ -1,6 +1,5 @@
-# Temporary (2026-10-29): why does Safari show a white page? Load the live site
-# in WebKit (Safari's engine) and Chromium, desktop and iPhone, and check what
-# an out-of-date asset URL returns. Public pages only.
+# Temporary (2026-10-29): GreatInternet sample PDF downloads come out 0 KB.
+# Public pages only. Delete this branch after.
 name: Diagnose BumpNotes database
 on:
   push:
@@ -9,44 +8,13 @@ permissions: {}
 jobs:
   probe:
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.48.2-jammy
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
       - run: |
-          echo "Old/missing asset URL returns:"
-          curl -s -o old.txt -w "%{http_code} %{content_type}\n" https://bumpnotes.co.uk/assets/index-OLDHASH123.js; head -c 120 old.txt; echo
-          curl -sI https://bumpnotes.co.uk/ | grep -iE "cache-control|cf-cache-status|age:|content-security|^server"
-      - run: |
-          npm init -y >/dev/null && npm i playwright@1.48.2 2>&1 | tail -2
-          cat > t.cjs <<'JS'
-          const pw = require('playwright');
-          (async () => {
-            const runs = [['webkit', 'Desktop Safari'], ['webkit', 'iPad Pro 11'], ['webkit', 'iPhone 13'], ['chromium', 'Desktop Chrome']];
-            for (const [eng, dev] of runs) {
-              const b = await pw[eng].launch();
-              const ctx = await b.newContext({ ...pw.devices[dev] });
-              for (const path of ['/', '/request-access', '/auth']) {
-                const p = await ctx.newPage();
-                const errs = [];
-                p.on('console', m => { if (m.type() === 'error' && !m.text().includes('Report Only')) errs.push('console: ' + m.text().slice(0, 400)); });
-                p.on('pageerror', e => errs.push('pageerror: ' + String(e.message).slice(0, 400) + ' @ ' + String(e.stack || '').split('\n').slice(0, 3).join(' | ').slice(0, 300)));
-                p.on('requestfailed', r => errs.push('failed: ' + r.url().slice(0, 150) + ' ' + (r.failure() || {}).errorText));
-                p.on('response', r => { if (r.status() >= 400) errs.push('HTTP ' + r.status() + ' ' + r.url().slice(0, 150)); });
-                try { await p.goto('https://bumpnotes.co.uk' + path, { waitUntil: 'networkidle', timeout: 30000 }); }
-                catch (e) { errs.push('goto: ' + e.message.slice(0, 200)); }
-                await p.waitForTimeout(4000);
-                const text = (await p.evaluate(() => document.body ? document.body.innerText : '')).replace(/\s+/g, ' ').slice(0, 120);
-                const name = (eng + '-' + dev + path).replace(/[^a-z0-9]+/gi, '_');
-                await p.screenshot({ path: 'shot_' + name + '.png' });
-                console.log('== ' + eng + ' / ' + dev + ' ' + path + ' | text: ' + (text || '(EMPTY - WHITE PAGE)') + '\n' + (errs.join('\n') || 'no errors'));
-              }
-              await b.close();
-            }
-          })();
-          JS
-          node t.cjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: screenshots
-          path: shot*.png
+          curl -s https://greatinternet.app/samples -o s.html -w "samples page %{http_code}\n"
+          grep -oE 'href="[^"]*pdf[^"]*"' s.html | sort -u
+          for p in /samples/planner/pdf /samples/photobooth/pdf; do
+            curl -s -D h.txt -o out.pdf --max-time 90 -w "$p -> HTTP %{http_code}, %{size_download} bytes, %{time_total}s\n" "https://greatinternet.app$p"
+            grep -iE "^(content-type|content-length|content-disposition|x-vercel-cache|x-vercel-error|cache-control|age):" h.txt
+            head -c 200 out.pdf | tr -cd '[:print:]\n'; echo
+          done
