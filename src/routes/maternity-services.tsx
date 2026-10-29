@@ -199,9 +199,16 @@ function GuidedDemo({ onValidate }: { onValidate: () => void }) {
   const [note, setNote] = useState("");
 
   // Each step starts at its top, so a long step never opens half-scrolled.
+  const boxRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const firstRender = useRef(true);
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: 0 });
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    boxRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [stage]);
   const next = () => setStage((current) => Math.min(maternityStages.length - 1, current + 1));
   const back = () => setStage((current) => Math.max(0, current - 1));
@@ -220,15 +227,15 @@ function GuidedDemo({ onValidate }: { onValidate: () => void }) {
   });
 
   return (
-    <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-white shadow-sm md:flex md:flex-col md:h-[calc(100svh-6rem)] md:max-h-[820px]">
-      <div className="border-b border-border bg-lavender-soft/55 px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+    <div ref={boxRef} className="mt-8 overflow-hidden rounded-2xl border border-border bg-white shadow-sm md:flex md:flex-col md:h-[calc(100svh-1rem)] lg:h-[calc(100svh-5.5rem)] md:max-h-[820px]">
+      <div className="border-b border-border bg-lavender-soft/55 px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-bold tracking-[0.18em] uppercase">Interactive demo · Example data</p>
           <p className="text-xs text-ink-soft truncate">{maternityStages[stage]}</p>
         </div>
         <Button variant="ghost" size="icon" onClick={reset} title="Exit and restart demo" aria-label="Exit and restart demo"><X /></Button>
       </div>
-      <div className="px-4 sm:px-6 py-4 border-b border-border overflow-x-auto no-scrollbar">
+      <div className="px-4 sm:px-6 py-2.5 border-b border-border overflow-x-auto no-scrollbar">
         <ol className="flex gap-2 min-w-max">
           {maternityStages.map((label, index) => (
             <li key={label}>
@@ -252,7 +259,7 @@ function GuidedDemo({ onValidate }: { onValidate: () => void }) {
         {stage === 4 && <ServiceDashboard onNext={next} />}
         {stage === 5 && <Insights onValidate={onValidate} />}
       </div>
-      <div className="border-t border-border px-4 sm:px-6 py-4 flex items-center justify-between gap-3 bg-white">
+      <div className="border-t border-border px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 bg-white">
         <Button variant="outline" onClick={back} disabled={stage === 0} className="rounded-full"><ArrowLeft /> Back</Button>
         <span className="text-xs text-ink-soft">{stage + 1} of {maternityStages.length}</span>
         {stage < maternityStages.length - 1 ? (
