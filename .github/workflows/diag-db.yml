@@ -1,5 +1,4 @@
-# Temporary (2026-10-29): does the maternity demo fit the screen? Measures every
-# step on live (before) and the maternity-fit preview (after). Public pages only.
+# Temporary (2026-10-29): time the GreatInternet sample PDF downloads. Public only.
 name: Diagnose BumpNotes database
 on:
   push:
@@ -8,45 +7,12 @@ permissions: {}
 jobs:
   probe:
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.48.2-jammy
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
       - run: |
-          npm init -y >/dev/null && npm i playwright@1.48.2 2>&1 | tail -1
-          cat > t.cjs <<'JS'
-          const pw = require('playwright');
-          const sites = { after: 'https://bumpnotes.co.uk' };
-          const sizes = [['iPad landscape (yours)', 1000, 565, 'webkit'], ['laptop', 1366, 768, 'webkit'], ['iPhone', 390, 664, 'webkit']];
-          (async () => {
-            for (const [label, w, h, eng] of sizes) {
-              for (const [which, base] of Object.entries(sites)) {
-                const b = await pw[eng].launch();
-                const p = await b.newPage({ viewport: { width: w, height: h } });
-                await p.goto(base + '/maternity-services', { waitUntil: 'networkidle' });
-                const rows = [];
-                for (let i = 0; i < 6; i++) {
-                  const box = p.locator('div.rounded-2xl:has(> div ol)').first();
-                  await box.scrollIntoViewIfNeeded();
-                  await box.evaluate(el => el.scrollIntoView({ block: 'start' }));
-                  await p.waitForTimeout(300);
-                  const m = await box.evaluate(el => { const r = el.getBoundingClientRect(); return { top: Math.round(r.top), height: Math.round(r.height), bottom: Math.round(r.bottom) }; });
-                  const next = p.getByRole('button', { name: i < 5 ? 'Next' : 'Share feedback' }).last();
-                  const nb = await next.boundingBox();
-                  const nextVisible = nb && nb.y >= 0 && nb.y + nb.height <= h;
-                  const inner = await box.evaluate(el => { const c = el.children[2]; return c ? Math.max(0, c.scrollHeight - c.clientHeight) : -1; });
-                  rows.push(`step ${i + 1}: box ${m.height}px (screen ${h}), Next ${nextVisible ? 'VISIBLE' : 'off-screen'}, inside-scroll ${inner}px`);
-                  if (i === 4) await p.screenshot({ path: `shot_${which}_${w}x${h}_dashboard.png` });
-                  if (i < 5) { await next.click(); await p.waitForTimeout(300); }
-                }
-                console.log(`== ${label} ${w}x${h} ${which}\n` + rows.join('\n'));
-                await b.close();
-              }
-            }
-          })();
-          JS
-          node t.cjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: screenshots
-          path: shot*.png
+          curl -s https://greatinternet.app/samples -o s.html
+          grep -oE '<a[^>]*href="[^"]*\.pdf"[^>]*>' s.html | sort -u
+          for f in greatinternet-big-picture-planner-sample-review.pdf greatinternet-mybishbash-photobooth-sample-review.pdf; do
+            for i in 1 2; do curl -s -o out.pdf -w "$f try $i: HTTP %{http_code}, %{size_download} bytes, %{time_total}s\n" "https://greatinternet.app/samples/pdf/$f"; done
+            head -c 8 out.pdf; echo
+          done
