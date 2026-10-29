@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { SERVICE_PAUSED } from "@/lib/service-pause";
 import { PauseNotice } from "@/components/bumpnotes/PauseNotice";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -198,6 +198,18 @@ function GuidedDemo({ onValidate }: { onValidate: () => void }) {
   const [archived, setArchived] = useState(false);
   const [note, setNote] = useState("");
 
+  // Each step starts at its top, so a long step never opens half-scrolled.
+  const boxRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    bodyRef.current?.scrollTo({ top: 0 });
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    boxRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [stage]);
   const next = () => setStage((current) => Math.min(maternityStages.length - 1, current + 1));
   const back = () => setStage((current) => Math.max(0, current - 1));
   const reset = () => {
@@ -215,15 +227,15 @@ function GuidedDemo({ onValidate }: { onValidate: () => void }) {
   });
 
   return (
-    <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
-      <div className="border-b border-border bg-lavender-soft/55 px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+    <div ref={boxRef} className="mt-8 overflow-hidden rounded-2xl border border-border bg-white shadow-sm md:flex md:flex-col md:h-[calc(100svh-1rem)] lg:h-[calc(100svh-5.5rem)] md:max-h-[820px]">
+      <div className="border-b border-border bg-lavender-soft/55 px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-bold tracking-[0.18em] uppercase">Interactive demo · Example data</p>
           <p className="text-xs text-ink-soft truncate">{maternityStages[stage]}</p>
         </div>
         <Button variant="ghost" size="icon" onClick={reset} title="Exit and restart demo" aria-label="Exit and restart demo"><X /></Button>
       </div>
-      <div className="px-4 sm:px-6 py-4 border-b border-border overflow-x-auto no-scrollbar">
+      <div className="px-4 sm:px-6 py-2.5 border-b border-border overflow-x-auto no-scrollbar">
         <ol className="flex gap-2 min-w-max">
           {maternityStages.map((label, index) => (
             <li key={label}>
@@ -239,7 +251,7 @@ function GuidedDemo({ onValidate }: { onValidate: () => void }) {
           ))}
         </ol>
       </div>
-      <div className="min-h-[610px] bg-background">
+      <div ref={bodyRef} className="bg-background md:flex-1 md:min-h-0 md:overflow-y-auto">
         {stage === 0 && <WomanJournal onNext={next} />}
         {stage === 1 && <SummaryBuilder selected={selected} onToggle={toggle} onNext={next} />}
         {stage === 2 && <Sharing selected={selected} shared={shared} setShared={setShared} onNext={next} />}
@@ -247,7 +259,7 @@ function GuidedDemo({ onValidate }: { onValidate: () => void }) {
         {stage === 4 && <ServiceDashboard onNext={next} />}
         {stage === 5 && <Insights onValidate={onValidate} />}
       </div>
-      <div className="border-t border-border px-4 sm:px-6 py-4 flex items-center justify-between gap-3 bg-white">
+      <div className="border-t border-border px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 bg-white">
         <Button variant="outline" onClick={back} disabled={stage === 0} className="rounded-full"><ArrowLeft /> Back</Button>
         <span className="text-xs text-ink-soft">{stage + 1} of {maternityStages.length}</span>
         {stage < maternityStages.length - 1 ? (
@@ -262,8 +274,8 @@ function GuidedDemo({ onValidate }: { onValidate: () => void }) {
 
 function DemoFrame({ children, area }: { children: ReactNode; area: "woman" | "team" }) {
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="p-4 sm:p-5 lg:p-6">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <span className={`rounded-full px-3 py-1 text-[10px] font-bold tracking-[0.16em] ${area === "woman" ? "bg-coral-soft" : "bg-mint-soft"}`}>
           {area === "woman" ? "WOMAN’S VIEW · DEMO" : "MATERNITY-SERVICE VIEW · DEMO DATA"}
         </span>
@@ -318,25 +330,25 @@ function SummaryBuilder({ selected, onToggle, onNext }: { selected: Set<string>;
     <DemoFrame area="woman">
       <div className="max-w-[820px] mx-auto">
         <p className="text-xs text-primary font-semibold">Prepare a summary</p>
-        <h3 className="mt-1 font-serif text-2xl sm:text-3xl font-semibold">Choose exactly what you want to show</h3>
+        <h3 className="mt-1 font-serif text-2xl font-semibold">Choose exactly what you want to show</h3>
         <p className="mt-2 text-sm text-ink-soft">All sections start included. Untick anything you do not want in this example summary.</p>
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           <Button variant="outline" className="rounded-full"><Pencil /> Edit</Button>
           <Button variant="outline" className="rounded-full"><FileText /> Preview</Button>
           <Button variant="outline" className="rounded-full"><Save /> Save for later</Button>
         </div>
-        <div className="mt-5 space-y-3">
+        <div className="mt-4 space-y-2">
           {maternityDemo.summarySections.map((section) => {
             const active = selected.has(section.id);
             return (
-              <Button key={section.id} type="button" variant="ghost" onClick={() => onToggle(section.id)} className={`h-auto w-full whitespace-normal text-left flex-col items-stretch justify-start rounded-xl border p-4 transition ${active ? "border-primary/35 bg-white" : "border-border bg-muted opacity-60"}`}>
+              <Button key={section.id} type="button" variant="ghost" onClick={() => onToggle(section.id)} className={`h-auto w-full whitespace-normal text-left flex-col items-stretch justify-start rounded-xl border px-4 py-3 transition ${active ? "border-primary/35 bg-white" : "border-border bg-muted opacity-60"}`}>
                 <span className="flex items-center justify-between gap-3"><span className="font-serif text-lg font-semibold">{section.title}</span><span className={`size-6 rounded-full grid place-items-center ${active ? "bg-primary text-primary-foreground" : "bg-white border border-border"}`}>{active && <Check className="size-3.5" />}</span></span>
-                {active && <ul className="mt-3 space-y-1.5">{section.lines.map((line) => <li key={line} className="text-sm text-ink-soft">“{line}”</li>)}</ul>}
+                {active && <ul className="mt-2 space-y-1">{section.lines.map((line) => <li key={line} className="text-sm text-ink-soft">“{line}”</li>)}</ul>}
               </Button>
             );
           })}
         </div>
-        <Button onClick={onNext} className="mt-5 rounded-full">Preview and share <ArrowRight /></Button>
+        <Button onClick={onNext} className="mt-4 rounded-full">Preview and share <ArrowRight /></Button>
       </div>
     </DemoFrame>
   );
@@ -349,17 +361,17 @@ function Sharing({ selected, shared, setShared, onNext }: { selected: Set<string
       <div className="max-w-[780px] mx-auto">
         {!shared ? (
           <>
-            <h3 className="font-serif text-2xl sm:text-3xl font-semibold">This is exactly what your team will receive</h3>
-            <p className="mt-2 text-sm text-ink-soft">Nothing else from your BumpNotes journal is included.</p>
-            <div className="mt-5 rounded-xl border border-border bg-white p-5 sm:p-7">
-              <div className="flex justify-between gap-3 border-b border-border pb-4"><div><p className="font-serif text-xl font-semibold">Pregnancy Summary</p><p className="text-sm text-ink-soft">{maternityDemo.woman.name} · {maternityDemo.woman.gestation}</p></div><span className="text-[10px] font-bold bg-lavender-soft rounded-full px-2.5 py-1 h-fit">EXAMPLE</span></div>
-              {visible.map((section) => <div key={section.id} className="py-4 border-b border-border last:border-0"><p className="font-semibold text-sm">{section.title}</p>{section.lines.map((line) => <p key={line} className="mt-1 text-sm text-ink-soft">{line}</p>)}</div>)}
+            <h3 className="font-serif text-2xl font-semibold">This is exactly what your team will receive</h3>
+            <p className="mt-1 text-sm text-ink-soft">Nothing else from your BumpNotes journal is included.</p>
+            <div className="mt-4 rounded-xl border border-border bg-white px-5 py-4">
+              <div className="flex justify-between gap-3 border-b border-border pb-3"><div><p className="font-serif text-xl font-semibold">Pregnancy Summary</p><p className="text-sm text-ink-soft">{maternityDemo.woman.name} · {maternityDemo.woman.gestation}</p></div><span className="text-[10px] font-bold bg-lavender-soft rounded-full px-2.5 py-1 h-fit">EXAMPLE</span></div>
+              {visible.map((section) => <div key={section.id} className="py-2.5 border-b border-border last:border-0"><p className="font-semibold text-sm">{section.title}</p>{section.lines.map((line) => <p key={line} className="mt-0.5 text-sm text-ink-soft">{line}</p>)}</div>)}
             </div>
-            <label className="mt-5 flex items-start gap-3 rounded-xl bg-mint-soft p-4 text-sm leading-relaxed"><input type="checkbox" defaultChecked className="mt-1 accent-[var(--primary)]" /><span>I choose to share this summary with {maternityDemo.woman.team}. I understand this sends only the information shown above.</span></label>
-            <Button onClick={() => setShared(true)} className="mt-5 h-12 rounded-full px-6"><Send /> Share this summary</Button>
+            <label className="mt-4 flex items-start gap-3 rounded-xl bg-mint-soft px-4 py-3 text-sm leading-relaxed"><input type="checkbox" defaultChecked className="mt-1 accent-[var(--primary)]" /><span>I choose to share this summary with {maternityDemo.woman.team}. I understand this sends only the information shown above.</span></label>
+            <Button onClick={() => setShared(true)} className="mt-4 h-11 rounded-full px-6"><Send /> Share this summary</Button>
           </>
         ) : (
-          <div className="text-center py-8 sm:py-14">
+          <div className="text-center py-6 sm:py-8">
             <CheckCircle2 className="size-14 text-primary mx-auto" />
             <h3 className="mt-4 font-serif text-3xl font-semibold">Summary shared</h3>
             <p className="mt-2 text-ink-soft">Sent to {maternityDemo.woman.team} on 22/09/2026 at 16:42.</p>
@@ -406,10 +418,10 @@ function TeamInbox(props: { reviewed: boolean; setReviewed: (v: boolean) => void
 function ServiceDashboard({ onNext }: { onNext: () => void }) {
   return (
     <DemoFrame area="team">
-      <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold text-primary">Example service activity</p><h3 className="font-serif text-2xl sm:text-3xl font-semibold">Service dashboard</h3></div><Button variant="outline" onClick={onNext}><Lightbulb /> View insights</Button></div>
+      <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold text-primary">Example service activity</p><h3 className="font-serif text-2xl font-semibold">Service dashboard</h3></div><Button variant="outline" onClick={onNext}><Lightbulb /> View insights</Button></div>
       <p className="mt-2 text-sm text-ink-soft">Fictional demonstration metrics. They are not live service data or performance measures.</p>
-      <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-3">{maternityDemo.metrics.map((metric) => <div key={metric.label} className="rounded-xl border border-border bg-white p-4"><p className="font-serif text-2xl sm:text-3xl font-semibold">{metric.value}</p><p className="mt-1 text-sm font-semibold">{metric.label}</p><p className="mt-1 text-[11px] text-ink-soft">{metric.note}</p></div>)}</div>
-      <div className="mt-5 grid lg:grid-cols-2 gap-4"><div className="rounded-xl border border-border bg-white p-5"><p className="font-serif text-lg font-semibold">Example adoption funnel</p>{[["Invited to BumpNotes", "w-full", 100], ["Started a journal", "w-[74%]", 74], ["Prepared a summary", "w-[46%]", 46], ["Chose to share", "w-[31%]", 31]].map(([label, width, value]) => <div key={String(label)} className="mt-4"><div className="flex justify-between text-xs"><span>{label}</span><span>{value}%</span></div><div className="mt-1.5 h-2 rounded-full bg-muted"><div className={`h-full rounded-full bg-primary ${width}`} /></div></div>)}</div><div className="rounded-xl border border-border bg-white p-5"><p className="font-serif text-lg font-semibold">Example sharing activity</p><div className="mt-5 grid grid-cols-7 gap-2 items-end h-40">{["h-[35%]", "h-[55%]", "h-[42%]", "h-[76%]", "h-[61%]", "h-[88%]", "h-[70%]"].map((height, i) => <div key={i} className="h-full flex items-end"><div className={`w-full rounded-t bg-mint ${height}`} /></div>)}</div><p className="mt-3 text-xs text-ink-soft">Among fictional BumpNotes users · last seven days</p></div></div>
+      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">{maternityDemo.metrics.map((metric) => <div key={metric.label} className="rounded-xl border border-border bg-white p-3"><p className="font-serif text-2xl font-semibold">{metric.value}</p><p className="mt-1 text-sm font-semibold">{metric.label}</p><p className="mt-1 text-[11px] text-ink-soft">{metric.note}</p></div>)}</div>
+      <div className="mt-4 grid md:grid-cols-2 gap-3"><div className="rounded-xl border border-border bg-white p-4"><p className="font-serif text-lg font-semibold">Example adoption funnel</p>{[["Invited to BumpNotes", "w-full", 100], ["Started a journal", "w-[74%]", 74], ["Prepared a summary", "w-[46%]", 46], ["Chose to share", "w-[31%]", 31]].map(([label, width, value]) => <div key={String(label)} className="mt-3"><div className="flex justify-between text-xs"><span>{label}</span><span>{value}%</span></div><div className="mt-1.5 h-2 rounded-full bg-muted"><div className={`h-full rounded-full bg-primary ${width}`} /></div></div>)}</div><div className="rounded-xl border border-border bg-white p-4"><p className="font-serif text-lg font-semibold">Example sharing activity</p><div className="mt-4 grid grid-cols-7 gap-2 items-end h-28">{["h-[35%]", "h-[55%]", "h-[42%]", "h-[76%]", "h-[61%]", "h-[88%]", "h-[70%]"].map((height, i) => <div key={i} className="h-full flex items-end"><div className={`w-full rounded-t bg-mint ${height}`} /></div>)}</div><p className="mt-3 text-xs text-ink-soft">Among fictional BumpNotes users · last seven days</p></div></div>
     </DemoFrame>
   );
 }
