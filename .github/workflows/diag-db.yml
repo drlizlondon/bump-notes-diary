@@ -14,10 +14,10 @@ jobs:
           set +e
           curl -s https://bumpnotes.co.uk/ -o home.html
           for js in $(grep -oE '/assets/[^"]+\.js' home.html | sort -u); do curl -s "https://bumpnotes.co.uk$js" >> all.js; done
-          echo "Projects named in the live bundle:"; grep -oE '[a-z]{20}\.supabase\.co' all.js | sort | uniq -c
+          echo "JS files: $(grep -oE '/assets/[^\"]+\.js' home.html | sort -u | wc -l), bytes $(wc -c < all.js)"; echo "key shapes: sb_publishable=$(grep -c sb_publishable_ all.js) eyJ=$(grep -oE 'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' all.js | wc -l)"; echo "Projects named in the live bundle:"; grep -oE '[a-z]{20}\.supabase\.co' all.js | sort | uniq -c
           for ref in zsmusjlipihurchkmbwk emyajhwcynmybiimszfs; do
-            key=$(grep -oE "https://$ref\.supabase\.co.{0,400}" all.js | grep -oE 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' | head -1)
-            [ -z "$key" ] && key=$(grep -oE 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' all.js | while read k; do echo "$k" | cut -d. -f2 | base64 -d 2>/dev/null | grep -q "$ref" && echo "$k"; done | head -1)
+            key=$(grep -oE 'sb_publishable_[A-Za-z0-9_-]+' all.js | head -1)
+            [ -z "$key" ] && key=$(grep -oE 'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' all.js | head -1)
             echo "== $ref (anon key found: $([ -n "$key" ] && echo yes || echo no))"
             echo -n "auth health: "; curl -s -o /dev/null -w '%{http_code}\n' "https://$ref.supabase.co/auth/v1/health" -H "apikey: $key"
             echo -n "bn_exec as anon (42501 = exists, PGRST202 = missing): "
