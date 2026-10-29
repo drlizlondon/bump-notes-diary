@@ -2,7 +2,7 @@
 // Owner-scoped by context.userId. See docs/product/GDPR-DATA-RIGHTS-SPEC.md.
 
 import { createServerFn } from "@tanstack/react-start";
-import { requireApiAuth } from "./api-auth-middleware";
+import { requireApiAuthNoInvite } from "./api-auth-middleware";
 import { getDb } from "@/lib/data-store/db";
 import { issueDownloadSas } from "./blob-helpers";
 // `performAccountErasure` is imported (never re-exported) rather than
@@ -29,7 +29,7 @@ async function writeAudit(
  * download URLs for every attachment. Writes a `data_export` audit event.
  */
 export const exportMyData = createServerFn({ method: "POST" })
-  .middleware([requireApiAuth])
+  .middleware([requireApiAuthNoInvite])
   .handler(async ({ context }) => {
     const pool = getDb();
     const uid = context.userId;
@@ -102,7 +102,7 @@ export const exportMyData = createServerFn({ method: "POST" })
  * style). The client should sign the user out after this resolves.
  */
 export const deleteOwnAccount = createServerFn({ method: "POST" })
-  .middleware([requireApiAuth])
+  .middleware([requireApiAuthNoInvite])
   .handler(async ({ context }) => {
     const pool = getDb();
     return performAccountErasure(pool, context.userId);
