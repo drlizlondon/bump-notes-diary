@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { AdminInvites } from "@/components/bumpnotes/AdminInvites";
 import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -314,6 +315,8 @@ function AdminDashboard() {
         </span>
       </div>
 
+      <AdminInvites />
+
       {/* Tester code overview tiles */}
       <div>
         <h2 className="font-serif text-lg font-semibold mb-2">Tester codes</h2>
@@ -487,7 +490,15 @@ function FeedbackSubmissionsPanel() {
       reply_email: string | null;
       is_tester: boolean;
       page_path: string | null;
-       context?: { formType?: string; firstName?: string; role?: string; organisation?: string; contactPreference?: string; validationInterest?: string; pilotUpdates?: boolean } | null;
+      context?: {
+        formType?: string;
+        firstName?: string;
+        role?: string;
+        organisation?: string;
+        contactPreference?: string;
+        validationInterest?: string;
+        pilotUpdates?: boolean;
+      } | null;
     }>
   >([]);
   const [loading, setLoading] = useState(true);
@@ -550,11 +561,11 @@ function FeedbackSubmissionsPanel() {
                         Tester
                       </span>
                     )}
-                     {m.context?.formType === "maternity-service-validation" && (
-                       <span className="inline-block px-2 py-0.5 rounded-full bg-lavender-soft text-[11px] mr-2">
-                         Maternity services
-                       </span>
-                     )}
+                    {m.context?.formType === "maternity-service-validation" && (
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-lavender-soft text-[11px] mr-2">
+                        Maternity services
+                      </span>
+                    )}
                     {m.reply_email || "no reply email"}
                   </p>
                   <p className="text-[11px] text-ink-soft">
@@ -570,16 +581,28 @@ function FeedbackSubmissionsPanel() {
                 </button>
               </div>
               <p className="text-sm mt-2 whitespace-pre-wrap">{m.message}</p>
-               {m.context?.formType === "maternity-service-validation" && (
-                 <div className="mt-3 grid sm:grid-cols-2 gap-2 rounded-lg bg-lavender-soft/45 p-3 text-xs">
-                   <p><strong>Name:</strong> {m.context.firstName || "—"}</p>
-                   <p><strong>Role:</strong> {m.context.role || "—"}</p>
-                   <p><strong>Organisation:</strong> {m.context.organisation || "—"}</p>
-                   <p><strong>Response:</strong> {m.context.contactPreference || "—"}</p>
-                   <p><strong>Validation:</strong> {m.context.validationInterest || "—"}</p>
-                   <p><strong>Pilot updates:</strong> {m.context.pilotUpdates ? "Yes" : "No"}</p>
-                 </div>
-               )}
+              {m.context?.formType === "maternity-service-validation" && (
+                <div className="mt-3 grid sm:grid-cols-2 gap-2 rounded-lg bg-lavender-soft/45 p-3 text-xs">
+                  <p>
+                    <strong>Name:</strong> {m.context.firstName || "—"}
+                  </p>
+                  <p>
+                    <strong>Role:</strong> {m.context.role || "—"}
+                  </p>
+                  <p>
+                    <strong>Organisation:</strong> {m.context.organisation || "—"}
+                  </p>
+                  <p>
+                    <strong>Response:</strong> {m.context.contactPreference || "—"}
+                  </p>
+                  <p>
+                    <strong>Validation:</strong> {m.context.validationInterest || "—"}
+                  </p>
+                  <p>
+                    <strong>Pilot updates:</strong> {m.context.pilotUpdates ? "Yes" : "No"}
+                  </p>
+                </div>
+              )}
             </li>
           ))}
         </ul>

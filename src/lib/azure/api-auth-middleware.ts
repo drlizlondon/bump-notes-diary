@@ -14,6 +14,8 @@ import { getRequest } from "@tanstack/react-start/server";
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import type pg from "pg";
 import { getDb } from "@/lib/data-store/db";
+import { INVITE_ONLY } from "@/lib/invite-config";
+import { isInvited } from "@/lib/bumpnotes/invite-core";
 
 export interface ResolvedIdentity {
   source: "supabase" | "entra";
@@ -105,7 +107,7 @@ async function resolveIdentity(token: string): Promise<ResolvedIdentity> {
   }
 }
 
-export const requireApiAuth = createMiddleware({ type: "function" }).server(async ({ next }) => {
+async function authenticate() {
   const request = getRequest();
   const authHeader = request?.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) {
@@ -117,6 +119,41 @@ export const requireApiAuth = createMiddleware({ type: "function" }).server(asyn
   const identity = await resolveIdentity(token);
   const pool = getDb();
   const userId = await resolveOrCreateUser(pool, identity);
+  return { pool, userId, identitySource: identity.source };
+}
 
-  return next({ context: { userId, identitySource: identity.source } });
+/** Thrown (and shown as the invite popup) when an account has no invite yet. */
+export const INVITE_REQUIRED = "Invite required";
+
+/**
+ * BN-INVITE: while INVITE_ONLY is on, an account without an invite can't read
+ * or write BumpNotes data. Checked here, on the server, so it can't be skipped
+ * from the browser.
+ */
+export async function assertInvited(
+  pool: Pick<pg.Pool, "query">,
+  userId: string,
+  inviteOnly = INVITE_ONLY,
+) {
+  if (!inviteOnly) return;
+  if (!(await isInvited(pool as Parameters<typeof isInvited>[0], userId)))
+    throw new Error(INVITE_REQUIRED);
+}
+
+/** Every data function: a signed-in, invited account. */
+export const requireApiAuth = createMiddleware({ type: "function" }).server(async ({ next }) => {
+  const { pool, userId, identitySource } = await authenticate();
+  await assertInvited(pool, userId);
+  return next({ context: { userId, identitySource } });
 });
+
+/**
+ * Signed in, invite not required: redeeming a code, checking invite status, and
+ * the data-rights functions (export and delete must always work).
+ */
+export const requireApiAuthNoInvite = createMiddleware({ type: "function" }).server(
+  async ({ next }) => {
+    const { userId, identitySource } = await authenticate();
+    return next({ context: { userId, identitySource } });
+  },
+);

@@ -6,7 +6,12 @@ import { useTester, isTester } from "@/lib/bumpnotes/tester";
 import { Onboarding } from "@/components/bumpnotes/Onboarding";
 import { useAppSession } from "@/lib/data/session";
 import type { Profile } from "@/lib/bumpnotes/types";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { INVITE_ONLY } from "@/lib/invite-config";
+import { myInviteStatus, redeemInviteCode } from "@/lib/bumpnotes/invite.functions";
+import { forgetInviteCode, rememberedInviteCode } from "@/lib/bumpnotes/invite-storage";
+import { InviteGate } from "@/components/bumpnotes/InviteGate";
 import { trackEvent } from "@/lib/analytics";
 import { AppRepository } from "@/lib/data/capture";
 import {
@@ -26,9 +31,34 @@ export const Route = createFileRoute("/onboarding")({
 // (tester on-device, or signed-in). Anon visitors sign up first (identity flow).
 function OnboardingRoute() {
   const navigate = useNavigate();
-  const { userId, loading } = useAppSession();
+  const { userId, email, loading } = useAppSession();
   const tester = useTester();
   const authorized = !!userId || tester;
+  // BN-INVITE: a real (non-tester) account needs an invite before onboarding.
+  const checkInvite = useServerFn(myInviteStatus);
+  const redeem = useServerFn(redeemInviteCode);
+  const [invite, setInvite] = useState<"checking" | "yes" | "no">(INVITE_ONLY ? "checking" : "yes");
+  useEffect(() => {
+    if (!INVITE_ONLY || tester || !userId) return;
+    let live = true;
+    (async () => {
+      const status = await checkInvite();
+      if (status.invited) return "yes" as const;
+      // A code checked on "Create account" is used here, so they're not asked twice.
+      const remembered = rememberedInviteCode();
+      if (remembered) {
+        const r = await redeem({ data: { code: remembered } });
+        forgetInviteCode();
+        if (r.ok) return "yes" as const;
+      }
+      return "no" as const;
+    })()
+      .then((v) => live && setInvite(v))
+      .catch(() => live && setInvite("no"));
+    return () => {
+      live = false;
+    };
+  }, [userId, tester, checkInvite, redeem]);
 
   useEffect(() => {
     const authed = !!userId || isTester();
@@ -53,6 +83,11 @@ function OnboardingRoute() {
   }
 
   if (!authorized) return null;
+
+  if (!tester && invite !== "yes") {
+    if (invite === "checking") return null;
+    return <InviteGate email={email ?? undefined} onInvited={() => setInvite("yes")} />;
+  }
 
   return (
     <AppRepository>

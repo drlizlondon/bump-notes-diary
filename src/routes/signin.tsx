@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate, Link, useSearch } from "@tanstack/react-router";
+import { INVITE_ONLY } from "@/lib/invite-config";
 import { PAUSE_MESSAGE, SERVICE_PAUSED } from "@/lib/service-pause";
 import { useEffect, useState } from "react";
 import { Toaster, toast } from "sonner";
@@ -206,16 +207,25 @@ function SupabaseSignInPage() {
             <div className="surface-card p-5 text-center space-y-3">
               <h2 className="font-serif text-base font-semibold">New to BumpNotes?</h2>
               <p className="text-xs text-ink-soft leading-relaxed">
-                Start your pregnancy record to create your account and begin your private pregnancy
-                record.
+                BumpNotes is invite-only during the beta. Have a code?{" "}
+                <Link to="/auth" className="text-primary font-medium underline">
+                  Create your account
+                </Link>
+                . No code yet?{" "}
+                <Link to="/request-access" className="text-primary font-medium underline">
+                  Request access
+                </Link>
               </p>
-              <Link
-                to="/onboarding"
-                onClick={() => trackEvent("cta_clicked")}
-                className="inline-flex w-full justify-center py-3 rounded-full bg-white border border-primary/40 text-primary text-sm font-semibold hover:bg-blush-soft"
-              >
-                Start your pregnancy record
-              </Link>
+              {/* Invite-only: new people sign in above (that creates the account), then enter their code. */}
+              {!INVITE_ONLY && (
+                <Link
+                  to="/onboarding"
+                  onClick={() => trackEvent("cta_clicked")}
+                  className="inline-flex w-full justify-center py-3 rounded-full bg-white border border-primary/40 text-primary text-sm font-semibold hover:bg-blush-soft"
+                >
+                  Start your pregnancy record
+                </Link>
+              )}
             </div>
           )}
 
