@@ -9,6 +9,7 @@ permissions: {}
 jobs:
   probe:
     runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.48.2-jammy
     timeout-minutes: 15
     steps:
       - run: |
@@ -16,7 +17,7 @@ jobs:
           curl -s -o old.txt -w "%{http_code} %{content_type}\n" https://bumpnotes.co.uk/assets/index-OLDHASH123.js; head -c 120 old.txt; echo
           curl -sI https://bumpnotes.co.uk/ | grep -iE "cache-control|cf-cache-status|age:|content-security|^server"
       - run: |
-          npm init -y >/dev/null && npm i playwright@1.48.2 >/dev/null 2>&1 && npx playwright install --with-deps chromium webkit >/dev/null 2>&1
+          npm init -y >/dev/null && npm i playwright@1.48.2 2>&1 | tail -2
           cat > t.cjs <<'JS'
           const pw = require('playwright');
           (async () => {
