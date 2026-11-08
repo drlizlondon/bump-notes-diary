@@ -6,6 +6,8 @@ import {
   createCodeForRequest,
   generateInviteCode,
   isInvited,
+  listAccessRequests,
+  listInvitedAccounts,
   normalizeCode,
   purgeStaleRequests,
   redeemCode,
@@ -186,5 +188,35 @@ describe("access requests", () => {
     expect(db.calls[0].text).toMatch(
       /DELETE FROM access_requests WHERE access_code_id IS NULL AND created_at < now\(\) - interval '90 days'/,
     );
+  });
+});
+
+describe("admin list serialization", () => {
+  it("returns access request dates as strings and preserves nullable fields", async () => {
+    const db = {
+      query: async (text: string) => ({ rows: text.startsWith("DELETE") ? [] : [{
+        id: "r1", email: "mum@example.com", heard_from: null,
+        created_at: new Date("2026-10-29T12:00:00Z"), handled_at: null,
+        code: null, use_count: null,
+      }] }),
+    } as unknown as Parameters<typeof listAccessRequests>[0];
+    expect(await listAccessRequests(db)).toEqual([{
+      id: "r1", email: "mum@example.com", heard_from: null,
+      created_at: "2026-10-29T12:00:00.000Z", handled_at: null,
+      code: null, use_count: null,
+    }]);
+  });
+
+  it("returns invited account dates as strings without dropping code details", async () => {
+    const db = {
+      query: async () => ({ rows: [{
+        email: "mum@example.com", code: "BNAB12CD", label: "Beta",
+        redeemed_at: new Date("2026-10-29T13:00:00Z"),
+      }] }),
+    } as unknown as Parameters<typeof listInvitedAccounts>[0];
+    expect(await listInvitedAccounts(db)).toEqual([{
+      email: "mum@example.com", code: "BNAB12CD", label: "Beta",
+      redeemed_at: "2026-10-29T13:00:00.000Z",
+    }]);
   });
 });

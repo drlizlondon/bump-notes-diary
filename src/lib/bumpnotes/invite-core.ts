@@ -116,14 +116,35 @@ export async function purgeStaleRequests(db: Query): Promise<void> {
   );
 }
 
+export type AccessRequestRow = {
+  id: string;
+  email: string;
+  heard_from: string | null;
+  created_at: Date;
+  handled_at: Date | null;
+  code: string | null;
+  use_count: number | null;
+};
+
+export type InvitedAccountRow = {
+  email: string;
+  code: string | null;
+  label: string | null;
+  redeemed_at: Date;
+};
+
 export async function listAccessRequests(db: Query) {
   await purgeStaleRequests(db);
-  const { rows } = await db.query(
+  const { rows } = await db.query<AccessRequestRow>(
     `SELECT r.id, r.email, r.heard_from, r.created_at, r.handled_at, c.code, c.use_count
        FROM access_requests r LEFT JOIN tester_access_codes c ON c.id = r.access_code_id
       ORDER BY r.handled_at IS NOT NULL, r.created_at DESC`,
   );
-  return rows;
+  return rows.map((row) => ({
+    ...row,
+    created_at: row.created_at.toISOString(),
+    handled_at: row.handled_at?.toISOString() ?? null,
+  }));
 }
 
 /** Makes a code labelled with the requester's email and marks the request handled. Lizzie sends it. */
@@ -166,11 +187,11 @@ export async function createCodeForRequest(
 
 /** Who is in: each invited account's email, the code it used, and when. */
 export async function listInvitedAccounts(db: Query) {
-  const { rows } = await db.query(
+  const { rows } = await db.query<InvitedAccountRow>(
     `SELECT u.email, c.code, c.label, i.redeemed_at
        FROM account_invites i JOIN users u ON u.id = i.user_id
        LEFT JOIN tester_access_codes c ON c.id = i.access_code_id
       ORDER BY i.redeemed_at DESC`,
   );
-  return rows;
+  return rows.map((row) => ({ ...row, redeemed_at: row.redeemed_at.toISOString() }));
 }
